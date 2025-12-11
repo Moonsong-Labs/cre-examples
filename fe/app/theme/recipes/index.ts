@@ -1,3 +1,4 @@
+import { heading } from "./heading";
 import { absoluteCenter } from "./absolute-center";
 import { badge } from "./badge";
 import { button } from "./button";
@@ -12,14 +13,15 @@ import { spinner } from "./spinner";
 import { text } from "./text";
 
 export const recipes = {
-	button,
-	group,
-	absoluteCenter,
-	spinner,
-	input,
-	text,
-	icon,
-	badge,
+    button,
+    group,
+    absoluteCenter,
+    spinner,
+    input,
+    text,
+    icon,
+    badge,
+    heading
 };
 
 export const slotRecipes = {

@@ -183,7 +183,10 @@ export function GooeyNav({
 								onClick={(e) => handleClick(e, index)}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
-										handleClick(e as unknown as React.MouseEvent<HTMLLIElement>, index);
+										handleClick(
+											e as unknown as React.MouseEvent<HTMLLIElement>,
+											index,
+										);
 									}
 								}}
 							>
