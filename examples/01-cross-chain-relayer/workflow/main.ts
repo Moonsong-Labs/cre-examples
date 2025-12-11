@@ -1,5 +1,11 @@
-import { cre, type NodeRuntime, Runner, type Runtime, json as toJson } from "@chainlink/cre-sdk";
-import type { Hex } from "viem";
+/** biome-ignore-all lint/suspicious/noExplicitAny: boilerplate */
+import { consensusIdenticalAggregation, cre, type NodeRuntime, Runner, type Runtime, json as toJson } from "@chainlink/cre-sdk";
+
+type IrisAttestation = {
+	attestation: string;
+	message: string;
+};
+
 type Config = {
 	schedule: string;
 	irisUrl: string;
@@ -18,14 +24,18 @@ export interface IrisMessage {
 	delayReason: any;
 }
 
-const onCronTrigger = (runtime: Runtime<Config>): string => {
+const onCronTrigger = (runtime: Runtime<Config>): IrisAttestation => {
 	runtime.log("Hello world! Workflow triggered.");
-	return "Hello world!";
+
+	const result = runtime.runInNodeMode(fetchIrisAttestation, consensusIdenticalAggregation())().result();
+
+	runtime.log(`Fetched Iris attestation message: ${result.message}`);
+	return {message: result.message, attestation: result.attestation}
 };
 
 const fetchIrisAttestation = (
 	nodeRuntime: NodeRuntime,
-): { message: Hex; attestation: Hex } => {
+): IrisAttestation => {
 	const httpClient = new cre.capabilities.HTTPClient();
 
 	// TODO: derive domain
@@ -33,12 +43,13 @@ const fetchIrisAttestation = (
 	const burnHash =
 		"0xd47fba15747f389e59a73ed87e4c2424b7c80d96d3b9f2bd649a4b265150de1d";
 	// TODO: derive burn hash
+	nodeRuntime.log(`Using endpoint: ${nodeRuntime.config.irisUrl}`);
 	const fullUrl = `${nodeRuntime.config.irisUrl}/messages/${domain}?transactionHash=${burnHash}`;
 	// https://iris-api-sandbox.circle.com/v2/messages/0?transactionHash=0xd47fba15747f389e59a73ed87e4c2424b7c80d96d3b9f2bd649a4b265150de1d'
+	nodeRuntime.log(`Fetching Iris attestation from URL: ${fullUrl}`);
 	const req = {
 		url: fullUrl,
 		method: "GET" as const,
-		cache: "no-store",
 	};
 
 	const resp = httpClient.sendRequest(nodeRuntime, req).result();

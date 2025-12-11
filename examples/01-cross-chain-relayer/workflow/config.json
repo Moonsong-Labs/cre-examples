@@ -1,4 +1,12 @@
 {
 	"schedule": "*/30 * * * * *",
-	"irisUrl": "https://iris-api-sandbox.circle.com/v2/"
+	"irisUrl": "https://iris-api-sandbox.circle.com/v2",
+	"evms": [
+		{
+			"storageAddress": "0xa17CF997C28FF154eDBae1422e6a50BeF23927F4",
+      		"calculatorConsumerAddress": "0x10785f51B1Fccd94b7e386FDc83b9d50C71C0e52",
+      		"chainName": "ethereum-testnet-sepolia",
+      		"gasLimit": "500000"
+		}
+	]
 }

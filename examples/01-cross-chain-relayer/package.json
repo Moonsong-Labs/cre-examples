@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "simulate": "cre workflow simulate workflow --target demo"
+    "simulate": "cre workflow simulate workflow --target demo",
+    "forge:build" : "cd contracts && forge build",
+    "forge:install" : "cd contracts && forge soldeer install"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -1,0 +1,38 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["dependencies"]
+
+[fmt]
+single_line_statement_blocks = 'single'
+multiline_func_header = "all"
+sort_imports = true
+contract_new_lines = false
+override_spacing = false
+line_length = 120
+tab_width = 4
+bracket_spacing = true
+int_types = "long"
+quote_style = "double"
+number_underscore = "thousands"
+wrap_comments = true
+
+[rpc_endpoints]
+mainnet = "https://1rpc.io/eth"
+sepolia = "https://1rpc.io/sepolia"
+local = "http://127.0.0.1:8545"
+
+[etherscan]
+mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
+sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }
+
+[soldeer]
+remappings_generate = true
+remappings_regenerate = false
+remappings_version = false
+remappings_prefix = ""
+remappings_location = "txt"
+
+[dependencies]
+forge-std = "1.12.0"
+"@openzeppelin-contracts" = "5.5.0"
