@@ -1,7 +1,7 @@
+import { ArrowLeftRight, ArrowRight, Globe, Shield, Zap } from "lucide-react";
 import { Link } from "react-router";
-import { ArrowLeftRight, ArrowRight, Zap, Shield, Globe } from "lucide-react";
 import { css } from "styled-system/css";
-import { Button, Card, Text, Badge } from "~/components/ui";
+import { Badge, Button, Card, Text } from "~/components/ui";
 import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
@@ -55,7 +55,11 @@ export default function Home() {
 					mb: "8",
 				})}
 			>
-				<Badge variant="surface" colorPalette="teal" className={css({ mb: "4" })}>
+				<Badge
+					variant="surface"
+					colorPalette="teal"
+					className={css({ mb: "4" })}
+				>
 					Cross-Chain Runtime Environment
 				</Badge>
 				<Text
@@ -64,7 +68,8 @@ export default function Home() {
 						fontSize: { base: "3xl", md: "5xl" },
 						fontWeight: "bold",
 						mb: "4",
-						background: "linear-gradient(135deg, token(colors.teal.11), token(colors.blue.11))",
+						background:
+							"linear-gradient(135deg, token(colors.teal.11), token(colors.blue.11))",
 						backgroundClip: "text",
 						color: "transparent",
 					})}
@@ -80,15 +85,23 @@ export default function Home() {
 						mb: "8",
 					})}
 				>
-					Explore interactive examples demonstrating the power of the Cross-Chain
-					Runtime Environment. Learn how to build seamless cross-chain
-					applications.
+					Explore interactive examples demonstrating the power of the
+					Cross-Chain Runtime Environment. Learn how to build seamless
+					cross-chain applications.
 				</Text>
-				<div className={css({ display: "flex", gap: "4", justifyContent: "center" })}>
+				<div
+					className={css({
+						display: "flex",
+						gap: "4",
+						justifyContent: "center",
+					})}
+				>
 					<Link to="/examples/cross-chain-relayer">
 						<Button size="lg">
 							Get Started
-							<ArrowRight className={css({ width: "4", height: "4", ml: "2" })} />
+							<ArrowRight
+								className={css({ width: "4", height: "4", ml: "2" })}
+							/>
 						</Button>
 					</Link>
 				</div>

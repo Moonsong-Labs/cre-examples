@@ -8,6 +8,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { css } from "styled-system/css";
 import { formatUnits, maxUint256 } from "viem";
 import {
 	useAccount,
@@ -16,7 +17,6 @@ import {
 	useWaitForTransactionReceipt,
 	useWriteContract,
 } from "wagmi";
-import { css } from "styled-system/css";
 import {
 	Badge,
 	Button,
@@ -39,7 +39,8 @@ export function meta({}: Route.MetaArgs) {
 		{ title: "Cross-Chain Relayer - CRE Examples" },
 		{
 			name: "description",
-			content: "Bridge USDC cross-chain using Circle's CCTP with CRE attestation relay",
+			content:
+				"Bridge USDC cross-chain using Circle's CCTP with CRE attestation relay",
 		},
 	];
 }
@@ -340,9 +341,7 @@ export default function CrossChainRelayer() {
 									})}
 								>
 									Get testnet USDC
-									<ExternalLink
-										className={css({ width: "3", height: "3" })}
-									/>
+									<ExternalLink className={css({ width: "3", height: "3" })} />
 								</a>
 							</div>
 						</Card.Body>
@@ -657,9 +656,7 @@ export default function CrossChainRelayer() {
 											</Text>
 										</div>
 									</div>
-									<Text
-										className={css({ fontSize: "xs", color: "fg.subtle" })}
-									>
+									<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
 										{transfer.timestamp.toLocaleTimeString()}
 									</Text>
 								</div>

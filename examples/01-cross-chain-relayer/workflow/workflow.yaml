@@ -15,20 +15,12 @@
 #     secrets-path: "../secrets.yaml"       # Path to secrets file (project root by default)
 
 # ==========================================================================
-staging-settings:
+demo:
   user-workflow:
-    workflow-name: "workflow-staging"
+    workflow-name: "cctp-relayer"
   workflow-artifacts:
     workflow-path: "./main.ts"
-    config-path: "./config.staging.json"
+    config-path: "./config.json"
     secrets-path: ""
+    # secrets-path: "../secrets.yaml"
     
-
-# ==========================================================================
-production-settings:
-  user-workflow:
-    workflow-name: "workflow-production"
-  workflow-artifacts:
-    workflow-path: "./main.ts"
-    config-path: "./config.production.json"
-    secrets-path: ""

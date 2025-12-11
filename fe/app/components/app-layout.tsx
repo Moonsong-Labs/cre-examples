@@ -1,14 +1,17 @@
-"use client";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Home, ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Home } from "lucide-react";
 import { Link } from "react-router";
 import { css } from "styled-system/css";
-import { Text } from "~/components/ui";
 import { GooeyNav } from "~/components/gooey-nav/gooey-nav";
+import { Text } from "~/components/ui";
 
 const NAV_ITEMS = [
 	{ href: "/", label: "Home", icon: Home },
-	{ href: "/examples/cross-chain-relayer", label: "Cross-Chain Relayer", icon: ArrowLeftRight },
+	{
+		href: "/examples/cross-chain-relayer",
+		label: "Cross-Chain Relayer",
+		icon: ArrowLeftRight,
+	},
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -74,9 +77,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 					<GooeyNav items={NAV_ITEMS} />
 				</aside>
 
-				<main className={css({ flex: "1", overflow: "auto" })}>
-					{children}
-				</main>
+				<main className={css({ flex: "1", overflow: "auto" })}>{children}</main>
 			</div>
 		</div>
 	);

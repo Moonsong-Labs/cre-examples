@@ -1,5 +1,4 @@
-"use client";
-import { useRef, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router";
 import "./gooey-nav.css";
 
@@ -34,16 +33,28 @@ export function GooeyNav({
 	const textRef = useRef<HTMLSpanElement>(null);
 	const location = useLocation();
 
-	const activeIndex = items.findIndex((item) => item.href === location.pathname);
+	const activeIndex = items.findIndex(
+		(item) => item.href === location.pathname,
+	);
 
 	const noise = (n = 1) => n / 2 - Math.random() * n;
 
-	const getXY = (distance: number, pointIndex: number, totalPoints: number): [number, number] => {
-		const angle = ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
+	const getXY = (
+		distance: number,
+		pointIndex: number,
+		totalPoints: number,
+	): [number, number] => {
+		const angle =
+			((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
 		return [distance * Math.cos(angle), distance * Math.sin(angle)];
 	};
 
-	const createParticle = (i: number, t: number, d: [number, number], r: number) => {
+	const createParticle = (
+		i: number,
+		t: number,
+		d: [number, number],
+		r: number,
+	) => {
 		const rotate = noise(r / 10);
 		return {
 			start: getXY(d[0], particleCount - i, particleCount),
@@ -76,7 +87,10 @@ export function GooeyNav({
 				particle.style.setProperty("--end-y", `${p.end[1]}px`);
 				particle.style.setProperty("--time", `${p.time}ms`);
 				particle.style.setProperty("--scale", `${p.scale}`);
-				particle.style.setProperty("--color", `var(--colors-teal-${8 + (p.color % 4)})`);
+				particle.style.setProperty(
+					"--color",
+					`var(--colors-teal-${8 + (p.color % 4)})`,
+				);
 				particle.style.setProperty("--rotate", `${p.rotate}deg`);
 
 				point.classList.add("point");
@@ -96,7 +110,7 @@ export function GooeyNav({
 		}
 	};
 
-	const updateEffectPosition = (element: HTMLElement) => {
+	const updateEffectPosition = useCallback((element: HTMLElement) => {
 		if (!containerRef.current || !filterRef.current || !textRef.current) return;
 		const containerRect = containerRef.current.getBoundingClientRect();
 		const pos = element.getBoundingClientRect();
@@ -110,7 +124,7 @@ export function GooeyNav({
 		Object.assign(filterRef.current.style, styles);
 		Object.assign(textRef.current.style, styles);
 		textRef.current.innerText = element.innerText;
-	};
+	}, []);
 
 	const handleClick = (e: React.MouseEvent<HTMLLIElement>, index: number) => {
 		const liEl = e.currentTarget;
@@ -120,7 +134,9 @@ export function GooeyNav({
 
 		if (filterRef.current) {
 			const particles = filterRef.current.querySelectorAll(".particle");
-			particles.forEach((p) => filterRef.current?.removeChild(p));
+			for (const p of particles) {
+				filterRef.current.removeChild(p);
+			}
 		}
 
 		if (textRef.current) {
@@ -143,7 +159,8 @@ export function GooeyNav({
 		}
 
 		const resizeObserver = new ResizeObserver(() => {
-			const currentActiveLi = navRef.current?.querySelectorAll("li")[activeIndex];
+			const currentActiveLi =
+				navRef.current?.querySelectorAll("li")[activeIndex];
 			if (currentActiveLi) {
 				updateEffectPosition(currentActiveLi);
 			}
@@ -151,7 +168,7 @@ export function GooeyNav({
 
 		resizeObserver.observe(containerRef.current);
 		return () => resizeObserver.disconnect();
-	}, [activeIndex]);
+	}, [activeIndex, updateEffectPosition]);
 
 	return (
 		<div className="gooey-nav-container vertical" ref={containerRef}>
@@ -164,6 +181,11 @@ export function GooeyNav({
 								key={item.href}
 								className={activeIndex === index ? "active" : ""}
 								onClick={(e) => handleClick(e, index)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										handleClick(e as unknown as React.MouseEvent<HTMLLIElement>, index);
+									}
+								}}
 							>
 								<NavLink to={item.href}>
 									{Icon && <Icon className="nav-icon" />}
