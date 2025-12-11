@@ -11,6 +11,7 @@
 	},
 	"dependencies": {
 		"@ark-ui/react": "^5.30.0",
+		"@circle-fin/bridge-kit": "^1.1.2",
 		"@metamask/sdk": "^0.34.0",
 		"@rainbow-me/rainbowkit": "^2.2.10",
 		"@react-router/node": "7.10.1",

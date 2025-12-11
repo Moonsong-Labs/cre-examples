@@ -1,0 +1,15 @@
+{
+  "name": "01-cross-chain-relayer",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "simulate": "cre workflow simulate workflow --target demo"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
