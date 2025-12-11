@@ -1,34 +1,31 @@
-import { cre, NodeRuntime, Runner, type Runtime} from "@chainlink/cre-sdk";
-import { json as toJson } from "@chainlink/cre-sdk"
-
-
+import { cre, type NodeRuntime, Runner, type Runtime, json as toJson } from "@chainlink/cre-sdk";
+import type { Hex } from "viem";
 type Config = {
 	schedule: string;
 	irisUrl: string;
 };
 
 export interface IrisResponse {
-  messages: IrisMessage[]
+	messages: IrisMessage[];
 }
 
 export interface IrisMessage {
-  attestation: string
-  message: string
-  eventNonce: string
-  cctpVersion: number
-  status: string
-  delayReason: any
+	attestation: string;
+	message: string;
+	eventNonce: string;
+	cctpVersion: number;
+	status: string;
+	delayReason: any;
 }
-
 
 const onCronTrigger = (runtime: Runtime<Config>): string => {
 	runtime.log("Hello world! Workflow triggered.");
 	return "Hello world!";
 };
 
-const fetchIrisAttestation = async (
+const fetchIrisAttestation = (
 	nodeRuntime: NodeRuntime,
-): Promise<{ message: Hash; attestation: Hash }> => {
+): { message: Hex; attestation: Hex } => {
 	const httpClient = new cre.capabilities.HTTPClient();
 
 	// TODO: derive domain
@@ -42,17 +39,17 @@ const fetchIrisAttestation = async (
 		url: fullUrl,
 		method: "GET" as const,
 		cache: "no-store",
-	};	
+	};
 
 	const resp = httpClient.sendRequest(nodeRuntime, req).result();
 
 	nodeRuntime.log(`Iris response status: ${resp.statusCode}`);
 
-	const {messages} = toJson(resp) as IrisResponse
-	const {attestation, message} = messages[0]
+	const { messages } = toJson(resp) as IrisResponse;
+	const { attestation, message } = messages[0];
 	nodeRuntime.log(`Attestation: ${attestation}`);
 	nodeRuntime.log(`Message: ${message}`);
-	return { attestation, message };
+	return { attestation , message };
 };
 
 const initWorkflow = (config: Config) => {
