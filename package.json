@@ -1,8 +1,11 @@
 {
   "name": "cre-examples",
-  "module": "index.ts",
   "type": "module",
+  "workspaces": ["examples/*"],
   "private": true,
+  "scripts": {
+    		"start:fe": "cd fe && bun dev"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
