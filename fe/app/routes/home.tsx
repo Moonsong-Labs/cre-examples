@@ -3,10 +3,11 @@ import { Link } from "react-router";
 import { css } from "styled-system/css";
 import { FloatingLines } from "~/components/backgrounds/floating-lines";
 import { GlassSurface } from "~/components/glass-surface";
+import { TextType } from "~/components/text-type";
 import { Button, Heading } from "~/components/ui";
 import type { Route } from "./+types/home";
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_args: Route.MetaArgs) {
 	return [
 		{ title: "CRE Examples" },
 		{
@@ -75,19 +76,42 @@ export default function Home() {
 				>
 					<Heading
 						as="h1"
+						textAlign="justify"
 						textStyle="7xl"
 						className={css({
 							color: "white",
 							fontWeight: "900",
 						})}
 					>
-						CRE Examples
+						CRE DEMOS
 					</Heading>
 
+					<TextType
+						text={[
+							"Welcome to the CRE Examples page!",
+							"Using Chainlink Runtime Environment to do cool things across chains.",
+							"Want to see some working use-cases on testnet?",
+							"Click through to get started ⬇️",
+						]}
+			
+						typingSpeed={50}
+						cursorCharacter="_"
+						deletingSpeed={30}
+						variableSpeed={{"min": 30, "max": 80}}
+						pauseDuration={2500}
+						className={css({
+							color: "white",
+							textStyle: "3xl",
+							minHeight: "2rem",
+						})}
+					/>
+
 					<Link to="/examples/cross-chain-relayer">
-						<Button size="xl">
+						<Button size="xl" variant="surface" backdropBlur={"3xl"}>
 							Get Started
-							<ArrowRight className={css({ width: "5", height: "5", ml: "2" })} />
+							<ArrowRight
+								className={css({ width: "5", height: "5", ml: "2" })}
+							/>
 						</Button>
 					</Link>
 				</div>
