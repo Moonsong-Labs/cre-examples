@@ -168,7 +168,7 @@ function getStatusBadge(status: TransferStatus) {
 
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
-	return formatUnits(balance, 6);
+	return Number(formatUnits(balance, 6)).toFixed(2)
 }
 
 const UNLIMITED_THRESHOLD = maxUint256 / 2n;
@@ -617,7 +617,7 @@ export default function CrossChainRelayer() {
 						>
 							<NumberInput.Label>Amount (USDC)</NumberInput.Label>
 							<NumberInput.Input />
-							<NumberInput.Control />
+							{/* <NumberInput.Control  /> */}
 						</NumberInput.Root>
 					</Field.Root>
 
