@@ -31,6 +31,7 @@ export function GooeyNav({
 	const navRef = useRef<HTMLUListElement>(null);
 	const filterRef = useRef<HTMLSpanElement>(null);
 	const textRef = useRef<HTMLSpanElement>(null);
+	const prefersReducedMotion = useRef(false);
 	const location = useLocation();
 
 	const activeIndex = items.findIndex(
@@ -123,7 +124,12 @@ export function GooeyNav({
 		};
 		Object.assign(filterRef.current.style, styles);
 		Object.assign(textRef.current.style, styles);
-		textRef.current.innerText = element.innerText;
+		const link = element.querySelector("a");
+		if (link) {
+			textRef.current.innerHTML = link.innerHTML;
+		} else {
+			textRef.current.innerText = element.innerText;
+		}
 	}, []);
 
 	const handleClick = (e: React.MouseEvent<HTMLLIElement>, index: number) => {
@@ -145,12 +151,18 @@ export function GooeyNav({
 			textRef.current.classList.add("active");
 		}
 
-		if (filterRef.current) {
+		if (filterRef.current && !prefersReducedMotion.current) {
 			makeParticles(filterRef.current);
 		}
 	};
 
 	useEffect(() => {
+		if (typeof window !== "undefined") {
+			prefersReducedMotion.current = window.matchMedia(
+				"(prefers-reduced-motion: reduce)",
+			).matches;
+		}
+
 		if (!navRef.current || !containerRef.current) return;
 		const activeLi = navRef.current.querySelectorAll("li")[activeIndex];
 		if (activeLi) {

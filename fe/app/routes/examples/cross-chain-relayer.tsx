@@ -38,7 +38,7 @@ import {
 } from "~/config/contracts";
 import type { Route } from "./+types/cross-chain-relayer";
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_args: Route.MetaArgs) {
 	return [
 		{ title: "Cross-Chain Relayer - CRE Examples" },
 		{
@@ -111,9 +111,15 @@ const STATUS_ACCENT: Record<TransferStatus, string> = {
 
 function getStatusBadge(status: TransferStatus) {
 	switch (status) {
+		case "idle":
+			return (
+				<Badge variant="outline" colorPalette="gray">
+					Idle
+				</Badge>
+			);
 		case "pending":
 			return (
-				<Badge variant="outline">
+				<Badge variant="outline" colorPalette="amber">
 					<Clock className={css({ width: "3", height: "3" })} />
 					Pending
 				</Badge>
@@ -129,7 +135,7 @@ function getStatusBadge(status: TransferStatus) {
 			);
 		case "relaying":
 			return (
-				<Badge variant="outline" colorPalette="teal">
+				<Badge variant="outline" colorPalette="blue">
 					<Loader2
 						className={css({ width: "3", height: "3", animation: "spin" })}
 					/>
@@ -151,7 +157,11 @@ function getStatusBadge(status: TransferStatus) {
 				</Badge>
 			);
 		default:
-			return <Badge variant="outline">Unknown</Badge>;
+			return (
+				<Badge variant="outline" colorPalette="gray">
+					Unknown
+				</Badge>
+			);
 	}
 }
 
@@ -278,14 +288,11 @@ export default function CrossChainRelayer() {
 			className={css({
 				maxWidth: "5xl",
 				mx: "auto",
-				p: { base: "5", md: "8" },
+				py: { base: "6", md: "10" },
+				px: { base: "4", md: "6" },
 				display: "flex",
 				flexDirection: "column",
-				gap: "6",
-				backgroundImage:
-					"radial-gradient(circle at 8% 10%, rgba(16, 185, 129, 0.12), transparent 38%), radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.12), transparent 34%)",
-				borderRadius: "2xl",
-				boxShadow: "0 18px 46px rgba(15, 23, 42, 0.08)",
+				gap: "8",
 			})}
 		>
 			<div
@@ -293,29 +300,23 @@ export default function CrossChainRelayer() {
 					display: "flex",
 					flexDirection: { base: "column", md: "row" },
 					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "center" },
+					alignItems: { base: "flex-start", md: "flex-end" },
 					gap: "4",
-					p: { base: "3", md: "4" },
-					borderRadius: "xl",
-					border: "1px solid",
-					borderColor: "border",
-					boxShadow: "0 12px 38px rgba(15, 23, 42, 0.08)",
-					backgroundImage:
-						"linear-gradient(135deg, rgba(20,184,166,0.1), rgba(59,130,246,0.08))",
 				})}
 			>
 				<div>
 					<Text
 						as="h1"
 						className={css({
-							fontSize: "2xl",
+							fontSize: "3xl",
 							fontWeight: "bold",
 							mb: "2",
+							color: "fg.default",
 						})}
 					>
 						Cross-Chain Relayer
 					</Text>
-					<Text className={css({ color: "fg.muted" })}>
+					<Text className={css({ color: "fg.muted", fontSize: "lg" })}>
 						Bridge USDC cross-chain using Circle's CCTP with CRE attestation
 						relay
 					</Text>
@@ -328,32 +329,59 @@ export default function CrossChainRelayer() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="sm">
+					<Badge variant="surface" colorPalette="teal" size="md">
 						CCTP ready
 					</Badge>
-					<Badge variant="subtle" colorPalette="gray" size="sm">
+					<Badge variant="subtle" colorPalette="gray" size="md">
 						CRE attestation relay
 					</Badge>
-					<Badge variant="outline" colorPalette="blue" size="sm">
+					<Badge variant="outline" colorPalette="blue" size="md">
 						Testnet flows
 					</Badge>
 				</div>
-				</div>
+			</div>
 
-				{isConnected && (
+			{isConnected && (
+				<div
+					className={css({
+						display: "flex",
+						flexDirection: { base: "column", md: "row" },
+						gap: "4",
+						alignItems: { base: "stretch", md: "center" },
+						justifyContent: "space-between",
+						p: "4",
+						borderRadius: "xl",
+						border: "1px solid",
+						borderColor: "border",
+						bg: "gray.surface.bg",
+					})}
+				>
 					<div
 						className={css({
 							display: "flex",
-							flexDirection: { base: "column", md: "row" },
-							gap: "3",
-							alignItems: { base: "stretch", md: "center" },
-							justifyContent: "space-between",
-							p: "3",
-							borderRadius: "xl",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "white",
-							boxShadow: "0 10px 26px rgba(15, 23, 42, 0.06)",
+							alignItems: "center",
+							gap: "2",
+							color: "fg.muted",
+							fontSize: "sm",
+							flexWrap: "wrap",
+						})}
+					>
+						<ShieldCheck
+							className={css({ width: "4", height: "4", color: "teal.11" })}
+						/>
+						Secure & connected to
+						<Badge variant="solid" colorPalette="teal">
+							{currentChain?.label ?? "Select source"}
+						</Badge>
+					</div>
+					<div
+						className={css({
+							display: "flex",
+							gap: "4",
+							flexWrap: "wrap",
+							justifyContent: "flex-end",
+							alignItems: "center",
+							fontSize: "sm",
 						})}
 					>
 						<div
@@ -361,86 +389,64 @@ export default function CrossChainRelayer() {
 								display: "flex",
 								alignItems: "center",
 								gap: "2",
-								color: "fg.muted",
-								fontSize: "sm",
-								flexWrap: "wrap",
+								bg: "gray.subtle.bg",
+								borderRadius: "md",
+								px: "3",
+								py: "1.5",
 							})}
 						>
-							<ShieldCheck className={css({ width: "4", height: "4", color: "teal.11" })} />
-							Secure & connected to
-							<Badge variant="solid" colorPalette="teal">
-								{currentChain?.label ?? "Select source"}
-							</Badge>
+							<Sparkles
+								className={css({ width: "3.5", height: "3.5", color: "teal.11" })}
+							/>
+							<Text className={css({ fontWeight: "medium" })}>
+								{formatBalance(sourceBalance)} USDC
+							</Text>
+							<Text className={css({ color: "fg.subtle", fontSize: "xs" })}>
+								{sourceChainData?.label ?? currentChain?.label ?? "Source"}
+							</Text>
 						</div>
 						<div
 							className={css({
 								display: "flex",
-								gap: "3",
-								flexWrap: "wrap",
-								justifyContent: "flex-end",
 								alignItems: "center",
-								fontSize: "sm",
+								gap: "2",
+								bg: "gray.subtle.bg",
+								borderRadius: "md",
+								px: "3",
+								py: "1.5",
 							})}
 						>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-									bg: "gray.2",
-									borderRadius: "md",
-									px: "3",
-									py: "2",
-								})}
-							>
-								<Sparkles className={css({ width: "4", height: "4", color: "teal.11" })} />
-								<Text className={css({ fontWeight: "medium" })}>
-									{formatBalance(sourceBalance)} USDC
-								</Text>
-								<Text className={css({ color: "fg.subtle" })}>
-									{sourceChainData?.label ?? currentChain?.label ?? "Source"}
-								</Text>
-							</div>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-									bg: "gray.2",
-									borderRadius: "md",
-									px: "3",
-									py: "2",
-								})}
-							>
-								<Globe2 className={css({ width: "4", height: "4", color: "blue.11" })} />
-								<Text className={css({ fontWeight: "medium" })}>
-									{destChainId ? `${formatBalance(destBalance)} USDC` : "—"}
-								</Text>
-								<Text className={css({ color: "fg.subtle" })}>
-									{destChainData?.label ?? "Destination"}
-								</Text>
-							</div>
-							<a
-								href={CIRCLE_FAUCET_URL}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={css({
-									display: "inline-flex",
-									alignItems: "center",
-									gap: "1",
-									color: "teal.11",
-									fontWeight: "medium",
-									_hover: { textDecoration: "underline" },
-								})}
-							>
-								Get testnet USDC
-								<ExternalLink className={css({ width: "3", height: "3" })} />
-							</a>
+							<Globe2
+								className={css({ width: "3.5", height: "3.5", color: "blue.11" })}
+							/>
+							<Text className={css({ fontWeight: "medium" })}>
+								{destChainId ? `${formatBalance(destBalance)} USDC` : "—"}
+							</Text>
+							<Text className={css({ color: "fg.subtle", fontSize: "xs" })}>
+								{destChainData?.label ?? "Destination"}
+							</Text>
 						</div>
+						<a
+							href={CIRCLE_FAUCET_URL}
+							target="_blank"
+							rel="noopener noreferrer"
+							className={css({
+								display: "inline-flex",
+								alignItems: "center",
+								gap: "1",
+								color: "teal.11",
+								fontWeight: "medium",
+								_hover: { textDecoration: "underline" },
+							})}
+						>
+							Get testnet USDC
+							<ExternalLink className={css({ width: "3", height: "3" })} />
+						</a>
 					</div>
-				)}
+				</div>
+			)}
 
-			<Card.Root>
+			<Card.Root variant="elevated">
 				<Card.Header>
 					<Card.Title>Transfer USDC</Card.Title>
 					<Card.Description>
@@ -452,7 +458,7 @@ export default function CrossChainRelayer() {
 					className={css({
 						display: "flex",
 						flexDirection: "column",
-						gap: "4",
+						gap: "6",
 					})}
 				>
 					{isConnected && currentChain && (
@@ -461,7 +467,7 @@ export default function CrossChainRelayer() {
 								display: "flex",
 								alignItems: "center",
 								gap: "2",
-								p: "2",
+								p: "2.5",
 								bg: "teal.2",
 								borderRadius: "md",
 							})}
@@ -473,25 +479,24 @@ export default function CrossChainRelayer() {
 								{currentChain.label}
 							</Badge>
 						</div>
-						)}
+					)}
 
 					<div
 						className={css({
 							display: "grid",
 							gridTemplateColumns: { base: "1fr", md: "1fr auto 1fr" },
-							gap: { base: "3", md: "4" },
-							alignItems: "center",
+							gap: { base: "4", md: "6" },
+							alignItems: "end",
+							p: { base: "4", md: "6" },
+							bg: "gray.subtle.bg",
+							borderRadius: "lg",
 							border: "1px solid",
 							borderColor: "border",
-							borderRadius: "lg",
-							p: { base: "3", md: "4" },
-							bg: "white",
-							boxShadow: "0 10px 26px rgba(15, 23, 42, 0.04)",
 						})}
 					>
-							<Field.Root>
-								<Select.Root
-									collection={chainsCollection}
+						<Field.Root>
+							<Select.Root
+								collection={chainsCollection}
 								value={sourceChain}
 								onValueChange={(e) => setSourceChain(e.value)}
 								disabled={!isConnected}
@@ -512,54 +517,37 @@ export default function CrossChainRelayer() {
 											</Select.Item>
 										))}
 									</Select.Content>
-									</Select.Positioner>
-								</Select.Root>
-							</Field.Root>
+								</Select.Positioner>
+							</Select.Root>
+						</Field.Root>
 
-							<div
+						<div
+							className={css({
+								display: { base: "none", md: "flex" },
+								flexDirection: "column",
+								alignItems: "center",
+								gap: "2",
+								pb: "2",
+							})}
+						>
+							<Button
+								variant="subtle"
+								size="sm"
+								onClick={handleSwapChains}
 								className={css({
-									display: { base: "none", md: "flex" },
-									flexDirection: "column",
-									alignItems: "center",
-									gap: "2",
-									justifySelf: "center",
+									borderRadius: "full",
+									px: "3",
 								})}
 							>
-								<div
-									className={css({
-										width: "10",
-										height: "10",
-										borderRadius: "full",
-										display: "grid",
-										placeItems: "center",
-										backgroundImage:
-											"linear-gradient(135deg, rgb(34 197 94), rgb(59 130 246))",
-										color: "white",
-										boxShadow: "0 14px 32px rgba(34, 197, 94, 0.28)",
-									})}
-								>
-									<ArrowRight className={css({ width: "5", height: "5" })} />
-								</div>
-								<Button
-									variant="subtle"
-									size="sm"
-									onClick={handleSwapChains}
-									className={css({
-										display: "inline-flex",
-										alignItems: "center",
-										gap: "2",
-									})}
-								>
-									<ArrowLeftRight className={css({ width: "4", height: "4" })} />
-									Swap
-								</Button>
-							</div>
+								<ArrowLeftRight className={css({ width: "4", height: "4" })} />
+							</Button>
+						</div>
 
-							<Field.Root>
-								<Select.Root
-									collection={destChainsCollection}
-									value={destChain}
-									onValueChange={(e) => setDestChain(e.value)}
+						<Field.Root>
+							<Select.Root
+								collection={destChainsCollection}
+								value={destChain}
+								onValueChange={(e) => setDestChain(e.value)}
 								disabled={!isConnected || !sourceChain.length}
 							>
 								<Select.Label>Destination Chain</Select.Label>
@@ -599,8 +587,8 @@ export default function CrossChainRelayer() {
 						>
 							<Sparkles className={css({ width: "4", height: "4" })} />
 							<Text className={css({ fontSize: "sm" })}>
-								Route locked: {sourceChainData.label} → {destChainData.label} with
-								CRE attestations
+								Route locked: {sourceChainData.label} → {destChainData.label}{" "}
+								with CRE attestations
 							</Text>
 						</div>
 					)}
@@ -622,73 +610,76 @@ export default function CrossChainRelayer() {
 						</NumberInput.Root>
 					</Field.Root>
 
-						{isConnected && sourceChain.length > 0 && (
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "space-between",
-									gap: "4",
-									p: "4",
-									bg: "white",
-									borderRadius: "md",
-									border: "1px solid",
-									borderColor: "border",
-									boxShadow: "0 12px 28px rgba(15, 23, 42, 0.06)",
-								})}
-							>
-								<div>
-									<Text className={css({ fontWeight: "medium" })}>
-										Token Approval
-									</Text>
-									<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-										{isApproved
-											? "USDC spending is approved"
-											: "Approve USDC for cross-chain transfers"}
-									</Text>
-									{isApproved && (
-										<Badge
-											variant="surface"
-											colorPalette="teal"
-											size="sm"
-											className={css({ mt: "2", display: "inline-flex", gap: "2" })}
-										>
-											<ShieldCheck className={css({ width: "3", height: "3" })} />
-											Unlimited allowance
-										</Badge>
-									)}
-								</div>
-						{!isApproved ? (
-							<Button
-								variant="solid"
-								disabled={isApproving || isApproveConfirming}
-								loading={isApproving || isApproveConfirming}
-								loadingText="Approving..."
-								onClick={handleApprove}
-							>
-								Approve USDC
-							</Button>
-						) : (
-							<Badge
-								variant="solid"
-								colorPalette="green"
-								className={css({
-									display: "inline-flex",
-									alignItems: "center",
-									gap: "2",
-									px: "3",
-									py: "2",
-								})}
-							>
-								<CheckCircle className={css({ width: "4", height: "4" })} />
-								Approved
-							</Badge>
-						)}
-					</div>
-				)}
-			</Card.Body>
-			<Card.Footer className={css({ justifyContent: "flex-end" })}>
-				<Button
+					{isConnected && sourceChain.length > 0 && (
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								gap: "4",
+								p: "4",
+								bg: "gray.subtle.bg",
+								borderRadius: "md",
+								border: "1px solid",
+								borderColor: "border",
+							})}
+						>
+							<div>
+								<Text className={css({ fontWeight: "medium" })}>
+									Token Approval
+								</Text>
+								<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+									{isApproved
+										? "USDC spending is approved"
+										: "Approve USDC for cross-chain transfers"}
+								</Text>
+								{isApproved && (
+									<Badge
+										variant="surface"
+										colorPalette="teal"
+										size="sm"
+										className={css({
+											mt: "2",
+											display: "inline-flex",
+											gap: "2",
+										})}
+									>
+										<ShieldCheck className={css({ width: "3", height: "3" })} />
+										Unlimited allowance
+									</Badge>
+								)}
+							</div>
+							{!isApproved ? (
+								<Button
+									variant="solid"
+									disabled={isApproving || isApproveConfirming}
+									loading={isApproving || isApproveConfirming}
+									loadingText="Approving..."
+									onClick={handleApprove}
+								>
+									Approve USDC
+								</Button>
+							) : (
+								<Badge
+									variant="solid"
+									colorPalette="green"
+									className={css({
+										display: "inline-flex",
+										alignItems: "center",
+										gap: "2",
+										px: "3",
+										py: "2",
+									})}
+								>
+									<CheckCircle className={css({ width: "4", height: "4" })} />
+									Approved
+								</Badge>
+							)}
+						</div>
+					)}
+				</Card.Body>
+				<Card.Footer className={css({ justifyContent: "flex-end" })}>
+					<Button
 						disabled={
 							!isConnected ||
 							!sourceChain.length ||
@@ -699,13 +690,15 @@ export default function CrossChainRelayer() {
 						loading={isSubmitting}
 						loadingText="Processing..."
 						onClick={handleTransfer}
+						size="lg"
+						className={css({ width: { base: "full", md: "auto" } })}
 					>
 						Transfer USDC
 					</Button>
 				</Card.Footer>
 			</Card.Root>
 
-			<Card.Root>
+			<Card.Root variant="outline">
 				<Card.Header>
 					<Card.Title>Recent Transfers</Card.Title>
 					<Card.Description>
@@ -717,7 +710,7 @@ export default function CrossChainRelayer() {
 						<Text
 							className={css({
 								textAlign: "center",
-								py: "4",
+								py: "8",
 								color: "fg.muted",
 							})}
 						>
@@ -728,38 +721,39 @@ export default function CrossChainRelayer() {
 							className={css({
 								display: "flex",
 								flexDirection: "column",
-								gap: "3",
+								gap: "0",
+								borderRadius: "md",
+								overflow: "hidden",
+								border: "1px solid",
+								borderColor: "border",
 							})}
 						>
-								{transfers.map((transfer) => (
+							{transfers.map((transfer, i) => (
+								<div
+									key={transfer.id}
+									className={css({
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+										p: "4",
+										bg: "gray.surface.bg",
+										borderBottom:
+											i === transfers.length - 1 ? "none" : "1px solid",
+										borderBottomColor: "border",
+									})}
+								>
 									<div
-										key={transfer.id}
 										className={css({
 											display: "flex",
-											justifyContent: "space-between",
-											alignItems: "center",
-											p: "3",
-											bg: "white",
-											borderRadius: "md",
-											border: "1px solid",
-											borderColor: "border",
-											borderLeft: "4px solid",
-											borderLeftColor: STATUS_ACCENT[transfer.status],
-											boxShadow: "0 8px 18px rgba(15, 23, 42, 0.05)",
-										})}
-									>
-										<div
-											className={css({
-												display: "flex",
 											flexDirection: "column",
-											gap: "1",
+											gap: "1.5",
 										})}
 									>
 										<div
 											className={css({
 												display: "flex",
 												alignItems: "center",
-												gap: "2",
+												gap: "3",
 											})}
 										>
 											<Text className={css({ fontWeight: "medium" })}>
@@ -771,31 +765,34 @@ export default function CrossChainRelayer() {
 											className={css({
 												display: "flex",
 												alignItems: "center",
-												gap: "1",
+												gap: "2",
+												color: "fg.muted",
+												fontSize: "sm",
 											})}
 										>
-											<Text
-												className={css({ fontSize: "sm", color: "fg.muted" })}
-											>
-												{transfer.from}
-											</Text>
+											<Text>{transfer.from}</Text>
 											<ArrowRight
 												className={css({
-													width: "3",
-													height: "3",
+													width: "3.5",
+													height: "3.5",
 													color: "fg.subtle",
 												})}
 											/>
-											<Text
-												className={css({ fontSize: "sm", color: "fg.muted" })}
-											>
-												{transfer.to}
-											</Text>
+											<Text>{transfer.to}</Text>
 										</div>
 									</div>
-									<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
-										{transfer.timestamp.toLocaleTimeString()}
-									</Text>
+									<div className={css({ textAlign: "right" })}>
+										<Text
+											className={css({ fontSize: "xs", color: "fg.subtle" })}
+										>
+											{transfer.timestamp.toLocaleTimeString()}
+										</Text>
+										<Text
+											className={css({ fontSize: "xs", color: "fg.subtle" })}
+										>
+											{transfer.timestamp.toLocaleDateString()}
+										</Text>
+									</div>
 								</div>
 							))}
 						</div>
@@ -808,7 +805,7 @@ export default function CrossChainRelayer() {
 					className={css({
 						textAlign: "center",
 						p: "8",
-						bg: "gray.2",
+						bg: "gray.subtle.bg",
 						borderRadius: "lg",
 						border: "1px dashed",
 						borderColor: "border",

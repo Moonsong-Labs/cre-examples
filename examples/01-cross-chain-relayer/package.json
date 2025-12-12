@@ -1,17 +1,21 @@
 {
-  "name": "01-cross-chain-relayer",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "simulate": "cre workflow simulate workflow --target demo",
-    "forge:build" : "cd contracts && forge build",
-    "forge:install" : "cd contracts && forge soldeer install"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "01-cross-chain-relayer",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"simulate": "cre workflow simulate workflow --target demo",
+		"broadcast": "cre workflow simulate workflow --target demo --broadcast",
+		"forge:build": "cd contracts && forge build",
+		"forge:install": "cd contracts && forge soldeer install"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"tiny-invariant": "^1.3.3"
+	}
 }

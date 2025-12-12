@@ -515,8 +515,6 @@ export function FloatingLines({
 	}, [
 		linesGradient,
 		enabledWaves,
-		lineCount,
-		lineDistance,
 		topWavePosition,
 		middleWavePosition,
 		bottomWavePosition,

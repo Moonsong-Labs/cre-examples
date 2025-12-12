@@ -2,14 +2,16 @@
 pragma solidity ^0.8.26;
 
 import { BaseScript } from "./Base.s.sol";
-import { DemoToken } from "src/DemoToken.sol";
+import { Relayer } from "../src/Relayer.sol";
 
 contract Deploy is BaseScript {
     function run() public broadcast {
         printAddress("Deployer:", deployer);
 
-        DemoToken token = new DemoToken(1_000_000 ether);
+        address messageTransmitterV2 = address(0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275); 
 
-        printAddress("DemoToken deployed at:", address(token));
+        Relayer relayer = new Relayer(messageTransmitterV2);
+
+        printAddress("Relayer deployed at:", address(relayer));
     }
 }

@@ -1,4 +1,11 @@
-import { useEffect, useRef, useId, type ReactNode, type CSSProperties } from "react";
+import {
+	type CSSProperties,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useId,
+	useRef,
+} from "react";
 import { css } from "styled-system/css";
 
 interface GlassSurfaceProps {
@@ -58,7 +65,7 @@ export function GlassSurface({
 	const blueChannelRef = useRef<SVGFEDisplacementMapElement>(null);
 	const gaussianBlurRef = useRef<SVGFEGaussianBlurElement>(null);
 
-	const generateDisplacementMap = () => {
+	const generateDisplacementMap = useCallback(() => {
 		const rect = containerRef.current?.getBoundingClientRect();
 		const actualWidth = rect?.width || 400;
 		const actualHeight = rect?.height || 200;
@@ -84,11 +91,20 @@ export function GlassSurface({
     `;
 
 		return `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
-	};
+	}, [
+		borderWidth,
+		borderRadius,
+		redGradId,
+		blueGradId,
+		mixBlendMode,
+		brightness,
+		opacity,
+		blur,
+	]);
 
-	const updateDisplacementMap = () => {
+	const updateDisplacementMap = useCallback(() => {
 		feImageRef.current?.setAttribute("href", generateDisplacementMap());
-	};
+	}, [generateDisplacementMap]);
 
 	useEffect(() => {
 		updateDisplacementMap();
@@ -98,7 +114,10 @@ export function GlassSurface({
 			{ ref: blueChannelRef, offset: blueOffset },
 		].forEach(({ ref, offset }) => {
 			if (ref.current) {
-				ref.current.setAttribute("scale", (distortionScale + offset).toString());
+				ref.current.setAttribute(
+					"scale",
+					(distortionScale + offset).toString(),
+				);
 				ref.current.setAttribute("xChannelSelector", xChannel);
 				ref.current.setAttribute("yChannelSelector", yChannel);
 			}
@@ -106,11 +125,7 @@ export function GlassSurface({
 
 		gaussianBlurRef.current?.setAttribute("stdDeviation", displace.toString());
 	}, [
-		borderRadius,
-		borderWidth,
-		brightness,
-		opacity,
-		blur,
+		updateDisplacementMap,
 		displace,
 		distortionScale,
 		redOffset,
@@ -118,7 +133,6 @@ export function GlassSurface({
 		blueOffset,
 		xChannel,
 		yChannel,
-		mixBlendMode,
 	]);
 
 	useEffect(() => {
@@ -133,11 +147,7 @@ export function GlassSurface({
 		return () => {
 			resizeObserver.disconnect();
 		};
-	}, []);
-
-	useEffect(() => {
-		setTimeout(updateDisplacementMap, 0);
-	}, [width, height]);
+	}, [updateDisplacementMap]);
 
 	const supportsSVGFilters = () => {
 		if (typeof navigator === "undefined") return false;
@@ -191,6 +201,7 @@ export function GlassSurface({
 					opacity: 0,
 					zIndex: -1,
 				})}
+				aria-hidden="true"
 				xmlns="http://www.w3.org/2000/svg"
 			>
 				<defs>
@@ -295,7 +306,8 @@ export function GlassSurface({
 
 const svgStyles = css({
 	bg: "hsl(0 0% 0% / var(--glass-frost, 0))",
-	backdropFilter: "var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1))",
+	backdropFilter:
+		"var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1))",
 	boxShadow: `
     0 0 2px 1px color-mix(in oklch, white, transparent 65%) inset,
     0 0 10px 4px color-mix(in oklch, white, transparent 85%) inset,

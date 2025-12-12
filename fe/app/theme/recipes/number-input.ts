@@ -51,6 +51,11 @@ export const numberInput = defineSlotRecipe({
 			...input.base,
 			verticalAlign: "top",
 			pe: "calc(var(--stepper-width) + 0.5rem)",
+			"&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
+				WebkitAppearance: "none",
+				margin: 0,
+			},
+			MozAppearance: "textfield",
 		},
 		label: {
 			color: "fg.default",

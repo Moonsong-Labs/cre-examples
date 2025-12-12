@@ -1,27 +1,21 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ArrowLeftRight, Home } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { css } from "styled-system/css";
 import { GooeyNav } from "~/components/gooey-nav/gooey-nav";
 import { Text } from "~/components/ui";
-
-const NAV_ITEMS = [
-	{ href: "/", label: "Home", icon: Home },
-	{
-		href: "/examples/cross-chain-relayer",
-		label: "Cross-Chain Relayer",
-		icon: ArrowLeftRight,
-	},
-];
+import { NAV_ITEMS } from "~/config/examples";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+	const location = useLocation();
+	const isHome = location.pathname === "/";
+
 	return (
 		<div
 			className={css({
 				minHeight: "100vh",
 				display: "flex",
 				flexDirection: "column",
-				bg: "gray.1",
+				bg: isHome ? "transparent" : "gray.1",
 				color: "fg.default",
 			})}
 		>
@@ -31,9 +25,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 					justifyContent: "space-between",
 					alignItems: "center",
 					p: "4",
-					borderBottom: "1px solid",
+					borderBottom: isHome ? "none" : "1px solid",
 					borderColor: "border",
-					bg: "gray.2",
+					bg: isHome ? "transparent" : "gray.2",
+					position: isHome ? "absolute" : "relative",
+					width: "100%",
+					zIndex: 10,
 				})}
 			>
 				<Link to="/" className={css({ textDecoration: "none" })}>
@@ -42,7 +39,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 						className={css({
 							fontSize: "xl",
 							fontWeight: "bold",
-							color: "teal.11",
+							color: isHome ? "white" : "teal.11",
 						})}
 					>
 						CRE Examples
@@ -52,30 +49,32 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 			</header>
 
 			<div className={css({ display: "flex", flex: "1" })}>
-				<aside
-					className={css({
-						width: "64",
-						borderRight: "1px solid",
-						borderColor: "border",
-						bg: "gray.2",
-						p: "4",
-						display: { base: "none", md: "block" },
-					})}
-				>
-					<Text
+				{!isHome && (
+					<aside
 						className={css({
-							fontSize: "xs",
-							fontWeight: "semibold",
-							color: "fg.subtle",
-							textTransform: "uppercase",
-							letterSpacing: "wider",
-							mb: "3",
+							width: "64",
+							borderRight: "1px solid",
+							borderColor: "border",
+							bg: "gray.2",
+							p: "4",
+							display: { base: "none", md: "block" },
 						})}
 					>
-						Examples
-					</Text>
-					<GooeyNav items={NAV_ITEMS} />
-				</aside>
+						<Text
+							className={css({
+								fontSize: "xs",
+								fontWeight: "semibold",
+								color: "fg.subtle",
+								textTransform: "uppercase",
+								letterSpacing: "wider",
+								mb: "3",
+							})}
+						>
+							Examples
+						</Text>
+						<GooeyNav items={NAV_ITEMS} />
+					</aside>
+				)}
 
 				<main className={css({ flex: "1", overflow: "auto" })}>{children}</main>
 			</div>

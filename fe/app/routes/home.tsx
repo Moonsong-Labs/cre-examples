@@ -5,6 +5,7 @@ import { FloatingLines } from "~/components/backgrounds/floating-lines";
 import { GlassSurface } from "~/components/glass-surface";
 import { TextType } from "~/components/text-type";
 import { Badge, Button, Card, Heading, Text } from "~/components/ui";
+import { EXAMPLES } from "~/config/examples";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
@@ -19,14 +20,7 @@ export function meta(_args: Route.MetaArgs) {
 }
 
 export default function Home() {
-	// const examples = [
-	// 	{
-	// 		title: "Cross-Chain Relayer",
-	// 		desc: "Bridge USDC across testnets with CRE attestations and CCTP.",
-	// 		href: "/examples/cross-chain-relayer",
-	// 		tag: "Live demo",
-	// 	},
-	// ];
+	const primaryExample = EXAMPLES[0];
 
 	return (
 		<div
@@ -36,7 +30,6 @@ export default function Home() {
 				display: "flex",
 				alignItems: "center",
 				justifyContent: "center",
-				bg: "gray.1",
 			})}
 		>
 			<div
@@ -67,7 +60,7 @@ export default function Home() {
 				blur={16}
 				backgroundOpacity={0.1}
 				className={css({
-					maxWidth: "1100px",
+					maxWidth: "1200px",
 					mx: "6",
 					position: "relative",
 					zIndex: 1,
@@ -78,22 +71,23 @@ export default function Home() {
 						py: { base: "10", md: "16" },
 						px: { base: "6", md: "10" },
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1.1fr 0.9fr" },
-						gap: "8",
+						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
+						gap: "12",
+						alignItems: "center",
 					})}
 				>
 					<div
 						className={css({
 							display: "flex",
 							flexDirection: "column",
-							gap: "5",
+							gap: "6",
 							color: "white",
 						})}
 					>
 						<Badge
 							variant="surface"
 							colorPalette="teal"
-							size="sm"
+							size="md"
 							className={css({ alignSelf: "flex-start" })}
 						>
 							CRE Examples
@@ -118,34 +112,44 @@ export default function Home() {
 							pauseDuration={2200}
 							className={css({
 								textStyle: "2xl",
-								minHeight: "2.5rem",
+								minHeight: "5rem",
+								color: "rgba(255,255,255,0.9)",
 							})}
 						/>
 
 						<div
 							className={css({
 								display: "flex",
-								gap: "3",
+								gap: "4",
 								alignItems: "center",
 								flexWrap: "wrap",
+								pt: "4",
 							})}
 						>
-							<Link to="/examples/cross-chain-relayer">
-								<Button size="lg" variant="surface" backdropBlur={"3xl"}>
+							<Link
+								to={primaryExample?.href ?? "/examples/cross-chain-relayer"}
+							>
+								<Button size="xl" variant="surface" backdropBlur={"3xl"}>
 									Launch demo
 									<ArrowRight
 										className={css({ width: "5", height: "5", ml: "2" })}
 									/>
 								</Button>
 							</Link>
-							<Badge variant="surface" colorPalette="gray" size="sm">
-								<ShieldCheck className={css({ width: "3", height: "3", mr: "2" })} />
-								Testnet safe
-							</Badge>
-							<Badge variant="surface" colorPalette="blue" size="sm">
-								<Sparkles className={css({ width: "3", height: "3", mr: "2" })} />
-								CCTP + CRE
-							</Badge>
+							<div className={css({ display: "flex", gap: "2" })}>
+								<Badge variant="surface" colorPalette="gray" size="md">
+									<ShieldCheck
+										className={css({ width: "3.5", height: "3.5", mr: "1.5" })}
+									/>
+									Testnet safe
+								</Badge>
+								<Badge variant="surface" colorPalette="blue" size="md">
+									<Sparkles
+										className={css({ width: "3.5", height: "3.5", mr: "1.5" })}
+									/>
+									CCTP + CRE
+								</Badge>
+							</div>
 						</div>
 					</div>
 
@@ -156,17 +160,18 @@ export default function Home() {
 							gap: "4",
 						})}
 					>
-						{/* <Card.Root
+						<Card.Root
 							className={css({
-								bg: "rgba(15,23,42,0.5)",
-								borderColor: "rgba(255,255,255,0.12)",
+								bg: "rgba(15,23,42,0.4)",
+								border: "1px solid rgba(255,255,255,0.08)",
 								color: "white",
 								backdropFilter: "blur(12px)",
+								boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
 							})}
 						>
 							<Card.Header>
 								<Card.Title>Available demos</Card.Title>
-								<Card.Description>
+								<Card.Description className={css({ color: "rgba(255,255,255,0.7)!" })}>
 									Hands-on flows you can run in the browser.
 								</Card.Description>
 							</Card.Header>
@@ -177,42 +182,90 @@ export default function Home() {
 									gap: "3",
 								})}
 							>
-								{examples.map((example) => (
-									<Link key={example.title} to={example.href}>
-										<div
-											className={css({
-												display: "flex",
-												justifyContent: "space-between",
-												alignItems: "center",
-												padding: "3",
-												borderRadius: "lg",
-												border: "1px solid",
-												borderColor: "rgba(255,255,255,0.12)",
-												background:
-													"linear-gradient(135deg, rgba(45,212,191,0.16), rgba(59,130,246,0.18))",
-												_hover: {
-													borderColor: "rgba(255,255,255,0.3)",
-													transform: "translateY(-2px)",
-												},
-												transition: "all 0.2s ease",
-											})}
+								{EXAMPLES.map((example) => {
+									const Icon = example.icon;
+									return (
+										<Link
+											key={example.href}
+											to={example.href}
+											className={css({ textDecoration: "none" })}
 										>
-											<div className={css({ display: "flex", gap: "2", flexDir: "column" })}>
-												<Text className={css({ fontWeight: "semibold" })}>
-													{example.title}
-												</Text>
-												<Text className={css({ color: "rgba(255,255,255,0.8)" })}>
-													{example.desc}
-												</Text>
+											<div
+												className={css({
+													display: "flex",
+													justifyContent: "space-between",
+													alignItems: "center",
+													padding: "4",
+													borderRadius: "lg",
+													border: "1px solid",
+													borderColor: "rgba(255,255,255,0.08)",
+													bg: "rgba(255,255,255,0.03)",
+													_hover: {
+														borderColor: "rgba(255,255,255,0.2)",
+														bg: "rgba(255,255,255,0.08)",
+														transform: "translateY(-1px)",
+													},
+													transition: "all 0.2s ease",
+												})}
+											>
+												<div
+													className={css({
+														display: "flex",
+														gap: "4",
+														alignItems: "center",
+													})}
+												>
+													{Icon && (
+														<div
+															className={css({
+																width: "10",
+																height: "10",
+																borderRadius: "md",
+																display: "grid",
+																placeItems: "center",
+																bg: "rgba(255,255,255,0.1)",
+															})}
+														>
+															<Icon
+																className={css({
+																	width: "5",
+																	height: "5",
+																	color: "white",
+																})}
+															/>
+														</div>
+													)}
+													<div
+														className={css({
+															display: "flex",
+															gap: "1",
+															flexDirection: "column",
+														})}
+													>
+														<Text className={css({ fontWeight: "semibold", fontSize: "md" })}>
+															{example.title}
+														</Text>
+														<Text
+															className={css({
+																color: "rgba(255,255,255,0.7)",
+																fontSize: "sm",
+															})}
+														>
+															{example.description}
+														</Text>
+													</div>
+												</div>
+												{example.tag && (
+													<Badge variant="solid" colorPalette="teal" size="sm">
+														{example.tag}
+													</Badge>
+												)}
 											</div>
-											<Badge variant="solid" colorPalette="teal" size="sm">
-												{example.tag}
-											</Badge>
-										</div>
-									</Link>
-								))}
+										</Link>
+									);
+								})}
 							</Card.Body>
-						</Card.Root> */}
+						</Card.Root>
 					</div>
 				</div>
 			</GlassSurface>
