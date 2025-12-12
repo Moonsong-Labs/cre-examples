@@ -101,7 +101,7 @@ const MOCK_TRANSFERS: Transfer[] = [
 	},
 ];
 
-const STATUS_ACCENT: Record<TransferStatus, string> = {
+const _STATUS_ACCENT: Record<TransferStatus, string> = {
 	idle: "gray.6",
 	pending: "amber.7",
 	attesting: "teal.8",
@@ -168,7 +168,7 @@ function getStatusBadge(status: TransferStatus) {
 
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
-	return Number(formatUnits(balance, 6)).toFixed(2)
+	return Number(formatUnits(balance, 6)).toFixed(2);
 }
 
 const UNLIMITED_THRESHOLD = maxUint256 / 2n;
@@ -335,16 +335,74 @@ export default function CrossChainRelayer() {
 					})}
 				>
 					<Badge variant="surface" colorPalette="teal" size="md">
-						CCTP ready
+						EVMLog Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
-						CRE attestation relay
+						HTTP API Read
 					</Badge>
 					<Badge variant="outline" colorPalette="blue" size="md">
-						Testnet flows
+						EVM Write
 					</Badge>
 				</div>
 			</div>
+
+			<Card.Root variant="outline">
+				<Card.Header>
+					<Card.Title>Context</Card.Title>
+					<Card.Description>
+						CCTP v2 is a 2-step flow: 1) Burn on Source chain 2) Claim on
+						Destination chain
+					</Card.Description>
+				</Card.Header>
+				<Card.Body
+					className={css({
+						display: "grid",
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+						gap: "4",
+					})}
+				>
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "2",
+						})}
+					>
+						<Badge variant="outline" colorPalette="amber" size="sm">
+							Problem
+						</Badge>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							The extra claim transaction adds friction and can leave transfers unclaimed if
+							a user doesn't come back to original bridge site.
+						</Text>
+					</div>
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "2",
+						})}
+					>
+						<Badge variant="outline" colorPalette="teal" size="sm">
+							Remedy
+						</Badge>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							This example relays the destination claim txn for a whitelist of
+							users, completing the bridge automatically. In this example the whitelist is populated with whomever interacts with this app.
+						</Text>
+					</div>
+				</Card.Body>
+			</Card.Root>
 
 			{isConnected && (
 				<div
