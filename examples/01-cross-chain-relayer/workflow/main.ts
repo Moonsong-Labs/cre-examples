@@ -3,23 +3,26 @@ import {
 	cre,
 	type EVMLog,
 	getNetwork,
+	hexToBase64,
 	type NodeRuntime,
 	prepareReportRequest,
 	type Report,
 	Runner,
 	type Runtime,
-	json as toJson,
+	json as toJson
 } from "@chainlink/cre-sdk";
 import invariant from "tiny-invariant";
 import {
 	bytesToHex,
 	decodeEventLog,
-	encodeEventTopics,
 	encodeFunctionData,
 	type Hex,
+	keccak256,
+	pad,
+	toHex
 } from "viem";
 import { abi } from "../contracts/out/Relayer.sol/IMessageTransmitterV2.json" with {
-	type: "json",
+	type: "json"
 };
 import { tokenMessengerV2Abi } from "./abi";
 import {
@@ -66,7 +69,7 @@ const onLogTrigger = (
 	runtime.log("Workflow triggered.");
 	const rawTopics = log.topics.map((t) => bytesToHex(t));
 
-	const burnTx = bytesToHex(log.txHash)
+	const burnTx = bytesToHex(log.txHash);
 
 	const event = decodeEventLog({
 		abi: tokenMessengerV2Abi,
@@ -100,7 +103,9 @@ const onLogTrigger = (
 		args: [attestation.message, attestation.attestation],
 	});
 
-	runtime.log(`Generated MessageTransmitterV2.receiveMessage payload: ${payload.length / 2} bytes`);
+	runtime.log(
+		`Generated MessageTransmitterV2.receiveMessage payload: ${payload.length / 2} bytes`,
+	);
 
 	// #3: Generate signed report for CRE submission
 	const signedReport = generateSignedReport(runtime, payload);
@@ -124,7 +129,7 @@ const onLogTrigger = (
 const fetchIrisAttestation = (
 	runtime: Runtime<CREConfig>,
 	sourceDomain: DestinationDomain,
-	burnTx: Hex
+	burnTx: Hex,
 ): IrisAttestation =>
 	runtime
 		.runInNodeMode(
@@ -172,7 +177,7 @@ const submitSignedReport = (
 	const evmClient = new cre.capabilities.EVMClient(
 		network.chainSelector.selector,
 	);
-	 const writeReportResult = evmClient
+	const writeReportResult = evmClient
 		.writeReport(runtime, {
 			receiver,
 			report: signedReport,
@@ -180,9 +185,11 @@ const submitSignedReport = (
 		})
 		.result();
 
-	  const txHash = bytesToHex(writeReportResult.txHash || new Uint8Array(32))
-  	runtime.log(`Write report transaction succeeded: ${txHash}`)
-  	runtime.log(`View transaction at ${ENVIRONMENT_INFO[destinationDomain].blockExplorerUrl}/tx/${txHash}`)
+	const txHash = bytesToHex(writeReportResult.txHash || new Uint8Array(32));
+	runtime.log(`Write report transaction succeeded: ${txHash}`);
+	runtime.log(
+		`View transaction at ${ENVIRONMENT_INFO[destinationDomain].blockExplorerUrl}/tx/${txHash}`,
+	);
 
 	runtime.log(`Submitted report to ${evm.chainSelectorName}.`);
 };
@@ -190,7 +197,7 @@ const submitSignedReport = (
 const fetchIrisAttestationFromApi = (
 	nodeRuntime: NodeRuntime<CREConfig>,
 	sourceDomain: DestinationDomain,
-	burnTx: Hex
+	burnTx: Hex,
 ): IrisAttestation => {
 	const httpClient = new cre.capabilities.HTTPClient();
 	nodeRuntime.log(`Using endpoint: ${nodeRuntime.config.irisUrl}`);
@@ -220,7 +227,8 @@ const fetchIrisAttestationFromApi = (
 		throw new Error("Invalid IRIS response");
 	}
 
-	const first = parsed.data.messages[0];
+	const [first] = parsed.data.messages;
+	invariant(first, "Invalid IRIS response");
 	if (first.attestation === "PENDING" || first.message === "0x") {
 		nodeRuntime.log(
 			`IRIS attestation pending (status: ${first.status ?? "unknown"}).`,
@@ -259,36 +267,24 @@ const initWorkflow = (config: CREConfig) =>
 		const sourceDomain = domain as DestinationDomain;
 		const env = ENVIRONMENT_INFO[sourceDomain];
 		invariant(env, `Unsupported domain ${domain} for ${chainSelectorName}`);
-		const eventTopics = encodeEventTopics({
-			abi: tokenMessengerV2Abi,
-			eventName: "DepositForBurn",
-			args: {
-				burnToken: env.usdcAddress,
-				minFinalityThreshold: 1000,
-			},
-		});
-		const [topic0, topic1, topic2, topic3] = eventTopics;
-		const toValues = (topic: Hex | Hex[] | null | undefined): Hex[] => {
-			if (topic == null) return [];
-			return Array.isArray(topic) ? topic : [topic];
-		};
+
+		const depositForBurnEventHash = keccak256(
+			toHex(
+				"DepositForBurn(address,uint256,address,bytes32,uint32,bytes32,bytes32,uint256,uint32,bytes)"
+			),
+		);
+		const topic1 = pad(env.usdcAddress);
 
 		return cre.handler(
 			evmClient.logTrigger({
-				addresses: [TOKEN_MESSENGER_V2_TESTNET],
+				addresses: [hexToBase64(TOKEN_MESSENGER_V2_TESTNET)],
 				confidence: "CONFIDENCE_LEVEL_LATEST",
 				topics: [
 					{
-						values: [topic0],
+						values: [hexToBase64(depositForBurnEventHash)],
 					},
 					{
-						values: toValues(topic1),
-					},
-					{
-						values: toValues(topic2),
-					},
-					{
-						values: toValues(topic3),
+						values: [hexToBase64(topic1)],
 					},
 				],
 			}),

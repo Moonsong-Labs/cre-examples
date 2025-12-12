@@ -1,9 +1,7 @@
 import { createListCollection } from "@ark-ui/react/select";
 import {
 	ArrowLeftRight,
-	ArrowRight,
 	CheckCircle,
-	Clock,
 	ExternalLink,
 	Globe2,
 	Loader2,
@@ -23,6 +21,7 @@ import {
 	useWaitForTransactionReceipt,
 	useWriteContract,
 } from "wagmi";
+import { BridgeTransactionFeed } from "~/components/bridge-transaction-feed";
 import {
 	Badge,
 	Button,
@@ -65,109 +64,6 @@ const CHAINS: ChainItem[] = [
 	{ value: "arbitrum-sepolia", label: "Arbitrum Sepolia", chainId: 421614 },
 ];
 
-type TransferStatus =
-	| "idle"
-	| "pending"
-	| "attesting"
-	| "relaying"
-	| "completed"
-	| "failed";
-
-interface Transfer {
-	id: string;
-	amount: string;
-	from: string;
-	to: string;
-	status: TransferStatus;
-	txHash?: string;
-	timestamp: Date;
-}
-
-const MOCK_TRANSFERS: Transfer[] = [
-	{
-		id: "1",
-		amount: "100.00",
-		from: "Ethereum Sepolia",
-		to: "Base Sepolia",
-		status: "completed",
-		txHash: "0x1234...5678",
-		timestamp: new Date(Date.now() - 3600000),
-	},
-	{
-		id: "2",
-		amount: "50.00",
-		from: "Base Sepolia",
-		to: "Arbitrum Sepolia",
-		status: "relaying",
-		txHash: "0xabcd...efgh",
-		timestamp: new Date(Date.now() - 1800000),
-	},
-];
-
-const _STATUS_ACCENT: Record<TransferStatus, string> = {
-	idle: "gray.6",
-	pending: "amber.7",
-	attesting: "teal.8",
-	relaying: "blue.8",
-	completed: "green.8",
-	failed: "red.8",
-};
-
-function getStatusBadge(status: TransferStatus) {
-	switch (status) {
-		case "idle":
-			return (
-				<Badge variant="outline" colorPalette="gray">
-					Idle
-				</Badge>
-			);
-		case "pending":
-			return (
-				<Badge variant="outline" colorPalette="amber">
-					<Clock className={css({ width: "3", height: "3" })} />
-					Pending
-				</Badge>
-			);
-		case "attesting":
-			return (
-				<Badge variant="outline" colorPalette="teal">
-					<Loader2
-						className={css({ width: "3", height: "3", animation: "spin" })}
-					/>
-					Attesting
-				</Badge>
-			);
-		case "relaying":
-			return (
-				<Badge variant="outline" colorPalette="blue">
-					<Loader2
-						className={css({ width: "3", height: "3", animation: "spin" })}
-					/>
-					Relaying
-				</Badge>
-			);
-		case "completed":
-			return (
-				<Badge variant="solid" colorPalette="green">
-					<CheckCircle className={css({ width: "3", height: "3" })} />
-					Completed
-				</Badge>
-			);
-		case "failed":
-			return (
-				<Badge variant="solid" colorPalette="red">
-					<XCircle className={css({ width: "3", height: "3" })} />
-					Failed
-				</Badge>
-			);
-		default:
-			return (
-				<Badge variant="outline" colorPalette="gray">
-					Unknown
-				</Badge>
-			);
-	}
-}
 
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
@@ -183,7 +79,6 @@ export default function CrossChainRelayer() {
 	const [amount, setAmount] = useState("0");
 	const [sourceChain, setSourceChain] = useState<string[]>([]);
 	const [destChain, setDestChain] = useState<string[]>([]);
-	const [transfers] = useState<Transfer[]>(MOCK_TRANSFERS);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const whitelistFetcher = useFetcher<typeof whitelistAction>();
 	const lastWhitelistAddress = useRef<string | null>(null);
@@ -838,107 +733,7 @@ export default function CrossChainRelayer() {
 				</Card.Footer>
 			</Card.Root>
 
-			<Card.Root variant="outline">
-				<Card.Header>
-					<Card.Title>Recent Transfers</Card.Title>
-					<Card.Description>
-						Track your cross-chain transfer history
-					</Card.Description>
-				</Card.Header>
-				<Card.Body>
-					{transfers.length === 0 ? (
-						<Text
-							className={css({
-								textAlign: "center",
-								py: "8",
-								color: "fg.muted",
-							})}
-						>
-							No transfers yet
-						</Text>
-					) : (
-						<div
-							className={css({
-								display: "flex",
-								flexDirection: "column",
-								gap: "0",
-								borderRadius: "md",
-								overflow: "hidden",
-								border: "1px solid",
-								borderColor: "border",
-							})}
-						>
-							{transfers.map((transfer, i) => (
-								<div
-									key={transfer.id}
-									className={css({
-										display: "flex",
-										justifyContent: "space-between",
-										alignItems: "center",
-										p: "4",
-										bg: "gray.surface.bg",
-										borderBottom:
-											i === transfers.length - 1 ? "none" : "1px solid",
-										borderBottomColor: "border",
-									})}
-								>
-									<div
-										className={css({
-											display: "flex",
-											flexDirection: "column",
-											gap: "1.5",
-										})}
-									>
-										<div
-											className={css({
-												display: "flex",
-												alignItems: "center",
-												gap: "3",
-											})}
-										>
-											<Text className={css({ fontWeight: "medium" })}>
-												{transfer.amount} USDC
-											</Text>
-											{getStatusBadge(transfer.status)}
-										</div>
-										<div
-											className={css({
-												display: "flex",
-												alignItems: "center",
-												gap: "2",
-												color: "fg.muted",
-												fontSize: "sm",
-											})}
-										>
-											<Text>{transfer.from}</Text>
-											<ArrowRight
-												className={css({
-													width: "3.5",
-													height: "3.5",
-													color: "fg.subtle",
-												})}
-											/>
-											<Text>{transfer.to}</Text>
-										</div>
-									</div>
-									<div className={css({ textAlign: "right" })}>
-										<Text
-											className={css({ fontSize: "xs", color: "fg.subtle" })}
-										>
-											{transfer.timestamp.toLocaleTimeString()}
-										</Text>
-										<Text
-											className={css({ fontSize: "xs", color: "fg.subtle" })}
-										>
-											{transfer.timestamp.toLocaleDateString()}
-										</Text>
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-				</Card.Body>
-			</Card.Root>
+			<BridgeTransactionFeed />
 
 			{!isConnected && (
 				<div
