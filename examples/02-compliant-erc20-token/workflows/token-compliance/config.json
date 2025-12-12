@@ -1,0 +1,10 @@
+{
+  "schedule": "* * * * * *",
+  "evms": [
+    {
+      "tokenAddress": "0x71FAf6A3909C99c5206eA2FFeA5702ED5293Fc32",
+      "chainSelectorName": "ethereum-testnet-sepolia",
+      "gasLimit": "1000000"
+    }
+  ]
+}
