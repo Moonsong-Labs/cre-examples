@@ -11,7 +11,8 @@ import {
 	Sparkles,
 	XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
 import { formatUnits, maxUint256 } from "viem";
 import {
@@ -37,6 +38,7 @@ import {
 	USDC_ADDRESSES,
 } from "~/config/contracts";
 import type { config } from "~/config/wagmi";
+import type { clientAction as whitelistAction } from "~/routes/resources/whitelist";
 import type { Route } from "./+types/cross-chain-relayer";
 
 export function meta(_args: Route.MetaArgs) {
@@ -181,6 +183,8 @@ export default function CrossChainRelayer() {
 	const [destChain, setDestChain] = useState<string[]>([]);
 	const [transfers] = useState<Transfer[]>(MOCK_TRANSFERS);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const whitelistFetcher = useFetcher<typeof whitelistAction>();
+	const lastWhitelistAddress = useRef<string | null>(null);
 
 	const currentChain = CHAINS.find((c) => c.chainId === chainId);
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
@@ -260,6 +264,29 @@ export default function CrossChainRelayer() {
 	if (isApproveSuccess) {
 		refetchAllowance();
 	}
+
+	useEffect(() => {
+		if (!isConnected || !address) {
+			lastWhitelistAddress.current = null;
+			return;
+		}
+
+		if (lastWhitelistAddress.current === address) return;
+		if (whitelistFetcher.state !== "idle") return;
+
+		lastWhitelistAddress.current = address;
+		whitelistFetcher.submit(
+			{ address },
+			{ method: "post", action: "/resources/whitelist" },
+		);
+	}, [isConnected, address, whitelistFetcher]);
+
+	const isWhitelisting = whitelistFetcher.state !== "idle";
+	const whitelistOk = !isWhitelisting && whitelistFetcher.data?.ok === true;
+	const whitelistError =
+		!isWhitelisting && whitelistFetcher.data && "error" in whitelistFetcher.data
+			? whitelistFetcher.data.error
+			: null;
 
 	const handleApprove = () => {
 		if (
@@ -377,8 +404,8 @@ export default function CrossChainRelayer() {
 							Problem
 						</Badge>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							The extra claim transaction adds friction and can leave transfers unclaimed if
-							a user doesn't come back to original bridge site.
+							The extra claim transaction adds friction and can leave transfers
+							unclaimed if a user doesn't come back to original bridge site.
 						</Text>
 					</div>
 					<div
@@ -398,7 +425,8 @@ export default function CrossChainRelayer() {
 						</Badge>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
 							This example relays the destination claim txn for a whitelist of
-							users, completing the bridge automatically. In this example the whitelist is populated with whomever interacts with this app.
+							users, completing the bridge automatically. In this example the
+							whitelist is populated with whomever interacts with this app.
 						</Text>
 					</div>
 				</Card.Body>
@@ -436,6 +464,35 @@ export default function CrossChainRelayer() {
 						<Badge variant="solid" colorPalette="teal">
 							{currentChain?.label ?? "Select source"}
 						</Badge>
+						{isWhitelisting && (
+							<Badge variant="outline" colorPalette="amber" size="sm">
+								<Loader2
+									className={css({
+										width: "3",
+										height: "3",
+										animation: "spin",
+									})}
+								/>
+								Whitelisting
+							</Badge>
+						)}
+						{whitelistOk && (
+							<Badge variant="outline" colorPalette="green" size="sm">
+								<CheckCircle className={css({ width: "3", height: "3" })} />
+								Whitelisted
+							</Badge>
+						)}
+						{whitelistError && (
+							<Badge
+								variant="outline"
+								colorPalette="red"
+								size="sm"
+								title={whitelistError}
+							>
+								<XCircle className={css({ width: "3", height: "3" })} />
+								Whitelist failed
+							</Badge>
+						)}
 					</div>
 					<div
 						className={css({

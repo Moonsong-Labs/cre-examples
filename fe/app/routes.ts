@@ -13,4 +13,5 @@ export default [
 			"routes/examples/cross-chain-relayer.tsx",
 		),
 	]),
+	route("resources/whitelist", "routes/resources/whitelist.ts"),
 ] satisfies RouteConfig;

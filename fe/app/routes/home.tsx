@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { css } from "styled-system/css";
 import { FloatingLines } from "~/components/backgrounds/floating-lines";
@@ -157,7 +157,9 @@ export default function Home() {
 						>
 							<Card.Header>
 								<Card.Title>Available demos</Card.Title>
-								<Card.Description className={css({ color: "rgba(255,255,255,0.7)!" })}>
+								<Card.Description
+									className={css({ color: "rgba(255,255,255,0.7)!" })}
+								>
 									Hands-on flows you can run in the browser.
 								</Card.Description>
 							</Card.Header>
@@ -228,7 +230,12 @@ export default function Home() {
 															flexDirection: "column",
 														})}
 													>
-														<Text className={css({ fontWeight: "semibold", fontSize: "md" })}>
+														<Text
+															className={css({
+																fontWeight: "semibold",
+																fontSize: "md",
+															})}
+														>
 															{example.title}
 														</Text>
 														<Text
