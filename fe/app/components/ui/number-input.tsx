@@ -1,4 +1,3 @@
-"use client";
 import { NumberInput } from "@ark-ui/react/number-input";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type { ComponentProps } from "react";

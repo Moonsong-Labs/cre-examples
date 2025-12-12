@@ -19,6 +19,7 @@ import {
 	useAccount,
 	useChainId,
 	useReadContract,
+	useSwitchChain,
 	useWaitForTransactionReceipt,
 	useWriteContract,
 } from "wagmi";
@@ -178,6 +179,7 @@ const UNLIMITED_THRESHOLD = maxUint256 / 2n;
 export default function CrossChainRelayer() {
 	const { isConnected, address } = useAccount();
 	const chainId = useChainId();
+	const { switchChainAsync } = useSwitchChain();
 	const [amount, setAmount] = useState("0");
 	const [sourceChain, setSourceChain] = useState<string[]>([]);
 	const [destChain, setDestChain] = useState<string[]>([]);
@@ -190,9 +192,7 @@ export default function CrossChainRelayer() {
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
 
-	const sourceChainId = sourceChainData?.chainId ?? chainId;
 	const destChainId = destChainData?.chainId;
-	const destChainIdOrCurrent = destChainId ?? chainId;
 
 	const chainsCollection = useMemo(
 		() => createListCollection<ChainItem>({ items: CHAINS }),
@@ -209,17 +209,19 @@ export default function CrossChainRelayer() {
 
 	const { data: sourceBalance, refetch: refetchSourceBalance } =
 		useReadContract({
-			chainId: sourceChainId,
-			address: USDC_ADDRESSES[sourceChainId],
+			chainId: sourceChainData?.chainId,
+			address: sourceChainData
+				? USDC_ADDRESSES[sourceChainData.chainId]
+				: undefined,
 			abi: erc20Abi,
 			functionName: "balanceOf",
 			args: address ? [address] : undefined,
-			query: { enabled: !!address && !!USDC_ADDRESSES[sourceChainId] },
+			query: { enabled: !!address && !!sourceChainData },
 		});
 
 	const { data: destBalance } = useReadContract({
-		chainId: destChainIdOrCurrent,
-		address: USDC_ADDRESSES[destChainIdOrCurrent],
+		chainId: destChainId,
+		address: destChainId ? USDC_ADDRESSES[destChainId] : undefined,
 		abi: erc20Abi,
 		functionName: "balanceOf",
 		args: address ? [address] : undefined,
@@ -228,21 +230,29 @@ export default function CrossChainRelayer() {
 		},
 	});
 
+	const sourceUsdcAddress = sourceChainData
+		? USDC_ADDRESSES[sourceChainData.chainId]
+		: undefined;
+	const sourceMessengerAddress = sourceChainData
+		? TOKEN_MESSENGER_ADDRESSES[sourceChainData.chainId]
+		: undefined;
+
 	const { data: currentAllowance, refetch: refetchAllowance } = useReadContract(
 		{
-			chainId: sourceChainId,
-			address: USDC_ADDRESSES[sourceChainId],
+			chainId: sourceChainData?.chainId,
+			address: sourceUsdcAddress,
 			abi: erc20Abi,
 			functionName: "allowance",
 			args:
-				address && TOKEN_MESSENGER_ADDRESSES[sourceChainId]
-					? [address, TOKEN_MESSENGER_ADDRESSES[sourceChainId]]
+				address && sourceMessengerAddress
+					? [address, sourceMessengerAddress]
 					: undefined,
 			query: {
 				enabled:
 					!!address &&
-					!!USDC_ADDRESSES[sourceChainId] &&
-					!!TOKEN_MESSENGER_ADDRESSES[sourceChainId],
+					!!sourceChainData &&
+					!!sourceUsdcAddress &&
+					!!sourceMessengerAddress,
 			},
 		},
 	);
@@ -261,9 +271,11 @@ export default function CrossChainRelayer() {
 			hash: approveTxHash,
 		});
 
-	if (isApproveSuccess) {
-		refetchAllowance();
-	}
+	useEffect(() => {
+		if (isApproveSuccess) {
+			refetchAllowance();
+		}
+	}, [isApproveSuccess, refetchAllowance]);
 
 	useEffect(() => {
 		if (!isConnected || !address) {
@@ -288,17 +300,19 @@ export default function CrossChainRelayer() {
 			? whitelistFetcher.data.error
 			: null;
 
-	const handleApprove = () => {
-		if (
-			!USDC_ADDRESSES[sourceChainId] ||
-			!TOKEN_MESSENGER_ADDRESSES[sourceChainId]
-		)
+	const handleApprove = async () => {
+		if (!sourceChainData || !sourceUsdcAddress || !sourceMessengerAddress)
 			return;
+
+		if (chainId !== sourceChainData.chainId) {
+			await switchChainAsync({ chainId: sourceChainData.chainId });
+		}
+
 		approveUsdc({
-			address: USDC_ADDRESSES[sourceChainId],
+			address: sourceUsdcAddress,
 			abi: erc20Abi,
 			functionName: "approve",
-			args: [TOKEN_MESSENGER_ADDRESSES[sourceChainId], maxUint256],
+			args: [sourceMessengerAddress, maxUint256],
 		});
 	};
 

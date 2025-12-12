@@ -1,4 +1,3 @@
-"use client";
 import { Field } from "@ark-ui/react/field";
 import type { ComponentProps } from "react";
 import { createStyleContext } from "styled-system/jsx";

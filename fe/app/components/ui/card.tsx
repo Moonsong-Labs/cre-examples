@@ -1,4 +1,3 @@
-"use client";
 import { ark } from "@ark-ui/react/factory";
 import type { ComponentProps } from "react";
 import { createStyleContext } from "styled-system/jsx";

@@ -4,7 +4,7 @@
 	"evms": [
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia",
-			"domain":0,
+			"domain": 0,
 			"gasLimit": "500000"
 		},
 		{

@@ -12,7 +12,7 @@ import stylesheet from "./app.css?url";
 import "./app.css";
 import { css } from "styled-system/css";
 import { Providers } from "~/components/providers";
-import { Button, Heading, Text } from "~/components/ui";
+import { Button, Heading, Spinner, Text } from "~/components/ui";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,6 +47,31 @@ export default function App() {
 		<Providers>
 			<Outlet />
 		</Providers>
+	);
+}
+
+export function HydrateFallback() {
+	return (
+		<div
+			className={css({
+				minHeight: "100vh",
+				display: "grid",
+				placeItems: "center",
+				bg: "gray.1",
+			})}
+		>
+			<div
+				className={css({
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					gap: "4",
+				})}
+			>
+				<Spinner size="lg" colorPalette="teal" />
+				<Text className={css({ color: "fg.muted" })}>Loading...</Text>
+			</div>
+		</div>
 	);
 }
 

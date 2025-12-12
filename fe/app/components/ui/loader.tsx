@@ -1,4 +1,3 @@
-"use client";
 import { forwardRef } from "react";
 import { type HTMLStyledProps, styled } from "styled-system/jsx";
 import { AbsoluteCenter } from "./absolute-center";

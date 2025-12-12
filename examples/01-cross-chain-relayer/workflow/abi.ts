@@ -93,4 +93,4 @@ export const tokenMessengerV2Abi = [
 		name: "DepositForBurn",
 		type: "event",
 	},
-] as const
+] as const;
