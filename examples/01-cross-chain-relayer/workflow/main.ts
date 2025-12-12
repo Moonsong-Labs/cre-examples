@@ -5,6 +5,7 @@ import {
 	getNetwork,
 	type NodeRuntime,
 	prepareReportRequest,
+	type Report,
 	Runner,
 	type Runtime,
 	json as toJson,
@@ -12,6 +13,8 @@ import {
 import {
 	type Address,
 	encodeAbiParameters,
+	encodeFunctionData,
+	type Hex,
 	parseAbiParameters,
 	zeroAddress,
 } from "viem";
@@ -21,19 +24,8 @@ import {
 	irisErrorSchema,
 	irisResponseSchema,
 } from "./schema";
-
-// const CIRCLE_DOMAIN_TO_CHAIN_SELECTOR: Record<
-// 	number,
-// 	`${string}-${string}-${string}`
-// > = {
-// 	0: "ethereum-testnet-sepolia",
-// 	3: "ethereum-testnet-sepolia-arbitrum-1",
-// 	6: "ethereum-testnet-sepolia-base-1",
-// };
-
-// - `Sepolia`: [0x9f430E32ffbbe270F48048BBe64F0D8d35127D10](https://sepolia.etherscan.io/address/0x9f430e32ffbbe270f48048bbe64f0d8d35127d10#code)
-// - `Base Sepolia`: [0x8762FCCfF9b5C32F1FDAa31AA70c1D9d99734417](https://sepolia.basescan.org/address/0x8762fccff9b5c32f1fdaa31aa70c1d9d99734417#code)
-// - `Arbitrum Sepolia`: [0xf4D3aBEA2360D4f5f614F375fAd8d5d00F32be36](https://sepolia.arbiscan.io/address/0xf4d3abea2360d4f5f614f375fad8d5d00f32be36#code)
+import invariant from "tiny-invariant";
+import {abi} from "../contracts/out/Relayer.sol/IMessageTransmitterV2.json" with { type: "json" };
 
 const ENVIRONMENT_INFO = {
 	0: {
@@ -58,53 +50,70 @@ type DestinationDomain = keyof typeof ENVIRONMENT_INFO;
 const onCronTrigger = (runtime: Runtime<CREConfig>): IrisAttestation => {
 	runtime.log("Workflow triggered.");
 
-	const result = runtime
-		.runInNodeMode(fetchIrisAttestation, consensusIdenticalAggregation())()
-		.result();
-
-	runtime.log(`Fetched Iris attestation message: ${result.message}`);
+	// #1: Fetch bridge attestation from IRIS
+	const attestation = fetchIrisAttestation(runtime);
+	runtime.log(`Fetched Iris attestation message: ${attestation.message}`);
 
 	if (
-		result.destinationDomain === undefined ||
-		result.message === "0x" ||
-		result.attestation === "0x"
+		attestation.destinationDomain === undefined ||
+		attestation.message === "0x" ||
+		attestation.attestation === "0x"
 	) {
 		runtime.log("IRIS attestation not ready, skipping chain write.");
-		return result;
+		return attestation;
 	}
 
-	if (!(result.destinationDomain in ENVIRONMENT_INFO)) {
+	// #2: Generate MessageTransmitterV2.ReceiveMessage function call data
+	const payload = encodeFunctionData({
+		abi,
+		functionName: "receiveMessage",
+		args: [attestation.message, attestation.attestation],
+	})
+
+	// #3: Generate signed report for CRE submission
+	const signedReport = generateSignedReport(runtime, payload);
+
+	// #4: Submit signed report to target chains
+	invariant(Object.keys(ENVIRONMENT_INFO).includes(String(attestation.destinationDomain)),
+		`Unsupported destination domain ${attestation.destinationDomain}`,
+	);
+	submitSignedReport(runtime, signedReport, attestation.destinationDomain as DestinationDomain);
+
+	return attestation;
+};
+
+const fetchIrisAttestation = (runtime: Runtime<CREConfig>): IrisAttestation =>
+	runtime
+		.runInNodeMode(
+			fetchIrisAttestationFromApi,
+			consensusIdenticalAggregation(),
+		)()
+		.result();
+
+const generateSignedReport = (runtime: Runtime<CREConfig>, payload: Hex) =>
+	runtime.report(prepareReportRequest(payload)).result();
+
+const submitSignedReport = (
+	runtime: Runtime<CREConfig>,
+	signedReport: Report,
+	destinationDomain: DestinationDomain,
+) => {
+	if (!(destinationDomain in ENVIRONMENT_INFO)) {
 		runtime.log(
-			`Unsupported destination domain ${result.destinationDomain}, skipping chain write.`,
+			`Unsupported destination domain ${destinationDomain}, skipping chain write.`,
 		);
-		return result;
+		return;
 	}
 
 	const chainSelectorName =
-		ENVIRONMENT_INFO[result.destinationDomain as DestinationDomain].chainSelector;
-	if (!chainSelectorName) {
-		runtime.log(
-			`Unknown destination domain ${result.destinationDomain}, skipping chain write.`,
-		);
-		return result;
-	}
-
+		ENVIRONMENT_INFO[destinationDomain].chainSelector;
 	const evm = runtime.config.evms.find(
 		(e) => e.chainSelectorName === chainSelectorName,
 	);
 	if (!evm) {
 		runtime.log(`No EVM target configured for ${chainSelectorName}, skipping.`);
-		return result;
+		return;
 	}
-
-	const encodedPayload = encodeAbiParameters(
-		parseAbiParameters("bytes message, bytes attestation"),
-		[result.message, result.attestation],
-	);
-
-	const signedReport = runtime
-		.report(prepareReportRequest(encodedPayload))
-		.result();
 
 	const network = getNetwork({
 		chainFamily: "evm",
@@ -113,16 +122,10 @@ const onCronTrigger = (runtime: Runtime<CREConfig>): IrisAttestation => {
 	});
 	if (!network) {
 		runtime.log(`Network not found for ${evm.chainSelectorName}, skipping.`);
-		return result;
+		return;
 	}
 
-	const receiver = evm.relayerAddress as Address;
-	if (receiver === zeroAddress) {
-		runtime.log(
-			`Relayer address not set for ${evm.chainSelectorName}, skipping.`,
-		);
-		return result;
-	}
+	const receiver = ENVIRONMENT_INFO[destinationDomain].relayerAddress
 
 	const evmClient = new cre.capabilities.EVMClient(
 		network.chainSelector.selector,
@@ -136,11 +139,9 @@ const onCronTrigger = (runtime: Runtime<CREConfig>): IrisAttestation => {
 		.result();
 
 	runtime.log(`Submitted report to ${evm.chainSelectorName}.`);
-
-	return result;
 };
 
-const fetchIrisAttestation = (
+const fetchIrisAttestationFromApi = (
 	nodeRuntime: NodeRuntime<CREConfig>,
 ): IrisAttestation => {
 	const httpClient = new cre.capabilities.HTTPClient();

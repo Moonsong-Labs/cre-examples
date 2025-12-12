@@ -505,8 +505,8 @@ export default function CrossChainRelayer() {
 								<Select.Control>
 									<Select.Trigger>
 										<Select.ValueText placeholder="Select chain" />
+										<Select.Indicator />
 									</Select.Trigger>
-									<Select.Indicator />
 								</Select.Control>
 								<Select.Positioner>
 									<Select.Content>
@@ -554,8 +554,8 @@ export default function CrossChainRelayer() {
 								<Select.Control>
 									<Select.Trigger>
 										<Select.ValueText placeholder="Select chain" />
+										<Select.Indicator />
 									</Select.Trigger>
-									<Select.Indicator />
 								</Select.Control>
 								<Select.Positioner>
 									<Select.Content>
@@ -603,10 +603,8 @@ export default function CrossChainRelayer() {
 							disabled={!isConnected}
 						>
 							<NumberInput.Label>Amount (USDC)</NumberInput.Label>
-							<div className={css({ display: "flex", gap: "2" })}>
-								<NumberInput.Input />
-								<NumberInput.Control />
-							</div>
+							<NumberInput.Input />
+							<NumberInput.Control />
 						</NumberInput.Root>
 					</Field.Root>
 

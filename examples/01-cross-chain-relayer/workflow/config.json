@@ -4,17 +4,14 @@
 	"evms": [
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia",
-			"relayerAddress": "0x0000000000000000000000000000000000000000",
 			"gasLimit": "500000"
 		},
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
-			"relayerAddress": "0x0000000000000000000000000000000000000000",
 			"gasLimit": "500000"
 		},
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia-base-1",
-			"relayerAddress": "0x0000000000000000000000000000000000000000",
 			"gasLimit": "500000"
 		}
 	]
