@@ -1,23 +1,23 @@
-import { getAddress, isHex, type Address, type Hex } from "viem";
+import { type Address, getAddress, type Hex, isHex } from "viem";
 import { z } from "zod";
 
 export const hexSchema = z
 	.string()
-	.refine((v) => isHex(v, { strict: true }), { message: "Expected 0x-hex" }) as z.ZodType<Hex>;
+	.refine((v) => isHex(v, { strict: true }), {
+		message: "Expected 0x-hex",
+	}) as z.ZodType<Hex>;
 
-export const addressSchema = z
-	.string()
-	.transform((v, ctx) => {
-		try {
-			return getAddress(v);
-		} catch {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: "Invalid EVM address",
-			});
-			return z.NEVER;
-		}
-	}) as z.ZodType<Address>;
+export const addressSchema = z.string().transform((v, ctx) => {
+	try {
+		return getAddress(v);
+	} catch {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: "Invalid EVM address",
+		});
+		return z.NEVER;
+	}
+}) as z.ZodType<Address>;
 
 const decimalString = z
 	.string()
@@ -35,7 +35,9 @@ export const irisMessageSchema = z
 		eventNonce: z.union([decimalString, hexSchema]).optional(),
 		attestation: z.union([hexSchema, z.literal("PENDING")]),
 		decodedMessage: irisDecodedMessageSchema.nullable().optional(),
-		cctpVersion: z.union([decimalString, z.number().int().nonnegative()]).optional(),
+		cctpVersion: z
+			.union([decimalString, z.number().int().nonnegative()])
+			.optional(),
 		status: z.string().optional(),
 	})
 	.passthrough();
@@ -58,6 +60,7 @@ export const evmTargetSchema = z.object({
 export const creConfigSchema = z.object({
 	schedule: z.string(),
 	irisUrl: z.string().url(),
+	domain: z.number().int().nonnegative(),
 	evms: z.array(evmTargetSchema),
 });
 

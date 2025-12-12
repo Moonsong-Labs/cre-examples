@@ -36,6 +36,7 @@ import {
 	TOKEN_MESSENGER_ADDRESSES,
 	USDC_ADDRESSES,
 } from "~/config/contracts";
+import type { config } from "~/config/wagmi";
 import type { Route } from "./+types/cross-chain-relayer";
 
 export function meta(_args: Route.MetaArgs) {
@@ -52,7 +53,7 @@ export function meta(_args: Route.MetaArgs) {
 interface ChainItem {
 	value: string;
 	label: string;
-	chainId: number;
+	chainId: (typeof config)["chains"][number]["id"];
 }
 
 const CHAINS: ChainItem[] = [
@@ -187,6 +188,7 @@ export default function CrossChainRelayer() {
 
 	const sourceChainId = sourceChainData?.chainId ?? chainId;
 	const destChainId = destChainData?.chainId;
+	const destChainIdOrCurrent = destChainId ?? chainId;
 
 	const chainsCollection = useMemo(
 		() => createListCollection<ChainItem>({ items: CHAINS }),
@@ -203,6 +205,7 @@ export default function CrossChainRelayer() {
 
 	const { data: sourceBalance, refetch: refetchSourceBalance } =
 		useReadContract({
+			chainId: sourceChainId,
 			address: USDC_ADDRESSES[sourceChainId],
 			abi: erc20Abi,
 			functionName: "balanceOf",
@@ -211,17 +214,19 @@ export default function CrossChainRelayer() {
 		});
 
 	const { data: destBalance } = useReadContract({
-		address: destChainId ? USDC_ADDRESSES[destChainId] : undefined,
+		chainId: destChainIdOrCurrent,
+		address: USDC_ADDRESSES[destChainIdOrCurrent],
 		abi: erc20Abi,
 		functionName: "balanceOf",
 		args: address ? [address] : undefined,
 		query: {
-			enabled: !!address && !!destChainId && !!USDC_ADDRESSES[destChainId],
+			enabled: !!address && !!destChainId,
 		},
 	});
 
 	const { data: currentAllowance, refetch: refetchAllowance } = useReadContract(
 		{
+			chainId: sourceChainId,
 			address: USDC_ADDRESSES[sourceChainId],
 			abi: erc20Abi,
 			functionName: "allowance",
@@ -396,7 +401,11 @@ export default function CrossChainRelayer() {
 							})}
 						>
 							<Sparkles
-								className={css({ width: "3.5", height: "3.5", color: "teal.11" })}
+								className={css({
+									width: "3.5",
+									height: "3.5",
+									color: "teal.11",
+								})}
 							/>
 							<Text className={css({ fontWeight: "medium" })}>
 								{formatBalance(sourceBalance)} USDC
@@ -417,7 +426,11 @@ export default function CrossChainRelayer() {
 							})}
 						>
 							<Globe2
-								className={css({ width: "3.5", height: "3.5", color: "blue.11" })}
+								className={css({
+									width: "3.5",
+									height: "3.5",
+									color: "blue.11",
+								})}
 							/>
 							<Text className={css({ fontWeight: "medium" })}>
 								{destChainId ? `${formatBalance(destBalance)} USDC` : "—"}

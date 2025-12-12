@@ -4,14 +4,17 @@
 	"evms": [
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia",
+			"domain":0,
 			"gasLimit": "500000"
 		},
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
+			"domain": 3,
 			"gasLimit": "500000"
 		},
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia-base-1",
+			"domain": 6,
 			"gasLimit": "500000"
 		}
 	]

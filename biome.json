@@ -10,7 +10,8 @@
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"formatWithErrors": true
 	},
 	"linter": {
 		"enabled": true,

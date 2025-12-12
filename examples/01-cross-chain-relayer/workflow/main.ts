@@ -1,7 +1,8 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: boilerplate */
+import { tokenMessengerV2Abi } from "./abi";
 import {
 	consensusIdenticalAggregation,
 	cre,
+	type EVMLog,
 	getNetwork,
 	type NodeRuntime,
 	prepareReportRequest,
@@ -10,45 +11,58 @@ import {
 	type Runtime,
 	json as toJson,
 } from "@chainlink/cre-sdk";
-import {
-	type Address,
-	encodeAbiParameters,
-	encodeFunctionData,
-	type Hex,
-	parseAbiParameters,
-	zeroAddress,
-} from "viem";
+import invariant from "tiny-invariant";
+import { bytesToHex, decodeEventLog, encodeEventTopics, encodeFunctionData, type Hex } from "viem";
+import { abi } from "../contracts/out/Relayer.sol/IMessageTransmitterV2.json" with {
+	type: "json",
+};
 import {
 	type CREConfig,
 	type IrisAttestation,
 	irisErrorSchema,
 	irisResponseSchema,
 } from "./schema";
-import invariant from "tiny-invariant";
-import {abi} from "../contracts/out/Relayer.sol/IMessageTransmitterV2.json" with { type: "json" };
 
 const ENVIRONMENT_INFO = {
 	0: {
 		name: "Sepolia",
 		relayerAddress: "0x9f430E32ffbbe270F48048BBe64F0D8d35127D10",
 		chainSelector: "ethereum-testnet-sepolia",
+		usdcAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
 	},
 	3: {
 		name: "Arbitrum Sepolia",
 		relayerAddress: "0xf4D3aBEA2360D4f5f614F375fAd8d5d00F32be36",
 		chainSelector: "ethereum-testnet-sepolia-arbitrum-1",
+		usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
 	},
 	6: {
 		name: "Base Sepolia",
 		relayerAddress: "0x8762FCCfF9b5C32F1FDAa31AA70c1D9d99734417",
 		chainSelector: "ethereum-testnet-sepolia-base-1",
+		usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
 	},
-} as const
+} as const;
+
+const TOKEN_MESSENGER_V2_TESTNET =
+	"0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA" as const;
 
 type DestinationDomain = keyof typeof ENVIRONMENT_INFO;
 
-const onCronTrigger = (runtime: Runtime<CREConfig>): IrisAttestation => {
+const onLogTrigger = (
+	runtime: Runtime<CREConfig>,
+	log: EVMLog,
+): IrisAttestation => {
 	runtime.log("Workflow triggered.");
+	const rawTopics = log.topics.map((t)=> bytesToHex(t))
+	const topics = decodeEventLog({
+		abi: tokenMessengerV2Abi,
+		data: bytesToHex(log.data),
+		topics: rawTopics as any
+	})
+
+	runtime.log(topics)
+	runtime.log(`Detected DepositForBurn event for burnToken: ${topics.args.burnToken}`);
 
 	// #1: Fetch bridge attestation from IRIS
 	const attestation = fetchIrisAttestation(runtime);
@@ -68,16 +82,23 @@ const onCronTrigger = (runtime: Runtime<CREConfig>): IrisAttestation => {
 		abi,
 		functionName: "receiveMessage",
 		args: [attestation.message, attestation.attestation],
-	})
+	});
 
 	// #3: Generate signed report for CRE submission
 	const signedReport = generateSignedReport(runtime, payload);
 
 	// #4: Submit signed report to target chains
-	invariant(Object.keys(ENVIRONMENT_INFO).includes(String(attestation.destinationDomain)),
+	invariant(
+		Object.keys(ENVIRONMENT_INFO).includes(
+			String(attestation.destinationDomain),
+		),
 		`Unsupported destination domain ${attestation.destinationDomain}`,
 	);
-	submitSignedReport(runtime, signedReport, attestation.destinationDomain as DestinationDomain);
+	submitSignedReport(
+		runtime,
+		signedReport,
+		attestation.destinationDomain as DestinationDomain,
+	);
 
 	return attestation;
 };
@@ -105,8 +126,7 @@ const submitSignedReport = (
 		return;
 	}
 
-	const chainSelectorName =
-		ENVIRONMENT_INFO[destinationDomain].chainSelector;
+	const chainSelectorName = ENVIRONMENT_INFO[destinationDomain].chainSelector;
 	const evm = runtime.config.evms.find(
 		(e) => e.chainSelectorName === chainSelectorName,
 	);
@@ -125,7 +145,7 @@ const submitSignedReport = (
 		return;
 	}
 
-	const receiver = ENVIRONMENT_INFO[destinationDomain].relayerAddress
+	const receiver = ENVIRONMENT_INFO[destinationDomain].relayerAddress;
 
 	const evmClient = new cre.capabilities.EVMClient(
 		network.chainSelector.selector,
@@ -204,13 +224,46 @@ const fetchIrisAttestationFromApi = (
 	};
 };
 
-const initWorkflow = (config: CREConfig) => {
-	const cron = new cre.capabilities.CronCapability();
+const initWorkflow = (config: CREConfig) =>
+	config.evms.map(({ chainSelectorName }) => {
+		const network = getNetwork({
+			chainFamily: "evm",
+			chainSelectorName,
+			isTestnet: true,
+		});
+		invariant(network, `Network not found for ${chainSelectorName}`);
+		const evmClient = new cre.capabilities.EVMClient(
+			network.chainSelector.selector,
+		);
+		const eventTopics = encodeEventTopics({
+			abi: tokenMessengerV2Abi,
+			eventName: "DepositForBurn",
+			args: {
+				burnToken:
+					ENVIRONMENT_INFO[config.domain as DestinationDomain].usdcAddress,
+				minFinalityThreshold: 1000,
+			},
+		}) as string[];
 
-	return [
-		cre.handler(cron.trigger({ schedule: config.schedule }), onCronTrigger),
-	];
-};
+		return cre.handler(
+			evmClient.logTrigger({
+				addresses: [TOKEN_MESSENGER_V2_TESTNET],
+				confidence: "CONFIDENCE_LEVEL_LATEST",
+				topics: [
+					{
+						values: [eventTopics[0]],
+					},
+					{
+						values: [eventTopics[1]],
+					},
+					{
+						values: [eventTopics[2]],
+					},
+				],
+			}),
+			onLogTrigger,
+		);
+	});
 
 export async function main() {
 	const runner = await Runner.newRunner<CREConfig>();
