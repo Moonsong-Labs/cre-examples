@@ -1,23 +1,9 @@
-import { type Address, getAddress, type Hex, isHex } from "viem";
+import { type Hex, isHex } from "viem";
 import { z } from "zod";
 
-export const hexSchema = z
-	.string()
-	.refine((v) => isHex(v, { strict: true }), {
-		message: "Expected 0x-hex",
-	}) as z.ZodType<Hex>;
-
-export const addressSchema = z.string().transform((v, ctx) => {
-	try {
-		return getAddress(v);
-	} catch {
-		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
-			message: "Invalid EVM address",
-		});
-		return z.NEVER;
-	}
-}) as z.ZodType<Address>;
+export const hexSchema = z.string().refine((v) => isHex(v, { strict: true }), {
+	message: "Expected 0x-hex",
+}) as z.ZodType<Hex>;
 
 const decimalString = z
 	.string()
@@ -53,14 +39,13 @@ export const irisErrorSchema = z.object({
 
 export const evmTargetSchema = z.object({
 	chainSelectorName: z.string(),
-	relayerAddress: addressSchema,
+	domain: z.number().int().nonnegative(),
 	gasLimit: decimalString.optional(),
 });
 
 export const creConfigSchema = z.object({
 	schedule: z.string(),
 	irisUrl: z.string().url(),
-	domain: z.number().int().nonnegative(),
 	evms: z.array(evmTargetSchema),
 });
 

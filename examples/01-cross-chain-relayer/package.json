@@ -4,8 +4,8 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"simulate": "cre workflow simulate workflow --target demo",
-		"broadcast": "cre workflow simulate workflow --target demo --broadcast",
+		"simulate": "cre workflow simulate workflow --target demo --non-interactive --trigger-index 0 --evm-tx-hash 0x71728849068e43d4076ff91b6a10f2005223ca80b9e2c14f7f9d54aa3cbc3398 --evm-event-index 4",
+		"broadcast": "bun simulate --broadcast",
 		"forge:build": "cd contracts && forge build",
 		"forge:install": "cd contracts && forge soldeer install"
 	},

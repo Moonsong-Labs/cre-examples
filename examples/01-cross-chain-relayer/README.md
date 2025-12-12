@@ -14,7 +14,9 @@ bun <cre instructions go here>
 
 ## Usage
 
-Start the FE with: `bun fe:start`
+Simulate the workflow with: `bun simulate` (interactive prompt)
+
+Start the FE with: `bun start:fe`
 
 Navigate to [http://localhost:5173](http://localhost:5173) and follow instructions
 

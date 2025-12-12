@@ -1,4 +1,3 @@
-import { tokenMessengerV2Abi } from "./abi";
 import {
 	consensusIdenticalAggregation,
 	cre,
@@ -12,10 +11,17 @@ import {
 	json as toJson,
 } from "@chainlink/cre-sdk";
 import invariant from "tiny-invariant";
-import { bytesToHex, decodeEventLog, encodeEventTopics, encodeFunctionData, type Hex } from "viem";
+import {
+	bytesToHex,
+	decodeEventLog,
+	encodeEventTopics,
+	encodeFunctionData,
+	type Hex,
+} from "viem";
 import { abi } from "../contracts/out/Relayer.sol/IMessageTransmitterV2.json" with {
 	type: "json",
 };
+import { tokenMessengerV2Abi } from "./abi";
 import {
 	type CREConfig,
 	type IrisAttestation,
@@ -29,18 +35,21 @@ const ENVIRONMENT_INFO = {
 		relayerAddress: "0x9f430E32ffbbe270F48048BBe64F0D8d35127D10",
 		chainSelector: "ethereum-testnet-sepolia",
 		usdcAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+		blockExplorerUrl: "https://sepolia.etherscan.io",
 	},
 	3: {
 		name: "Arbitrum Sepolia",
 		relayerAddress: "0xf4D3aBEA2360D4f5f614F375fAd8d5d00F32be36",
 		chainSelector: "ethereum-testnet-sepolia-arbitrum-1",
 		usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+		blockExplorerUrl: "https://sepolia.arbiscan.io",
 	},
 	6: {
 		name: "Base Sepolia",
 		relayerAddress: "0x8762FCCfF9b5C32F1FDAa31AA70c1D9d99734417",
 		chainSelector: "ethereum-testnet-sepolia-base-1",
 		usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+		blockExplorerUrl: "https://sepolia.basescan.org",
 	},
 } as const;
 
@@ -52,20 +61,27 @@ type DestinationDomain = keyof typeof ENVIRONMENT_INFO;
 const onLogTrigger = (
 	runtime: Runtime<CREConfig>,
 	log: EVMLog,
+	sourceDomain: DestinationDomain,
 ): IrisAttestation => {
 	runtime.log("Workflow triggered.");
-	const rawTopics = log.topics.map((t)=> bytesToHex(t))
-	const topics = decodeEventLog({
+	const rawTopics = log.topics.map((t) => bytesToHex(t));
+
+	const burnTx = bytesToHex(log.txHash)
+
+	const event = decodeEventLog({
 		abi: tokenMessengerV2Abi,
 		data: bytesToHex(log.data),
-		topics: rawTopics as any
-	})
+		eventName: "DepositForBurn",
+		// biome-ignore lint/suspicious/noExplicitAny: gd enough for now
+		topics: rawTopics as any,
+	});
 
-	runtime.log(topics)
-	runtime.log(`Detected DepositForBurn event for burnToken: ${topics.args.burnToken}`);
+	runtime.log(
+		`Detected DepositForBurn event for burnToken: ${event.args.burnToken} for tx: ${burnTx}`,
+	);
 
 	// #1: Fetch bridge attestation from IRIS
-	const attestation = fetchIrisAttestation(runtime);
+	const attestation = fetchIrisAttestation(runtime, sourceDomain, burnTx);
 	runtime.log(`Fetched Iris attestation message: ${attestation.message}`);
 
 	if (
@@ -83,6 +99,8 @@ const onLogTrigger = (
 		functionName: "receiveMessage",
 		args: [attestation.message, attestation.attestation],
 	});
+
+	runtime.log(`Generated MessageTransmitterV2.receiveMessage payload: ${payload.length / 2} bytes`);
 
 	// #3: Generate signed report for CRE submission
 	const signedReport = generateSignedReport(runtime, payload);
@@ -103,12 +121,16 @@ const onLogTrigger = (
 	return attestation;
 };
 
-const fetchIrisAttestation = (runtime: Runtime<CREConfig>): IrisAttestation =>
+const fetchIrisAttestation = (
+	runtime: Runtime<CREConfig>,
+	sourceDomain: DestinationDomain,
+	burnTx: Hex
+): IrisAttestation =>
 	runtime
 		.runInNodeMode(
 			fetchIrisAttestationFromApi,
 			consensusIdenticalAggregation(),
-		)()
+		)(sourceDomain, burnTx)
 		.result();
 
 const generateSignedReport = (runtime: Runtime<CREConfig>, payload: Hex) =>
@@ -150,7 +172,7 @@ const submitSignedReport = (
 	const evmClient = new cre.capabilities.EVMClient(
 		network.chainSelector.selector,
 	);
-	evmClient
+	 const writeReportResult = evmClient
 		.writeReport(runtime, {
 			receiver,
 			report: signedReport,
@@ -158,22 +180,21 @@ const submitSignedReport = (
 		})
 		.result();
 
+	  const txHash = bytesToHex(writeReportResult.txHash || new Uint8Array(32))
+  	runtime.log(`Write report transaction succeeded: ${txHash}`)
+  	runtime.log(`View transaction at ${ENVIRONMENT_INFO[destinationDomain].blockExplorerUrl}/tx/${txHash}`)
+
 	runtime.log(`Submitted report to ${evm.chainSelectorName}.`);
 };
 
 const fetchIrisAttestationFromApi = (
 	nodeRuntime: NodeRuntime<CREConfig>,
+	sourceDomain: DestinationDomain,
+	burnTx: Hex
 ): IrisAttestation => {
 	const httpClient = new cre.capabilities.HTTPClient();
-
-	// TODO: derive domain
-	const domain = "0";
-	const burnHash =
-		"0x4ac3dfd2aeffd7a1ad0508d97a0a0a18447c7fc60be14c0ca6d7048a28566e4e";
-	// TODO: derive burn hash
 	nodeRuntime.log(`Using endpoint: ${nodeRuntime.config.irisUrl}`);
-	const fullUrl = `${nodeRuntime.config.irisUrl}/messages/${domain}?transactionHash=${burnHash}`;
-	// https://iris-api-sandbox.circle.com/v2/messages/0?transactionHash=0xd47fba15747f389e59a73ed87e4c2424b7c80d96d3b9f2bd649a4b265150de1d'
+	const fullUrl = `${nodeRuntime.config.irisUrl}/messages/${sourceDomain}?transactionHash=${burnTx}`;
 	nodeRuntime.log(`Fetching Iris attestation from URL: ${fullUrl}`);
 	const req = {
 		url: fullUrl,
@@ -225,7 +246,7 @@ const fetchIrisAttestationFromApi = (
 };
 
 const initWorkflow = (config: CREConfig) =>
-	config.evms.map(({ chainSelectorName }) => {
+	config.evms.map(({ chainSelectorName, domain }) => {
 		const network = getNetwork({
 			chainFamily: "evm",
 			chainSelectorName,
@@ -235,15 +256,22 @@ const initWorkflow = (config: CREConfig) =>
 		const evmClient = new cre.capabilities.EVMClient(
 			network.chainSelector.selector,
 		);
+		const sourceDomain = domain as DestinationDomain;
+		const env = ENVIRONMENT_INFO[sourceDomain];
+		invariant(env, `Unsupported domain ${domain} for ${chainSelectorName}`);
 		const eventTopics = encodeEventTopics({
 			abi: tokenMessengerV2Abi,
 			eventName: "DepositForBurn",
 			args: {
-				burnToken:
-					ENVIRONMENT_INFO[config.domain as DestinationDomain].usdcAddress,
+				burnToken: env.usdcAddress,
 				minFinalityThreshold: 1000,
 			},
-		}) as string[];
+		});
+		const [topic0, topic1, topic2, topic3] = eventTopics;
+		const toValues = (topic: Hex | Hex[] | null | undefined): Hex[] => {
+			if (topic == null) return [];
+			return Array.isArray(topic) ? topic : [topic];
+		};
 
 		return cre.handler(
 			evmClient.logTrigger({
@@ -251,17 +279,21 @@ const initWorkflow = (config: CREConfig) =>
 				confidence: "CONFIDENCE_LEVEL_LATEST",
 				topics: [
 					{
-						values: [eventTopics[0]],
+						values: [topic0],
 					},
 					{
-						values: [eventTopics[1]],
+						values: toValues(topic1),
 					},
 					{
-						values: [eventTopics[2]],
+						values: toValues(topic2),
+					},
+					{
+						values: toValues(topic3),
 					},
 				],
 			}),
-			onLogTrigger,
+			(runtime: Runtime<CREConfig>, log: EVMLog) =>
+				onLogTrigger(runtime, log, sourceDomain),
 		);
 	});
 

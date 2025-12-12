@@ -136,20 +136,6 @@ export default function Home() {
 									/>
 								</Button>
 							</Link>
-							<div className={css({ display: "flex", gap: "2" })}>
-								<Badge variant="surface" colorPalette="gray" size="md">
-									<ShieldCheck
-										className={css({ width: "3.5", height: "3.5", mr: "1.5" })}
-									/>
-									Testnet safe
-								</Badge>
-								<Badge variant="surface" colorPalette="blue" size="md">
-									<Sparkles
-										className={css({ width: "3.5", height: "3.5", mr: "1.5" })}
-									/>
-									CCTP + CRE
-								</Badge>
-							</div>
 						</div>
 					</div>
 
