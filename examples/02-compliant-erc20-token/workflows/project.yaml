@@ -19,3 +19,5 @@ demo:
   rpcs:
     - chain-name: ethereum-testnet-sepolia
       url: https://1rpc.io/sepolia
+    - chain-name: ethereum-mainnet
+      url: https://1rpc.io/eth
