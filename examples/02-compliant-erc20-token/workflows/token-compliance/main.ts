@@ -17,6 +17,7 @@ import { CompliantToken } from "./abi/CompliantToken";
 
 const ConfigSchema = z.object({
   schedule: z.string().min(1, "Schedule is required"),
+  spreadsheetId: z.string().min(1, "Spreadsheet ID is required"),
   evms: z.array(
     z.object({
       tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address"),
@@ -43,7 +44,7 @@ const computeBlacklistDelta = (
 
 const getSpreadsheetBlacklist = (runtime: Runtime<Config>): Set<Address> => {
   const httpClient = new cre.capabilities.HTTPClient();
-  const spreadsheetId = runtime.getSecret({ id: "SPREADSHEET_ID" }).result().value;
+  const spreadsheetId = runtime.config.spreadsheetId;
 
   const result = httpClient
     .sendRequest(runtime, fetchBlacklist, consensusIdenticalAggregation<Blacklist>())(spreadsheetId)
