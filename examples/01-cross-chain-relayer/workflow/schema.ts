@@ -44,9 +44,17 @@ export const evmTargetSchema = z.object({
 });
 
 export const creConfigSchema = z.object({
-	schedule: z.string(),
-	irisUrl: z.string().url(),
+	schedule: z.string().optional(),
+	irisUrl: z.string().url().optional(),
+	mailboxUrl: z.string().url().optional(),
+	authorizedAddress: hexSchema.optional(),
 	evms: z.array(evmTargetSchema),
+});
+
+export const relayInputSchema = z.object({
+	destinationDomain: z.number().int().nonnegative(),
+	message: hexSchema,
+	attestation: hexSchema,
 });
 
 export type IrisAttestation = {
@@ -57,5 +65,14 @@ export type IrisAttestation = {
 
 export type EvmTarget = z.infer<typeof evmTargetSchema>;
 export type CREConfig = z.infer<typeof creConfigSchema>;
+export type RelayInput = z.infer<typeof relayInputSchema>;
 export type IrisResponse = z.infer<typeof irisResponseSchema>;
 export type IrisMessage = z.infer<typeof irisMessageSchema>;
+
+export type MailboxPayload = {
+	burnTxHash: Hex;
+	sourceDomain: number;
+	depositor: Hex;
+	destinationDomain: number;
+	amount: string;
+};

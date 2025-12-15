@@ -1,21 +1,18 @@
 # ==========================================================================
 # CRE PROJECT SETTINGS FILE
 # ==========================================================================
-# Project-specific settings for CRE CLI targets.
-# Each target defines cre-cli, account, and rpcs groups.
-#
-# Example custom target:
-# my-target:
-#   account:
-#     workflow-owner-address: "0x123..."            # Optional: Owner wallet/MSIG address (used for --unsigned transactions)
-#   rpcs:
-#     - chain-name: ethereum-testnet-sepolia        # Required if your workflow interacts with this chain
-#       url: "<select your own rpc url>"
-#     - chain-name: ethereum-mainnet                # Required if your workflow interacts with this chain
-#       url: "<select your own rpc url>"
+detector:
+  rpcs:
+    - chain-name: ethereum-mainnet
+      url: https://rpc.ankr.com/eth/265ba449068ac9b2ea82e224375312300e973507c0e03291e85fc6f2da9234d3
+    - chain-name: ethereum-testnet-sepolia
+      url: https://1rpc.io/sepolia
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: https://arbitrum-sepolia.drpc.org
 
-# ==========================================================================
-demo:
+relayer:
   rpcs:
     - chain-name: ethereum-mainnet
       url: https://rpc.ankr.com/eth/265ba449068ac9b2ea82e224375312300e973507c0e03291e85fc6f2da9234d3
