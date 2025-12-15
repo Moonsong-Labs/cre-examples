@@ -1,5 +1,5 @@
 {
-  "schedule": "* * * * * *",
+  "schedule": "* * * * *",
   "spreadsheetId": "1qbeYZqDWH4doO4BuHZYnJYhNCgPhQLJdFgKQw8xAxfo",
   "evms": [
     {
