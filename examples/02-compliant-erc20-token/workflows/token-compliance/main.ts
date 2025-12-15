@@ -45,9 +45,10 @@ const computeBlacklistDelta = (
 const getSpreadsheetBlacklist = (runtime: Runtime<Config>): Set<Address> => {
   const httpClient = new cre.capabilities.HTTPClient();
   const spreadsheetId = runtime.config.spreadsheetId;
+  const apiKey = runtime.getSecret({ id: "GOOGLE_API_KEY" }).result().value;
 
   const result = httpClient
-    .sendRequest(runtime, fetchBlacklist, consensusIdenticalAggregation<Blacklist>())(spreadsheetId)
+    .sendRequest(runtime, fetchBlacklist, consensusIdenticalAggregation<Blacklist>())(spreadsheetId, apiKey)
     .result();
 
   return new Set(result.addresses.map(a => a.toLowerCase() as Address));
