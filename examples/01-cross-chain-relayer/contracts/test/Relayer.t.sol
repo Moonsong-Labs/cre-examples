@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Test } from "forge-std/Test.sol";
-import { Relayer, IMessageTransmitterV2 } from "../src/Relayer.sol";
-import { ReceiverTemplate } from "../src/ReceiverTemplate.sol";
 import { IReceiver } from "../src/IReceiver.sol";
+import { ReceiverTemplate } from "../src/ReceiverTemplate.sol";
+import { IMessageTransmitterV2, Relayer } from "../src/Relayer.sol";
 import { IERC165 } from "@openzeppelin-contracts/interfaces/IERC165.sol";
+import { Test } from "forge-std/Test.sol";
 
 contract MockMessageTransmitter is IMessageTransmitterV2 {
     bool public shouldSucceed = true;
@@ -46,7 +46,11 @@ contract RelayerTest is Test {
         bytes32 workflowId,
         bytes10 workflowName,
         address wfOwner
-    ) internal pure returns (bytes memory) {
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encodePacked(workflowId, workflowName, wfOwner);
     }
 
