@@ -35,11 +35,13 @@ const stepIndicator = css({
 const stepConnector = css({
 	position: "relative",
 	mx: "2",
+	mt: "5",
 	height: "0.5",
 	flex: "1",
 	overflow: "hidden",
 	borderRadius: "sm",
 	bg: "gray.7",
+	transform: "translateY(-50%)",
 });
 
 const stepConnectorFill = css({
