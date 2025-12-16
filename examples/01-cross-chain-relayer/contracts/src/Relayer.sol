@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {ReceiverTemplate} from "./ReceiverTemplate.sol";
+import { ReceiverTemplate } from "./ReceiverTemplate.sol";
 
 interface IMessageTransmitterV2 {
     function receiveMessage(bytes calldata message, bytes calldata attestation) external returns (bool success);
