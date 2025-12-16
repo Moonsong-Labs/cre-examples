@@ -1,315 +1,165 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-	type Address,
-	decodeEventLog,
-	encodeEventTopics,
-	formatUnits,
-	padHex,
-} from "viem";
+import { useCallback, useState } from "react";
+import { type Address, formatUnits } from "viem";
 import { useWatchContractEvent } from "wagmi";
-import { arbitrumSepolia, baseSepolia, sepolia } from "wagmi/chains";
 import {
-	type BridgeEvent,
 	CCTP_DOMAINS,
 	CHAIN_NAMES,
-	depositForBurnEventAbi,
 	DOMAIN_TO_CHAIN_ID,
-	ETHERSCAN_API_URLS,
-	messageReceivedEventAbi,
+	depositForBurnEventAbi,
 	MESSAGE_TRANSMITTER_V2_ADDRESS,
+	messageReceivedEventAbi,
+	RECEIVER_ADDRESSES,
 	TOKEN_MESSENGER_V2_ADDRESS,
 } from "~/config/cctp";
 
-const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY ?? "";
-const SUPPORTED_CHAINS = [sepolia, baseSepolia, arbitrumSepolia];
-const MAX_EVENTS_PER_CHAIN = 10;
+export type TransferStatus = "pending" | "deposit_sent" | "minted";
 
-interface EtherscanLogResult {
-	address: string;
-	topics: string[];
-	data: string;
-	blockNumber: string;
-	timeStamp: string;
-	transactionHash: string;
+export interface BridgeTransfer {
+	id: string;
+	status: TransferStatus;
+	sourceChainId: number;
+	destChainId: number;
+	sourceDomain: number;
+	destinationDomain: number;
+	amount: bigint;
+	depositor: Address;
+	depositTxHash: `0x${string}`;
+	mintTxHash?: `0x${string}`;
+	depositTimestamp: number;
+	mintTimestamp?: number;
 }
 
-async function fetchHistoricalLogs(
-	chainId: number,
-	address: Address,
-	topic0: `0x${string}`,
-	topic2: `0x${string}` | null,
-): Promise<EtherscanLogResult[]> {
-	const baseUrl = ETHERSCAN_API_URLS[chainId];
-	if (!baseUrl || !ETHERSCAN_API_KEY) {
-		return [];
-	}
+type SupportedChainId = 11155111 | 84532 | 421614;
 
-	const params = new URLSearchParams({
-		chainid: chainId.toString(),
-		module: "logs",
-		action: "getLogs",
-		address,
-		fromBlock: "0",
-		toBlock: "latest",
-		topic0,
-		page: "1",
-		offset: "50",
-		apikey: ETHERSCAN_API_KEY,
+interface UseBridgeTransferParams {
+	walletAddress: Address | undefined;
+	sourceChainId: SupportedChainId | undefined;
+	destChainId: SupportedChainId | undefined;
+}
+
+export function useBridgeTransfer({
+	walletAddress,
+	sourceChainId,
+	destChainId,
+}: UseBridgeTransferParams) {
+	const [transfer, setTransfer] = useState<BridgeTransfer | null>(null);
+
+	const handleDepositForBurn = useCallback(
+		(
+			chainId: number,
+			txHash: `0x${string}`,
+			depositor: Address,
+			amount: bigint,
+			destinationDomain: number,
+		) => {
+			const sourceDomain = CCTP_DOMAINS[chainId] ?? 0;
+			const destChainId = DOMAIN_TO_CHAIN_ID[destinationDomain];
+
+			setTransfer({
+				id: `transfer-${txHash}`,
+				status: "deposit_sent",
+				sourceChainId: chainId,
+				destChainId: destChainId ?? 0,
+				sourceDomain,
+				destinationDomain,
+				amount,
+				depositor,
+				depositTxHash: txHash,
+				depositTimestamp: Math.floor(Date.now() / 1000),
+			});
+		},
+		[],
+	);
+
+	const handleMessageReceived = useCallback(
+		(chainId: number, txHash: `0x${string}`, sourceDomain: number) => {
+			setTransfer((prev) => {
+				if (!prev) return prev;
+				if (prev.sourceDomain !== sourceDomain) return prev;
+				if (DOMAIN_TO_CHAIN_ID[prev.destinationDomain] !== chainId) return prev;
+
+				return {
+					...prev,
+					status: "minted",
+					mintTxHash: txHash,
+					mintTimestamp: Math.floor(Date.now() / 1000),
+				};
+			});
+		},
+		[],
+	);
+
+	useWatchContractEvent({
+		address: TOKEN_MESSENGER_V2_ADDRESS,
+		abi: depositForBurnEventAbi,
+		eventName: "DepositForBurn",
+		chainId: sourceChainId,
+		args: { depositor: walletAddress },
+		enabled: !!walletAddress && !!sourceChainId,
+		onLogs: (logs) => {
+			for (const log of logs) {
+				if (!sourceChainId) continue;
+				handleDepositForBurn(
+					sourceChainId,
+					log.transactionHash,
+					log.args.depositor as Address,
+					log.args.amount as bigint,
+					log.args.destinationDomain as number,
+				);
+			}
+		},
 	});
 
-	if (topic2) {
-		params.set("topic2", topic2);
-		params.set("topic0_2_opr", "and");
-	}
+	const destReceiverAddress = destChainId
+		? RECEIVER_ADDRESSES[destChainId]
+		: undefined;
 
-	const url = `${baseUrl}?${params.toString()}`;
-	const response = await fetch(url);
-	const json = await response.json();
+	useWatchContractEvent({
+		address: MESSAGE_TRANSMITTER_V2_ADDRESS,
+		abi: messageReceivedEventAbi,
+		eventName: "MessageReceived",
+		chainId: destChainId,
+		args: { caller: destReceiverAddress },
+		enabled:
+			!!walletAddress && !!destChainId && !!destReceiverAddress && !!transfer,
+		onLogs: (logs) => {
+			for (const log of logs) {
+				if (!destChainId) continue;
+				handleMessageReceived(
+					destChainId,
+					log.transactionHash,
+					log.args.sourceDomain as number,
+				);
+			}
+		},
+	});
 
-	if (json.status !== "1" || !Array.isArray(json.result)) {
-		return [];
-	}
+	const reset = useCallback(() => {
+		setTransfer(null);
+	}, []);
 
-	return json.result;
-}
-
-function parseDepositForBurnLog(
-	log: EtherscanLogResult,
-	chainId: number,
-): BridgeEvent | null {
-	try {
-		const decoded = decodeEventLog({
-			abi: depositForBurnEventAbi,
-			data: log.data as `0x${string}`,
-			topics: log.topics as [`0x${string}`, ...`0x${string}`[]],
-		});
-
-		const args = decoded.args as {
-			burnToken: Address;
-			amount: bigint;
-			depositor: Address;
-			mintRecipient: `0x${string}`;
-			destinationDomain: number;
-			destinationTokenMessenger: `0x${string}`;
-			destinationCaller: `0x${string}`;
-			maxFee: bigint;
-			minFinalityThreshold: number;
-			hookData: `0x${string}`;
-		};
-
-		return {
-			id: `burn-${log.transactionHash}-${log.topics[0]}`,
-			type: "burn",
-			chainId,
-			txHash: log.transactionHash as `0x${string}`,
-			blockNumber: BigInt(log.blockNumber),
-			timestamp: Number.parseInt(log.timeStamp, 16),
-			depositor: args.depositor,
-			amount: args.amount,
-			sourceDomain: CCTP_DOMAINS[chainId] ?? 0,
-			destinationDomain: args.destinationDomain,
-		};
-	} catch {
-		return null;
-	}
-}
-
-function parseMessageReceivedLog(
-	log: EtherscanLogResult,
-	chainId: number,
-): Partial<BridgeEvent> | null {
-	try {
-		const decoded = decodeEventLog({
-			abi: messageReceivedEventAbi,
-			data: log.data as `0x${string}`,
-			topics: log.topics as [`0x${string}`, ...`0x${string}`[]],
-		});
-
-		const args = decoded.args as {
-			caller: Address;
-			sourceDomain: number;
-			nonce: `0x${string}`;
-			sender: `0x${string}`;
-			messageBody: `0x${string}`;
-		};
-
-		return {
-			id: `mint-${log.transactionHash}-${args.nonce}`,
-			type: "mint",
-			chainId,
-			txHash: log.transactionHash as `0x${string}`,
-			blockNumber: BigInt(log.blockNumber),
-			timestamp: Number.parseInt(log.timeStamp, 16),
-			sourceDomain: args.sourceDomain,
-			destinationDomain: CCTP_DOMAINS[chainId] ?? 0,
-		};
-	} catch {
-		return null;
-	}
-}
-
-export function useBridgeEvents(walletAddress: Address | undefined) {
-	const [events, setEvents] = useState<BridgeEvent[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const initialFetchDone = useRef(false);
-
-	const addEvent = useCallback((event: BridgeEvent) => {
-		setEvents((prev) => {
-			if (prev.some((e) => e.id === event.id)) return prev;
-			return [event, ...prev].sort((a, b) => b.timestamp - a.timestamp);
+	const startPending = useCallback(() => {
+		setTransfer((prev) => {
+			if (prev) return prev;
+			return {
+				id: `pending-${Date.now()}`,
+				status: "pending",
+				sourceChainId: 0,
+				destChainId: 0,
+				sourceDomain: 0,
+				destinationDomain: 0,
+				amount: 0n,
+				depositor: "0x" as Address,
+				depositTxHash: "0x" as `0x${string}`,
+				depositTimestamp: Math.floor(Date.now() / 1000),
+			};
 		});
 	}, []);
 
-	const fetchHistorical = useCallback(async () => {
-		if (!walletAddress || !ETHERSCAN_API_KEY) return;
-
-		setIsLoading(true);
-		setError(null);
-
-		try {
-			const depositTopic0 = encodeEventTopics({
-				abi: depositForBurnEventAbi,
-				eventName: "DepositForBurn",
-			})[0];
-
-			const walletTopic = padHex(walletAddress.toLowerCase() as `0x${string}`, {
-				size: 32,
-			});
-
-			const allEvents: BridgeEvent[] = [];
-
-			for (const chain of SUPPORTED_CHAINS) {
-				const burnLogs = await fetchHistoricalLogs(
-					chain.id,
-					TOKEN_MESSENGER_V2_ADDRESS,
-					depositTopic0,
-					walletTopic,
-				);
-
-				const chainEvents: BridgeEvent[] = [];
-				for (const log of burnLogs) {
-					const parsed = parseDepositForBurnLog(log, chain.id);
-					if (
-						parsed &&
-						parsed.depositor.toLowerCase() === walletAddress.toLowerCase()
-					) {
-						chainEvents.push(parsed);
-					}
-				}
-
-				chainEvents.sort((a, b) => b.timestamp - a.timestamp);
-				allEvents.push(...chainEvents.slice(0, MAX_EVENTS_PER_CHAIN));
-			}
-
-			const sorted = allEvents
-				.sort((a, b) => b.timestamp - a.timestamp)
-				.slice(0, MAX_EVENTS_PER_CHAIN);
-			setEvents(sorted);
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Failed to fetch events");
-		} finally {
-			setIsLoading(false);
-		}
-	}, [walletAddress]);
-
-	useEffect(() => {
-		if (walletAddress && !initialFetchDone.current) {
-			initialFetchDone.current = true;
-			fetchHistorical();
-		}
-	}, [walletAddress, fetchHistorical]);
-
-	useEffect(() => {
-		if (!walletAddress) {
-			initialFetchDone.current = false;
-			setEvents([]);
-		}
-	}, [walletAddress]);
-
-	useWatchContractEvent({
-		address: TOKEN_MESSENGER_V2_ADDRESS,
-		abi: depositForBurnEventAbi,
-		eventName: "DepositForBurn",
-		chainId: sepolia.id,
-		args: { depositor: walletAddress },
-		enabled: !!walletAddress,
-		onLogs: (logs) => {
-			for (const log of logs) {
-				const event: BridgeEvent = {
-					id: `burn-${log.transactionHash}-${log.logIndex}`,
-					type: "burn",
-					chainId: sepolia.id,
-					txHash: log.transactionHash,
-					blockNumber: log.blockNumber,
-					timestamp: Math.floor(Date.now() / 1000),
-					depositor: log.args.depositor as Address,
-					amount: log.args.amount as bigint,
-					sourceDomain: CCTP_DOMAINS[sepolia.id] ?? 0,
-					destinationDomain: log.args.destinationDomain as number,
-				};
-				addEvent(event);
-			}
-		},
-	});
-
-	useWatchContractEvent({
-		address: TOKEN_MESSENGER_V2_ADDRESS,
-		abi: depositForBurnEventAbi,
-		eventName: "DepositForBurn",
-		chainId: baseSepolia.id,
-		args: { depositor: walletAddress },
-		enabled: !!walletAddress,
-		onLogs: (logs) => {
-			for (const log of logs) {
-				const event: BridgeEvent = {
-					id: `burn-${log.transactionHash}-${log.logIndex}`,
-					type: "burn",
-					chainId: baseSepolia.id,
-					txHash: log.transactionHash,
-					blockNumber: log.blockNumber,
-					timestamp: Math.floor(Date.now() / 1000),
-					depositor: log.args.depositor as Address,
-					amount: log.args.amount as bigint,
-					sourceDomain: CCTP_DOMAINS[baseSepolia.id] ?? 0,
-					destinationDomain: log.args.destinationDomain as number,
-				};
-				addEvent(event);
-			}
-		},
-	});
-
-	useWatchContractEvent({
-		address: TOKEN_MESSENGER_V2_ADDRESS,
-		abi: depositForBurnEventAbi,
-		eventName: "DepositForBurn",
-		chainId: arbitrumSepolia.id,
-		args: { depositor: walletAddress },
-		enabled: !!walletAddress,
-		onLogs: (logs) => {
-			for (const log of logs) {
-				const event: BridgeEvent = {
-					id: `burn-${log.transactionHash}-${log.logIndex}`,
-					type: "burn",
-					chainId: arbitrumSepolia.id,
-					txHash: log.transactionHash,
-					blockNumber: log.blockNumber,
-					timestamp: Math.floor(Date.now() / 1000),
-					depositor: log.args.depositor as Address,
-					amount: log.args.amount as bigint,
-					sourceDomain: CCTP_DOMAINS[arbitrumSepolia.id] ?? 0,
-					destinationDomain: log.args.destinationDomain as number,
-				};
-				addEvent(event);
-			}
-		},
-	});
-
 	return {
-		events,
-		isLoading,
-		error,
-		refetch: fetchHistorical,
+		transfer,
+		reset,
+		startPending,
 	};
 }
 

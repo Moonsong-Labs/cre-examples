@@ -12,7 +12,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
-import { formatUnits, maxUint256 } from "viem";
+import { formatUnits, maxUint256, pad, parseUnits } from "viem";
 import {
 	useAccount,
 	useChainId,
@@ -21,7 +21,7 @@ import {
 	useWaitForTransactionReceipt,
 	useWriteContract,
 } from "wagmi";
-import { BridgeTransactionFeed } from "~/components/bridge-transaction-feed";
+import { BridgeProgress } from "~/components/bridge-progress";
 import {
 	Badge,
 	Button,
@@ -32,12 +32,20 @@ import {
 	Text,
 } from "~/components/ui";
 import {
+	CCTP_DOMAINS,
+	fetchBridgeFee,
+	FINALITY_THRESHOLD,
+	TOKEN_MESSENGER_V2_ADDRESS,
+	tokenMessengerAbi,
+} from "~/config/cctp";
+import {
 	CIRCLE_FAUCET_URL,
 	erc20Abi,
 	TOKEN_MESSENGER_ADDRESSES,
 	USDC_ADDRESSES,
 } from "~/config/contracts";
 import type { config } from "~/config/wagmi";
+import { useBridgeTransfer } from "~/hooks/useBridgeEvents";
 import type { clientAction as whitelistAction } from "~/routes/resources/whitelist";
 import type { Route } from "./+types/cross-chain-relayer";
 
@@ -64,7 +72,6 @@ const CHAINS: ChainItem[] = [
 	{ value: "arbitrum-sepolia", label: "Arbitrum Sepolia", chainId: 421614 },
 ];
 
-
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
 	return Number(formatUnits(balance, 6)).toFixed(2);
@@ -79,13 +86,22 @@ export default function CrossChainRelayer() {
 	const [amount, setAmount] = useState("0");
 	const [sourceChain, setSourceChain] = useState<string[]>([]);
 	const [destChain, setDestChain] = useState<string[]>([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const whitelistFetcher = useFetcher<typeof whitelistAction>();
 	const lastWhitelistAddress = useRef<string | null>(null);
 
 	const currentChain = CHAINS.find((c) => c.chainId === chainId);
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
+
+	const {
+		transfer,
+		reset: resetTransfer,
+		startPending,
+	} = useBridgeTransfer({
+		walletAddress: address,
+		sourceChainId: sourceChainData?.chainId,
+		destChainId: destChainData?.chainId,
+	});
 
 	const destChainId = destChainData?.chainId;
 
@@ -166,6 +182,17 @@ export default function CrossChainRelayer() {
 			hash: approveTxHash,
 		});
 
+	const {
+		writeContract: depositForBurn,
+		data: burnTxHash,
+		isPending: isBurning,
+	} = useWriteContract();
+
+	const { isLoading: isBurnConfirming, isSuccess: isBurnSuccess } =
+		useWaitForTransactionReceipt({
+			hash: burnTxHash,
+		});
+
 	useEffect(() => {
 		if (isApproveSuccess) {
 			refetchAllowance();
@@ -212,11 +239,53 @@ export default function CrossChainRelayer() {
 	};
 
 	const handleTransfer = async () => {
-		setIsSubmitting(true);
-		await new Promise((r) => setTimeout(r, 2000));
-		setIsSubmitting(false);
-		refetchSourceBalance();
+		if (
+			!sourceChainData ||
+			!destChainData ||
+			!address ||
+			!sourceUsdcAddress
+		)
+			return;
+
+		if (chainId !== sourceChainData.chainId) {
+			await switchChainAsync({ chainId: sourceChainData.chainId });
+		}
+
+		const amountInUnits = parseUnits(amount, 6);
+		const mintRecipient = pad(address, { size: 32 });
+		const sourceDomain = CCTP_DOMAINS[sourceChainData.chainId];
+		const destinationDomain = CCTP_DOMAINS[destChainData.chainId];
+		const destinationCaller = pad("0x0", { size: 32 });
+
+		const maxFee = await fetchBridgeFee(
+			sourceDomain,
+			destinationDomain,
+			amountInUnits,
+			"FAST",
+		);
+
+		startPending();
+		depositForBurn({
+			address: TOKEN_MESSENGER_V2_ADDRESS,
+			abi: tokenMessengerAbi,
+			functionName: "depositForBurn",
+			args: [
+				amountInUnits,
+				destinationDomain,
+				mintRecipient,
+				sourceUsdcAddress,
+				destinationCaller,
+				maxFee,
+				FINALITY_THRESHOLD.FAST,
+			],
+		});
 	};
+
+	useEffect(() => {
+		if (isBurnSuccess) {
+			refetchSourceBalance();
+		}
+	}, [isBurnSuccess, refetchSourceBalance]);
 
 	const handleSwapChains = () => {
 		if (!sourceChain.length && !destChain.length) return;
@@ -720,10 +789,12 @@ export default function CrossChainRelayer() {
 							!sourceChain.length ||
 							!destChain.length ||
 							Number(amount) <= 0 ||
-							!isApproved
+							!isApproved ||
+							isBurning ||
+							isBurnConfirming
 						}
-						loading={isSubmitting}
-						loadingText="Processing..."
+						loading={isBurning || isBurnConfirming}
+						loadingText={isBurnConfirming ? "Confirming..." : "Signing..."}
 						onClick={handleTransfer}
 						size="lg"
 						className={css({ width: { base: "full", md: "auto" } })}
@@ -733,7 +804,7 @@ export default function CrossChainRelayer() {
 				</Card.Footer>
 			</Card.Root>
 
-			<BridgeTransactionFeed />
+			<BridgeProgress transfer={transfer} onReset={resetTransfer} />
 
 			{!isConnected && (
 				<div

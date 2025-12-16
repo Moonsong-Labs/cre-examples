@@ -19,8 +19,8 @@ function getServerUrl() {
 	return resolveServerUrl(import.meta.env.VITE_CRE_HELPER_SERVER_URL);
 }
 
-function getBearerToken() {
-	const candidate = import.meta.env.VITE_CRE_HELPER_BEARER_TOKEN;
+function getApiKey() {
+	const candidate = import.meta.env.VITE_CRE_HELPER_API_KEY;
 	const trimmed = candidate?.trim();
 	return trimmed ? trimmed : null;
 }
@@ -48,7 +48,7 @@ async function ping(serverUrl: string) {
 }
 
 async function isRegistered(serverUrl: string, address: string) {
-	const response = await fetch(`${serverUrl}/addresses/${address}`);
+	const response = await fetch(`${serverUrl}/whitelist/${address}`);
 	if (!response.ok) {
 		const message = await parseErrorMessage(response);
 		throw new Error(
@@ -63,14 +63,14 @@ async function isRegistered(serverUrl: string, address: string) {
 }
 
 async function addAddress(serverUrl: string, address: string) {
-	const bearerToken = getBearerToken();
-	if (!bearerToken) {
-		throw new Error("Missing VITE_CRE_HELPER_BEARER_TOKEN");
+	const apiKey = getApiKey();
+	if (!apiKey) {
+		throw new Error("Missing VITE_CRE_HELPER_API_KEY");
 	}
 
-	const response = await fetch(`${serverUrl}/add-address/${address}`, {
+	const response = await fetch(`${serverUrl}/whitelist/add/${address}`, {
 		method: "POST",
-		headers: { Authorization: `Bearer ${bearerToken}` },
+		headers: { "X-API-Key": apiKey },
 	});
 
 	if (!response.ok) {

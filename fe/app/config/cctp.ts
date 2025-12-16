@@ -5,13 +5,53 @@ export const TOKEN_MESSENGER_V2_ADDRESS =
 	"0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA" as const;
 
 export const MESSAGE_TRANSMITTER_V2_ADDRESS =
-	"0x7865fAfC2db2093669d92c0F33AeEF291086BEFD" as const;
+	"0xe737e5cebeeba77efe34d4aa090756590b1ce275" as const;
+
+export const RECEIVER_ADDRESSES: Record<number, `0x${string}`> = {
+	[sepolia.id]: "0x9f430E32ffbbe270F48048BBe64F0D8d35127D10",
+	[baseSepolia.id]: "0x8762FCCfF9b5C32F1FDAa31AA70c1D9d99734417",
+	[arbitrumSepolia.id]: "0xf4D3aBEA2360D4f5f614F375fAd8d5d00F32be36",
+};
 
 export const CCTP_DOMAINS: Record<number, number> = {
 	[sepolia.id]: 0,
 	[baseSepolia.id]: 6,
 	[arbitrumSepolia.id]: 3,
 };
+
+export const FINALITY_THRESHOLD = {
+	FAST: 1000,
+	SLOW: 2000,
+} as const;
+
+export const IRIS_API_BASE = "https://iris-api-sandbox.circle.com/v2";
+
+export interface FeeEntry {
+	finalityThreshold: number;
+	minimumFee: number;
+}
+
+export async function fetchBridgeFee(
+	sourceDomain: number,
+	destDomain: number,
+	amount: bigint,
+	speed: "FAST" | "SLOW" = "FAST",
+): Promise<bigint> {
+	const url = `${IRIS_API_BASE}/burn/USDC/fees/${sourceDomain}/${destDomain}`;
+	try {
+		const res = await fetch(url);
+		if (!res.ok) return 0n;
+
+		const feeArr = (await res.json()) as FeeEntry[];
+		const threshold =
+			speed === "FAST" ? FINALITY_THRESHOLD.FAST : FINALITY_THRESHOLD.SLOW;
+		const entry = feeArr.find((f) => f.finalityThreshold === threshold);
+		const bps = entry?.minimumFee ?? 0;
+		return (amount * BigInt(bps) + 9999n) / 10000n;
+	} catch {
+		return 0n;
+	}
+}
 
 export const DOMAIN_TO_CHAIN_ID: Record<number, number> = {
 	0: sepolia.id,
@@ -23,12 +63,6 @@ export const CHAIN_NAMES: Record<number, string> = {
 	[sepolia.id]: "Sepolia",
 	[baseSepolia.id]: "Base Sepolia",
 	[arbitrumSepolia.id]: "Arbitrum Sepolia",
-};
-
-export const ETHERSCAN_API_URLS: Record<number, string> = {
-	[sepolia.id]: "https://api.etherscan.io/v2/api",
-	[baseSepolia.id]: "https://api.etherscan.io/v2/api",
-	[arbitrumSepolia.id]: "https://api.etherscan.io/v2/api",
 };
 
 export const BLOCK_EXPLORER_URLS: Record<number, string> = {
@@ -65,10 +99,29 @@ export const messageReceivedEventAbi = [
 			{ indexed: false, name: "sourceDomain", type: "uint32" },
 			{ indexed: true, name: "nonce", type: "bytes32" },
 			{ indexed: false, name: "sender", type: "bytes32" },
+			{ indexed: true, name: "finalityThresholdExecuted", type: "uint32" },
 			{ indexed: false, name: "messageBody", type: "bytes" },
 		],
 		name: "MessageReceived",
 		type: "event",
+	},
+] as const;
+
+export const tokenMessengerAbi = [
+	{
+		inputs: [
+			{ name: "amount", type: "uint256" },
+			{ name: "destinationDomain", type: "uint32" },
+			{ name: "mintRecipient", type: "bytes32" },
+			{ name: "burnToken", type: "address" },
+			{ name: "destinationCaller", type: "bytes32" },
+			{ name: "maxFee", type: "uint256" },
+			{ name: "minFinalityThreshold", type: "uint32" },
+		],
+		name: "depositForBurn",
+		outputs: [],
+		stateMutability: "nonpayable",
+		type: "function",
 	},
 ] as const;
 
