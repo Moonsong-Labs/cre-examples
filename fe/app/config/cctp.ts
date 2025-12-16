@@ -171,7 +171,7 @@ export async function fetchRelayStatus(
 	if (!baseUrl) return null;
 
 	try {
-		const res = await fetch(`${baseUrl}/mailbox/${burnTxHash}`, {
+		const res = await fetch(`${baseUrl}/01-relay/mailbox/${burnTxHash}`, {
 			headers: { "x-api-key": apiKey ?? "" },
 		});
 		if (!res.ok) return null;
