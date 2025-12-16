@@ -7,6 +7,7 @@
 	"private": true,
 	"scripts": {
 		"start:fe": "cd fe && bun dev",
+		"build:fe": "cd fe && bun run build",
 		"check": "biome check --write"
 	},
 	"devDependencies": {
