@@ -365,62 +365,6 @@ export default function CrossChainRelayer() {
 				</div>
 			</div>
 
-			<Card.Root variant="outline">
-				<Card.Header>
-					<Card.Title>Context</Card.Title>
-					<Card.Description></Card.Description>
-				</Card.Header>
-				<Card.Body
-					className={css({
-						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-						gap: "4",
-					})}
-				>
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "2",
-						})}
-					>
-						<Badge variant="outline" colorPalette="amber" size="sm">
-							Problem
-						</Badge>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							The extra claim transaction adds friction and can leave transfers
-							unclaimed if a user doesn't come back to original bridge site.
-						</Text>
-					</div>
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "2",
-						})}
-					>
-						<Badge variant="outline" colorPalette="teal" size="sm">
-							Remedy
-						</Badge>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							This example relays the destination claim txn for a whitelist of
-							users, completing the bridge automatically. In this example the
-							whitelist is populated with whomever interacts with this app.
-						</Text>
-					</div>
-				</Card.Body>
-			</Card.Root>
-
 			{isConnected && (
 				<div
 					className={css({
@@ -774,6 +718,63 @@ export default function CrossChainRelayer() {
 			</Card.Root>
 
 			<BridgeProgress transfer={transfer} onReset={resetTransfer} />
+
+				<Card.Root variant="outline">
+				<Card.Header>
+					<Card.Title>Context</Card.Title>
+					<Card.Description></Card.Description>
+				</Card.Header>
+				<Card.Body
+					className={css({
+						display: "grid",
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+						gap: "4",
+					})}
+				>
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "2",
+						})}
+					>
+						<Badge variant="outline" colorPalette="amber" size="sm">
+							Problem
+						</Badge>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							The extra claim transaction adds friction and can leave transfers
+							unclaimed if a user doesn't come back to original bridge site.
+						</Text>
+					</div>
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "2",
+						})}
+					>
+						<Badge variant="outline" colorPalette="teal" size="sm">
+							Remedy
+						</Badge>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							This example relays the destination claim txn for a whitelist of
+							users, completing the bridge automatically. In this example the
+							whitelist is populated with whomever interacts with this app.
+						</Text>
+					</div>
+				</Card.Body>
+			</Card.Root>
+
 
 			{!isConnected && (
 				<div

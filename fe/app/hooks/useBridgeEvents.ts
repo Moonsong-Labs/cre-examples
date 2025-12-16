@@ -94,7 +94,7 @@ export function useBridgeTransfer({
 					...prev,
 					status: "minted",
 					mintTxHash: txHash,
-					mintTimestamp: Math.floor(Date.now() / 1000),
+					mintTimestamp: prev.mintTimestamp ?? Math.floor(Date.now() / 1000),
 				};
 			});
 		},
@@ -129,6 +129,11 @@ export function useBridgeTransfer({
 		? RECEIVER_ADDRESSES[destChainId]
 		: undefined;
 
+	const needsMintTxHash =
+		!!transfer &&
+		(transfer.status === "minted" || transfer.status === "relaying") &&
+		!transfer.mintTxHash;
+
 	const isTransferInProgress =
 		!!transfer && !["minted", "failed"].includes(transfer.status);
 
@@ -142,7 +147,7 @@ export function useBridgeTransfer({
 			!!walletAddress &&
 			!!destChainId &&
 			!!destReceiverAddress &&
-			isTransferInProgress,
+			(isTransferInProgress || needsMintTxHash),
 		onLogs: (logs) => {
 			for (const log of logs) {
 				if (!destChainId) continue;
