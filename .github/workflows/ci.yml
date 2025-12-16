@@ -172,7 +172,6 @@ jobs:
 
       - name: Run tests
         run: forge test -vvv
-        continue-on-error: true
 
   # cre-simulate:
   #   name: CRE Simulate (${{ matrix.example }})
