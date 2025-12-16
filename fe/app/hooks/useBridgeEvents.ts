@@ -107,7 +107,10 @@ export function useBridgeTransfer({
 		eventName: "DepositForBurn",
 		chainId: sourceChainId,
 		args: { depositor: walletAddress },
-		enabled: !!walletAddress && !!sourceChainId,
+		enabled:
+			!!walletAddress &&
+			!!sourceChainId &&
+			(!transfer || transfer.status === "pending"),
 		onLogs: (logs) => {
 			for (const log of logs) {
 				if (!sourceChainId) continue;
@@ -126,6 +129,9 @@ export function useBridgeTransfer({
 		? RECEIVER_ADDRESSES[destChainId]
 		: undefined;
 
+	const isTransferInProgress =
+		!!transfer && !["minted", "failed"].includes(transfer.status);
+
 	useWatchContractEvent({
 		address: MESSAGE_TRANSMITTER_V2_ADDRESS,
 		abi: messageReceivedEventAbi,
@@ -133,7 +139,10 @@ export function useBridgeTransfer({
 		chainId: destChainId,
 		args: { caller: destReceiverAddress },
 		enabled:
-			!!walletAddress && !!destChainId && !!destReceiverAddress && !!transfer,
+			!!walletAddress &&
+			!!destChainId &&
+			!!destReceiverAddress &&
+			isTransferInProgress,
 		onLogs: (logs) => {
 			for (const log of logs) {
 				if (!destChainId) continue;

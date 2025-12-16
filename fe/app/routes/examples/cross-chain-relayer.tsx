@@ -368,8 +368,7 @@ export default function CrossChainRelayer() {
 			<Card.Root variant="outline">
 				<Card.Header>
 					<Card.Title>Context</Card.Title>
-					<Card.Description>
-					</Card.Description>
+					<Card.Description></Card.Description>
 				</Card.Header>
 				<Card.Body
 					className={css({
@@ -579,7 +578,6 @@ export default function CrossChainRelayer() {
 						gap: "6",
 					})}
 				>
-
 					<div
 						className={css({
 							display: "grid",
