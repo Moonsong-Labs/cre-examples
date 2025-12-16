@@ -1,12 +1,21 @@
 {
-  "name": "cre-examples",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "cre-examples",
+	"type": "module",
+	"workspaces": [
+		"examples/*"
+	],
+	"private": true,
+	"scripts": {
+		"start:fe": "cd fe && bun dev",
+		"check": "biome check --write"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@biomejs/biome": "^2.3.8"
+	}
 }

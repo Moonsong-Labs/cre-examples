@@ -1,0 +1,26 @@
+# ==========================================================================
+# CRE PROJECT SETTINGS FILE
+# ==========================================================================
+detector:
+  rpcs:
+    - chain-name: ethereum-mainnet
+      url: https://rpc.ankr.com/eth/265ba449068ac9b2ea82e224375312300e973507c0e03291e85fc6f2da9234d3
+    - chain-name: ethereum-testnet-sepolia
+      url: https://1rpc.io/sepolia
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: https://arbitrum-sepolia.drpc.org
+
+relayer:
+  rpcs:
+    - chain-name: ethereum-mainnet
+      url: https://rpc.ankr.com/eth/265ba449068ac9b2ea82e224375312300e973507c0e03291e85fc6f2da9234d3
+    - chain-name: ethereum-testnet-sepolia
+      url: https://1rpc.io/sepolia
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: https://arbitrum-sepolia.drpc.org
+
+
