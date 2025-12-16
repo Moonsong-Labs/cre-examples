@@ -46,8 +46,9 @@ export async function fetchBridgeFee(
 		const threshold =
 			speed === "FAST" ? FINALITY_THRESHOLD.FAST : FINALITY_THRESHOLD.SLOW;
 		const entry = feeArr.find((f) => f.finalityThreshold === threshold);
-		const bps = entry?.minimumFee ?? 0;
-		return (amount * BigInt(bps) + 9999n) / 10000n;
+		const feePct = entry?.minimumFee ?? 0;
+		// minimumFee is in 0.1% units (1 = 0.1%), so divide by 1000
+		return (amount * BigInt(feePct) + 999n) / 1000n;
 	} catch {
 		return 0n;
 	}
@@ -138,4 +139,83 @@ export interface BridgeEvent {
 	amount: bigint;
 	sourceDomain: number;
 	destinationDomain: number;
+}
+
+export type RelayStatus =
+	| "pending"
+	| "polling"
+	| "ready"
+	| "relayed"
+	| "failed";
+
+export interface RelayStatusResponse {
+	burnTxHash: string;
+	status: RelayStatus;
+	sourceDomain: number;
+	destinationDomain: number;
+	depositor: string;
+	createdAt: number;
+	updatedAt: number;
+	retryCount: number;
+	errorMessage: string | null;
+	attestation: string | null;
+	message: string | null;
+}
+
+export async function fetchRelayStatus(
+	burnTxHash: string,
+): Promise<RelayStatusResponse | null> {
+	const baseUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL;
+	const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
+
+	if (!baseUrl) return null;
+
+	try {
+		const res = await fetch(`${baseUrl}/mailbox/${burnTxHash}`, {
+			headers: { "x-api-key": apiKey ?? "" },
+		});
+		if (!res.ok) return null;
+		return (await res.json()) as RelayStatusResponse;
+	} catch {
+		return null;
+	}
+}
+
+export type IrisAttestationStatus = "pending" | "complete";
+
+export interface IrisMessage {
+	attestation: string;
+	message: string;
+	eventNonce: string;
+	cctpVersion: number;
+	status: string;
+	decodedMessage: unknown;
+	delayReason?: string;
+}
+
+export interface IrisResponse {
+	messages: IrisMessage[];
+}
+
+export async function fetchIrisAttestation(
+	sourceDomain: number,
+	txHash: string,
+): Promise<{ status: IrisAttestationStatus; attestation?: string } | null> {
+	try {
+		const res = await fetch(
+			`${IRIS_API_BASE}/messages/${sourceDomain}?transactionHash=${txHash}`,
+		);
+		if (!res.ok) return null;
+
+		const data = (await res.json()) as IrisResponse;
+		const msg = data.messages?.[0];
+		if (!msg) return null;
+
+		if (msg.status === "complete" && msg.attestation !== "PENDING") {
+			return { status: "complete", attestation: msg.attestation };
+		}
+		return { status: "pending" };
+	} catch {
+		return null;
+	}
 }

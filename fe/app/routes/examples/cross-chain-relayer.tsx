@@ -12,7 +12,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
-import { formatUnits, maxUint256, pad, parseUnits } from "viem";
+import { formatUnits, maxUint256, pad, parseEventLogs, parseUnits } from "viem";
 import {
 	useAccount,
 	useChainId,
@@ -33,15 +33,15 @@ import {
 } from "~/components/ui";
 import {
 	CCTP_DOMAINS,
-	fetchBridgeFee,
+	depositForBurnEventAbi,
 	FINALITY_THRESHOLD,
+	fetchBridgeFee,
 	TOKEN_MESSENGER_V2_ADDRESS,
 	tokenMessengerAbi,
 } from "~/config/cctp";
 import {
 	CIRCLE_FAUCET_URL,
 	erc20Abi,
-	TOKEN_MESSENGER_ADDRESSES,
 	USDC_ADDRESSES,
 } from "~/config/contracts";
 import type { config } from "~/config/wagmi";
@@ -97,6 +97,7 @@ export default function CrossChainRelayer() {
 		transfer,
 		reset: resetTransfer,
 		startPending,
+		setDeposited,
 	} = useBridgeTransfer({
 		walletAddress: address,
 		sourceChainId: sourceChainData?.chainId,
@@ -144,9 +145,6 @@ export default function CrossChainRelayer() {
 	const sourceUsdcAddress = sourceChainData
 		? USDC_ADDRESSES[sourceChainData.chainId]
 		: undefined;
-	const sourceMessengerAddress = sourceChainData
-		? TOKEN_MESSENGER_ADDRESSES[sourceChainData.chainId]
-		: undefined;
 
 	const { data: currentAllowance, refetch: refetchAllowance } = useReadContract(
 		{
@@ -154,16 +152,9 @@ export default function CrossChainRelayer() {
 			address: sourceUsdcAddress,
 			abi: erc20Abi,
 			functionName: "allowance",
-			args:
-				address && sourceMessengerAddress
-					? [address, sourceMessengerAddress]
-					: undefined,
+			args: address ? [address, TOKEN_MESSENGER_V2_ADDRESS] : undefined,
 			query: {
-				enabled:
-					!!address &&
-					!!sourceChainData &&
-					!!sourceUsdcAddress &&
-					!!sourceMessengerAddress,
+				enabled: !!address && !!sourceChainData && !!sourceUsdcAddress,
 			},
 		},
 	);
@@ -188,7 +179,7 @@ export default function CrossChainRelayer() {
 		isPending: isBurning,
 	} = useWriteContract();
 
-	const { isLoading: isBurnConfirming, isSuccess: isBurnSuccess } =
+	const { data: burnReceipt, isLoading: isBurnConfirming } =
 		useWaitForTransactionReceipt({
 			hash: burnTxHash,
 		});
@@ -223,8 +214,7 @@ export default function CrossChainRelayer() {
 			: null;
 
 	const handleApprove = async () => {
-		if (!sourceChainData || !sourceUsdcAddress || !sourceMessengerAddress)
-			return;
+		if (!sourceChainData || !sourceUsdcAddress) return;
 
 		if (chainId !== sourceChainData.chainId) {
 			await switchChainAsync({ chainId: sourceChainData.chainId });
@@ -234,17 +224,12 @@ export default function CrossChainRelayer() {
 			address: sourceUsdcAddress,
 			abi: erc20Abi,
 			functionName: "approve",
-			args: [sourceMessengerAddress, maxUint256],
+			args: [TOKEN_MESSENGER_V2_ADDRESS, maxUint256],
 		});
 	};
 
 	const handleTransfer = async () => {
-		if (
-			!sourceChainData ||
-			!destChainData ||
-			!address ||
-			!sourceUsdcAddress
-		)
+		if (!sourceChainData || !destChainData || !address || !sourceUsdcAddress)
 			return;
 
 		if (chainId !== sourceChainData.chainId) {
@@ -264,6 +249,8 @@ export default function CrossChainRelayer() {
 			"FAST",
 		);
 
+		console.log("Fetched bridge fee:", formatUnits(maxFee, 6), "USDC");
+
 		startPending();
 		depositForBurn({
 			address: TOKEN_MESSENGER_V2_ADDRESS,
@@ -282,10 +269,37 @@ export default function CrossChainRelayer() {
 	};
 
 	useEffect(() => {
-		if (isBurnSuccess) {
-			refetchSourceBalance();
+		if (!burnReceipt || !sourceChainData || !address) return;
+
+		const logs = parseEventLogs({
+			abi: depositForBurnEventAbi,
+			logs: burnReceipt.logs,
+		});
+
+		const depositEvent = logs.find(
+			(log) =>
+				log.eventName === "DepositForBurn" &&
+				log.args.depositor?.toLowerCase() === address.toLowerCase(),
+		);
+
+		if (depositEvent?.args) {
+			setDeposited(
+				burnReceipt.transactionHash,
+				depositEvent.args.depositor,
+				depositEvent.args.amount,
+				sourceChainData.chainId,
+				depositEvent.args.destinationDomain,
+			);
 		}
-	}, [isBurnSuccess, refetchSourceBalance]);
+
+		refetchSourceBalance();
+	}, [
+		burnReceipt,
+		sourceChainData,
+		address,
+		setDeposited,
+		refetchSourceBalance,
+	]);
 
 	const handleSwapChains = () => {
 		if (!sourceChain.length && !destChain.length) return;
@@ -355,8 +369,6 @@ export default function CrossChainRelayer() {
 				<Card.Header>
 					<Card.Title>Context</Card.Title>
 					<Card.Description>
-						CCTP v2 is a 2-step flow: 1) Burn on Source chain 2) Claim on
-						Destination chain
 					</Card.Description>
 				</Card.Header>
 				<Card.Body
@@ -567,25 +579,6 @@ export default function CrossChainRelayer() {
 						gap: "6",
 					})}
 				>
-					{isConnected && currentChain && (
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-								p: "2.5",
-								bg: "teal.2",
-								borderRadius: "md",
-							})}
-						>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Connected to:
-							</Text>
-							<Badge variant="solid" colorPalette="teal">
-								{currentChain.label}
-							</Badge>
-						</div>
-					)}
 
 					<div
 						className={css({
@@ -676,28 +669,6 @@ export default function CrossChainRelayer() {
 							</Select.Root>
 						</Field.Root>
 					</div>
-
-					{sourceChainData && destChainData && (
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-								color: "teal.11",
-								bg: "teal.2",
-								border: "1px solid",
-								borderColor: "teal.4",
-								borderRadius: "md",
-								p: "3",
-							})}
-						>
-							<Sparkles className={css({ width: "4", height: "4" })} />
-							<Text className={css({ fontSize: "sm" })}>
-								Route locked: {sourceChainData.label} → {destChainData.label}{" "}
-								with CRE attestations
-							</Text>
-						</div>
-					)}
 
 					<Field.Root>
 						<NumberInput.Root

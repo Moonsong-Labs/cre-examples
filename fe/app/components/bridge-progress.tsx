@@ -1,9 +1,12 @@
 import {
+	AlertCircle,
 	ArrowRight,
 	Check,
 	ExternalLink,
 	Flame,
 	Loader2,
+	Radio,
+	Shield,
 	Sparkles,
 } from "lucide-react";
 import { css, cx } from "styled-system/css";
@@ -277,16 +280,19 @@ interface BridgeProgressProps {
 	onReset: () => void;
 }
 
+const statusToStep: Record<string, number> = {
+	pending: 1,
+	deposited: 3, // deposit confirmed → step 2 done, now on step 3 (attesting)
+	attesting: 3,
+	relaying: 4,
+	minted: 6, // all steps completed
+	failed: 6,
+};
+
 export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 	const { isConnected } = useAccount();
 
-	const currentStep = transfer
-		? transfer.status === "pending"
-			? 1
-			: transfer.status === "deposit_sent"
-				? 2
-				: 3
-		: 0;
+	const currentStep = transfer ? (statusToStep[transfer.status] ?? 0) : 0;
 
 	if (!isConnected) {
 		return (
@@ -364,7 +370,7 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 								className={css({ width: "5", height: "5", color: "teal.11" })}
 							/>
 							Bridge Progress
-							{transfer.status !== "minted" && (
+							{transfer.status !== "minted" && transfer.status !== "failed" && (
 								<Loader2
 									className={css({
 										width: "4",
@@ -382,6 +388,11 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 					{transfer.status === "minted" && (
 						<Badge variant="solid" colorPalette="green">
 							Complete
+						</Badge>
+					)}
+					{transfer.status === "failed" && (
+						<Badge variant="solid" colorPalette="red">
+							Failed
 						</Badge>
 					)}
 				</div>
@@ -411,7 +422,7 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 					<Step
 						step={2}
 						currentStep={currentStep}
-						label="Deposit Sent"
+						label="Deposited"
 						icon={<Flame className={css({ width: "5", height: "5" })} />}
 						activeIcon={<Flame className={css({ width: "5", height: "5" })} />}
 					/>
@@ -419,10 +430,36 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 					<Step
 						step={3}
 						currentStep={currentStep}
-						label="Minted"
-						icon={<Sparkles className={css({ width: "5", height: "5" })} />}
+						label="Attesting"
+						icon={<Shield className={css({ width: "5", height: "5" })} />}
+						activeIcon={<Shield className={css({ width: "5", height: "5" })} />}
+					/>
+					<StepConnectorLine isCompleted={currentStep > 3} />
+					<Step
+						step={4}
+						currentStep={currentStep}
+						label="Relaying"
+						icon={<Radio className={css({ width: "5", height: "5" })} />}
+						activeIcon={<Radio className={css({ width: "5", height: "5" })} />}
+					/>
+					<StepConnectorLine isCompleted={currentStep > 4} />
+					<Step
+						step={5}
+						currentStep={currentStep}
+						label={transfer.status === "failed" ? "Failed" : "Minted"}
+						icon={
+							transfer.status === "failed" ? (
+								<AlertCircle className={css({ width: "5", height: "5" })} />
+							) : (
+								<Sparkles className={css({ width: "5", height: "5" })} />
+							)
+						}
 						activeIcon={
-							<Sparkles className={css({ width: "5", height: "5" })} />
+							transfer.status === "failed" ? (
+								<AlertCircle className={css({ width: "5", height: "5" })} />
+							) : (
+								<Sparkles className={css({ width: "5", height: "5" })} />
+							)
 						}
 					/>
 				</div>
@@ -431,7 +468,7 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 					<TransferDetails transfer={transfer} />
 				)}
 
-				{transfer.status === "minted" && (
+				{(transfer.status === "minted" || transfer.status === "failed") && (
 					<div className={css({ mt: "4", textAlign: "center" })}>
 						<button
 							type="button"
@@ -463,15 +500,28 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 							width: "2",
 							height: "2",
 							borderRadius: "full",
-							bg: transfer.status === "minted" ? "green.9" : "amber.9",
-							animation: transfer.status !== "minted" ? "pulse" : "none",
+							bg:
+								transfer.status === "minted"
+									? "green.9"
+									: transfer.status === "failed"
+										? "red.9"
+										: "amber.9",
+							animation:
+								transfer.status !== "minted" && transfer.status !== "failed"
+									? "pulse"
+									: "none",
 						})}
 					/>
 					{transfer.status === "pending" &&
 						"Waiting for deposit transaction..."}
-					{transfer.status === "deposit_sent" &&
-						"Deposit confirmed, waiting for mint..."}
+					{transfer.status === "deposited" &&
+						"Deposit confirmed, processing..."}
+					{transfer.status === "attesting" &&
+						"Fetching attestation from Circle..."}
+					{transfer.status === "relaying" && "Relaying to destination chain..."}
 					{transfer.status === "minted" && "Transfer complete!"}
+					{transfer.status === "failed" &&
+						(transfer.errorMessage ?? "Transfer failed")}
 				</div>
 			</Card.Footer>
 		</Card.Root>
