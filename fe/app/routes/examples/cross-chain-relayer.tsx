@@ -324,8 +324,8 @@ export default function CrossChainRelayer() {
 
 	const handleSwapChains = () => {
 		if (!sourceChain.length && !destChain.length) return;
-		const newSource = destChain.length ? [destChain[0]] : [];
-		const newDest = sourceChain.length ? [sourceChain[0]] : [];
+		const newSource = destChain[0] ? [destChain[0]] : [];
+		const newDest = sourceChain[0] ? [sourceChain[0]] : [];
 		setValue("sourceChain", newSource, { shouldValidate: true });
 		setValue("destChain", newDest, { shouldValidate: true });
 	};
@@ -676,7 +676,13 @@ export default function CrossChainRelayer() {
 							render={({ field }) => (
 								<NumberInput.Root
 									value={field.value}
-									onValueChange={(e) => field.onChange(e.value)}
+									onValueChange={(e) =>
+										field.onChange(
+											Number.isNaN(e.valueAsNumber)
+												? "0"
+												: e.valueAsNumber.toString(),
+										)
+									}
 									min={0}
 									step={0.01}
 									formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
