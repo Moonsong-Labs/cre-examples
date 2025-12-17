@@ -31,6 +31,8 @@ export interface FeeEntry {
 	minimumFee: number;
 }
 
+const MIN_FAST_FEE = 100_000n; // 0.10 USDC absolute minimum for FAST
+
 export async function fetchBridgeFee(
 	sourceDomain: number,
 	destDomain: number,
@@ -40,17 +42,21 @@ export async function fetchBridgeFee(
 	const url = `${IRIS_API_BASE}/burn/USDC/fees/${sourceDomain}/${destDomain}`;
 	try {
 		const res = await fetch(url);
-		if (!res.ok) return 0n;
+		if (!res.ok) return speed === "FAST" ? MIN_FAST_FEE : 0n;
 
 		const feeArr = (await res.json()) as FeeEntry[];
 		const threshold =
 			speed === "FAST" ? FINALITY_THRESHOLD.FAST : FINALITY_THRESHOLD.SLOW;
 		const entry = feeArr.find((f) => f.finalityThreshold === threshold);
 		const feePct = entry?.minimumFee ?? 0;
-		// minimumFee is in 0.1% units (1 = 0.1%), so divide by 1000
-		return (amount * BigInt(feePct) + 999n) / 1000n;
+		// minimumFee is in basis points (1 bps = 0.01%), divide by 10000
+		const calculatedFee = (amount * BigInt(feePct)) / 10000n;
+		// Ensure minimum floor for FAST transfers
+		return speed === "FAST" && calculatedFee < MIN_FAST_FEE
+			? MIN_FAST_FEE
+			: calculatedFee;
 	} catch {
-		return 0n;
+		return speed === "FAST" ? MIN_FAST_FEE : 0n;
 	}
 }
 

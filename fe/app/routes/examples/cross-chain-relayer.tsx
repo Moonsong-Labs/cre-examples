@@ -7,12 +7,21 @@ import {
 	Loader2,
 	ShieldCheck,
 	Sparkles,
+	User,
 	XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
-import { formatUnits, maxUint256, pad, parseEventLogs, parseUnits } from "viem";
+import {
+	formatUnits,
+	isAddress,
+	maxUint256,
+	pad,
+	parseEventLogs,
+	parseUnits,
+} from "viem";
 import {
 	useAccount,
 	useChainId,
@@ -28,6 +37,7 @@ import {
 	Button,
 	Card,
 	Field,
+	Input,
 	NumberInput,
 	Select,
 	Text,
@@ -73,6 +83,8 @@ const CHAINS: ChainItem[] = [
 	{ value: "arbitrum-sepolia", label: "Arbitrum Sepolia", chainId: 421614 },
 ];
 
+const chainsCollection = createListCollection<ChainItem>({ items: CHAINS });
+
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
 	return Number(formatUnits(balance, 6)).toFixed(2);
@@ -80,19 +92,59 @@ function formatBalance(balance: bigint | undefined): string {
 
 const UNLIMITED_THRESHOLD = maxUint256 / 2n;
 
+const MINIMUM_AMOUNT = 1;
+
+interface BridgeFormData {
+	amount: string;
+	sourceChain: string[];
+	destChain: string[];
+}
+
 export default function CrossChainRelayer() {
 	const { isConnected, address } = useAccount();
 	const chainId = useChainId();
 	const { switchChainAsync } = useSwitchChain();
-	const [amount, setAmount] = useState("0");
-	const [sourceChain, setSourceChain] = useState<string[]>([]);
-	const [destChain, setDestChain] = useState<string[]>([]);
 	const whitelistFetcher = useFetcher<typeof whitelistAction>();
-	const lastWhitelistAddress = useRef<string | null>(null);
 
 	const currentChain = CHAINS.find((c) => c.chainId === chainId);
+
+	const {
+		control,
+		watch,
+		setValue,
+		formState: { errors },
+	} = useForm<BridgeFormData>({
+		mode: "onChange",
+		defaultValues: {
+			amount: "0",
+			sourceChain: [],
+			destChain: [],
+		},
+	});
+
+	const sourceChain = watch("sourceChain");
+	const destChain = watch("destChain");
+	const amount = watch("amount");
+
+	const [sameAsWallet, setSameAsWallet] = useState(true);
+	const [recipientAddress, setRecipientAddress] = useState("");
+
+	const handleToggleSameAsWallet = () => {
+		if (sameAsWallet) {
+			setSameAsWallet(false);
+		} else {
+			setSameAsWallet(true);
+			setRecipientAddress(address ?? "");
+		}
+	};
+
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
+	const destChainId = destChainData?.chainId;
+
+	const destChainsCollection = createListCollection<ChainItem>({
+		items: CHAINS.filter((c) => c.value !== sourceChain[0]),
+	});
 
 	const {
 		transfer,
@@ -104,21 +156,6 @@ export default function CrossChainRelayer() {
 		sourceChainId: sourceChainData?.chainId,
 		destChainId: destChainData?.chainId,
 	});
-
-	const destChainId = destChainData?.chainId;
-
-	const chainsCollection = useMemo(
-		() => createListCollection<ChainItem>({ items: CHAINS }),
-		[],
-	);
-
-	const destChainsCollection = useMemo(
-		() =>
-			createListCollection<ChainItem>({
-				items: CHAINS.filter((c) => c.value !== sourceChain[0]),
-			}),
-		[sourceChain],
-	);
 
 	const { data: sourceBalance, refetch: refetchSourceBalance } =
 		useReadContract({
@@ -191,21 +228,25 @@ export default function CrossChainRelayer() {
 		}
 	}, [isApproveSuccess, refetchAllowance]);
 
+	const [whitelistedAddress, setWhitelistedAddress] = useState<string | null>(
+		null,
+	);
+
 	useEffect(() => {
 		if (!isConnected || !address) {
-			lastWhitelistAddress.current = null;
+			setWhitelistedAddress(null);
 			return;
 		}
 
-		if (lastWhitelistAddress.current === address) return;
+		if (whitelistedAddress === address) return;
 		if (whitelistFetcher.state !== "idle") return;
 
-		lastWhitelistAddress.current = address;
+		setWhitelistedAddress(address);
 		whitelistFetcher.submit(
 			{ address },
 			{ method: "post", action: "/resources/whitelist" },
 		);
-	}, [isConnected, address, whitelistFetcher]);
+	}, [isConnected, address, whitelistFetcher, whitelistedAddress]);
 
 	const isWhitelisting = whitelistFetcher.state !== "idle";
 	const whitelistOk = !isWhitelisting && whitelistFetcher.data?.ok === true;
@@ -233,12 +274,15 @@ export default function CrossChainRelayer() {
 		if (!sourceChainData || !destChainData || !address || !sourceUsdcAddress)
 			return;
 
+		const recipient = sameAsWallet ? address : recipientAddress;
+		if (!recipient || !isAddress(recipient)) return;
+
 		if (chainId !== sourceChainData.chainId) {
 			await switchChainAsync({ chainId: sourceChainData.chainId });
 		}
 
 		const amountInUnits = parseUnits(amount, 6);
-		const mintRecipient = pad(address, { size: 32 });
+		const mintRecipient = pad(recipient, { size: 32 });
 		const sourceDomain = CCTP_DOMAINS[sourceChainData.chainId];
 		const destinationDomain = CCTP_DOMAINS[destChainData.chainId];
 		const destinationCaller = pad("0x0", { size: 32 });
@@ -304,8 +348,10 @@ export default function CrossChainRelayer() {
 
 	const handleSwapChains = () => {
 		if (!sourceChain.length && !destChain.length) return;
-		setSourceChain(destChain.length ? [destChain[0]] : []);
-		setDestChain(sourceChain.length ? [sourceChain[0]] : []);
+		const newSource = destChain[0] ? [destChain[0]] : [];
+		const newDest = sourceChain[0] ? [sourceChain[0]] : [];
+		setValue("sourceChain", newSource, { shouldValidate: true });
+		setValue("destChain", newDest, { shouldValidate: true });
 	};
 
 	return (
@@ -538,31 +584,40 @@ export default function CrossChainRelayer() {
 							borderColor: "border",
 						})}
 					>
-						<Field.Root>
-							<Select.Root
-								collection={chainsCollection}
-								value={sourceChain}
-								onValueChange={(e) => setSourceChain(e.value)}
-								disabled={!isConnected}
-							>
-								<Select.Label>Source Chain</Select.Label>
-								<Select.Control>
-									<Select.Trigger>
-										<Select.ValueText placeholder="Select chain" />
-										<Select.Indicator />
-									</Select.Trigger>
-								</Select.Control>
-								<Select.Positioner>
-									<Select.Content>
-										{chainsCollection.items.map((chain) => (
-											<Select.Item key={chain.value} item={chain}>
-												<Select.ItemText>{chain.label}</Select.ItemText>
-												<Select.ItemIndicator />
-											</Select.Item>
-										))}
-									</Select.Content>
-								</Select.Positioner>
-							</Select.Root>
+						<Field.Root invalid={!!errors.sourceChain}>
+							<Controller
+								name="sourceChain"
+								control={control}
+								render={({ field }) => (
+									<Select.Root
+										collection={chainsCollection}
+										value={field.value}
+										onValueChange={(e) => field.onChange(e.value)}
+										disabled={!isConnected}
+									>
+										<Select.Label>Source Chain</Select.Label>
+										<Select.Control>
+											<Select.Trigger>
+												<Select.ValueText placeholder="Select chain" />
+												<Select.Indicator />
+											</Select.Trigger>
+										</Select.Control>
+										<Select.Positioner>
+											<Select.Content>
+												{chainsCollection.items.map((chain) => (
+													<Select.Item key={chain.value} item={chain}>
+														<Select.ItemText>{chain.label}</Select.ItemText>
+														<Select.ItemIndicator />
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
+								)}
+							/>
+							{errors.sourceChain && (
+								<Field.ErrorText>{errors.sourceChain.message}</Field.ErrorText>
+							)}
 						</Field.Root>
 
 						<div
@@ -587,48 +642,181 @@ export default function CrossChainRelayer() {
 							</Button>
 						</div>
 
-						<Field.Root>
-							<Select.Root
-								collection={destChainsCollection}
-								value={destChain}
-								onValueChange={(e) => setDestChain(e.value)}
-								disabled={!isConnected || !sourceChain.length}
-							>
-								<Select.Label>Destination Chain</Select.Label>
-								<Select.Control>
-									<Select.Trigger>
-										<Select.ValueText placeholder="Select chain" />
-										<Select.Indicator />
-									</Select.Trigger>
-								</Select.Control>
-								<Select.Positioner>
-									<Select.Content>
-										{destChainsCollection.items.map((chain) => (
-											<Select.Item key={chain.value} item={chain}>
-												<Select.ItemText>{chain.label}</Select.ItemText>
-												<Select.ItemIndicator />
-											</Select.Item>
-										))}
-									</Select.Content>
-								</Select.Positioner>
-							</Select.Root>
+						<Field.Root invalid={!!errors.destChain}>
+							<Controller
+								name="destChain"
+								control={control}
+								render={({ field }) => (
+									<Select.Root
+										collection={destChainsCollection}
+										value={field.value}
+										onValueChange={(e) => field.onChange(e.value)}
+										disabled={!isConnected || !sourceChain.length}
+									>
+										<Select.Label>Destination Chain</Select.Label>
+										<Select.Control>
+											<Select.Trigger>
+												<Select.ValueText placeholder="Select chain" />
+												<Select.Indicator />
+											</Select.Trigger>
+										</Select.Control>
+										<Select.Positioner>
+											<Select.Content>
+												{destChainsCollection.items.map((chain) => (
+													<Select.Item key={chain.value} item={chain}>
+														<Select.ItemText>{chain.label}</Select.ItemText>
+														<Select.ItemIndicator />
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
+								)}
+							/>
+							{errors.destChain && (
+								<Field.ErrorText>{errors.destChain.message}</Field.ErrorText>
+							)}
 						</Field.Root>
 					</div>
 
-					<Field.Root>
-						<NumberInput.Root
-							value={amount}
-							onValueChange={(e) => setAmount(e.value)}
-							min={0}
-							step={0.01}
-							formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
-							disabled={!isConnected}
-						>
-							<NumberInput.Label>Amount (USDC)</NumberInput.Label>
-							<NumberInput.Input />
-							{/* <NumberInput.Control  /> */}
-						</NumberInput.Root>
+					<Field.Root invalid={!!errors.amount}>
+						<Controller
+							name="amount"
+							control={control}
+							rules={{
+								validate: {
+									minimum: (val) =>
+										Number(val) >= MINIMUM_AMOUNT ||
+										`Minimum amount is ${MINIMUM_AMOUNT} USDC`,
+									balance: (val) => {
+										if (sourceBalance === undefined) return true;
+										return (
+											parseUnits(val, 6) <= sourceBalance ||
+											"Insufficient balance"
+										);
+									},
+								},
+							}}
+							render={({ field }) => (
+								<NumberInput.Root
+									value={field.value}
+									onValueChange={(e) =>
+										field.onChange(
+											Number.isNaN(e.valueAsNumber)
+												? "0"
+												: e.valueAsNumber.toString(),
+										)
+									}
+									min={0}
+									step={0.01}
+									formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
+									disabled={!isConnected}
+								>
+									<NumberInput.Label>Amount (USDC)</NumberInput.Label>
+									<NumberInput.Input />
+								</NumberInput.Root>
+							)}
+						/>
+						{errors.amount && (
+							<Field.ErrorText>{errors.amount.message}</Field.ErrorText>
+						)}
 					</Field.Root>
+
+					<div
+						className={css({
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+							p: "4",
+							bg: "gray.subtle.bg",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<User
+								className={css({
+									width: "4",
+									height: "4",
+									color: "blue.11",
+								})}
+							/>
+							<Text className={css({ fontWeight: "medium" })}>
+								Bridge Destination
+							</Text>
+						</div>
+
+						<label
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+								cursor: "pointer",
+							})}
+						>
+							<input
+								type="checkbox"
+								checked={sameAsWallet}
+								onChange={handleToggleSameAsWallet}
+								className={css({
+									width: "5",
+									height: "5",
+									accentColor: "teal",
+									cursor: "pointer",
+								})}
+							/>
+							<Text
+								className={css({
+									fontSize: "sm",
+									color: "fg.default",
+									userSelect: "none",
+								})}
+							>
+								Send to connected wallet
+							</Text>
+						</label>
+
+						<Field.Root
+							invalid={
+								!sameAsWallet &&
+								recipientAddress.length > 0 &&
+								!isAddress(recipientAddress)
+							}
+						>
+							<Field.Label
+								className={css({
+									fontSize: "sm",
+									color: "fg.muted",
+								})}
+							>
+								Recipient Address
+							</Field.Label>
+							<Input
+								value={recipientAddress}
+								onChange={(e) => setRecipientAddress(e.target.value)}
+								placeholder={
+									sameAsWallet ? (address ?? "Connect wallet") : "0x..."
+								}
+								disabled={sameAsWallet || !isConnected}
+								className={css({
+									fontFamily: "mono",
+									fontSize: "sm",
+								})}
+							/>
+							{!sameAsWallet &&
+								recipientAddress.length > 0 &&
+								!isAddress(recipientAddress) && (
+									<Field.ErrorText>Invalid Ethereum address</Field.ErrorText>
+								)}
+						</Field.Root>
+					</div>
 
 					{isConnected && sourceChain.length > 0 && (
 						<div
@@ -704,10 +892,12 @@ export default function CrossChainRelayer() {
 							!isConnected ||
 							!sourceChain.length ||
 							!destChain.length ||
-							Number(amount) <= 0 ||
+							!!errors.amount ||
+							Number(amount) < MINIMUM_AMOUNT ||
 							!isApproved ||
 							isBurning ||
-							isBurnConfirming
+							isBurnConfirming ||
+							(!sameAsWallet && !isAddress(recipientAddress))
 						}
 						loading={isBurning || isBurnConfirming}
 						loadingText={isBurnConfirming ? "Confirming..." : "Signing..."}
@@ -724,7 +914,7 @@ export default function CrossChainRelayer() {
 
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>Context</Card.Title>
+					<Card.Title>Scenario Description</Card.Title>
 					<Card.Description></Card.Description>
 				</Card.Header>
 				<Card.Body
