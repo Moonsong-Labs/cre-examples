@@ -362,7 +362,7 @@ export default function CompliantToken() {
 						/>
 						<div>
 							<Text className={css({ fontWeight: "medium", fontSize: "sm" })}>
-								{tokenName || "Compliant Token"}
+								{typeof tokenName === "string" ? tokenName : "Compliant Token"}
 							</Text>
 							<a
 								href={`${ETHERSCAN_BASE}/address/${COMPLIANT_TOKEN_ADDRESS}`}
@@ -420,7 +420,7 @@ export default function CompliantToken() {
 								})}
 							/>
 							<Text className={css({ fontWeight: "medium" })}>
-								{formatBalance(totalSupply)}
+								{formatBalance(totalSupply as bigint | undefined)}
 							</Text>
 							<Text className={css({ color: "fg.subtle", fontSize: "xs" })}>
 								Total Supply
@@ -445,7 +445,7 @@ export default function CompliantToken() {
 								})}
 							/>
 							<Text className={css({ fontWeight: "medium" })}>
-								{formatBalance(userBalance)}
+								{formatBalance(userBalance as bigint | undefined)}
 							</Text>
 							<Text className={css({ color: "fg.subtle", fontSize: "xs" })}>
 								Your Balance
@@ -546,6 +546,7 @@ export default function CompliantToken() {
 
 							<Field.Root>
 								<Field.Label>Amount (max 1000)</Field.Label>
+								{/* @ts-ignore */}
 								<NumberInput.Root
 									value={mintAmount}
 									onValueChange={(e) => {
@@ -630,7 +631,7 @@ export default function CompliantToken() {
 										refetchAllowlist();
 									}}
 									size="sm"
-									variant="ghost"
+									variant="plain"
 									className={css({ ml: "auto" })}
 								>
 									Clear
@@ -660,7 +661,7 @@ export default function CompliantToken() {
 								<Button
 									onClick={() => resetMint()}
 									size="sm"
-									variant="ghost"
+									variant="plain"
 									className={css({ ml: "auto" })}
 								>
 									Dismiss
@@ -763,7 +764,7 @@ export default function CompliantToken() {
 								<Button
 									onClick={() => setSyncError(null)}
 									size="sm"
-									variant="ghost"
+									variant="plain"
 									className={css({ flexShrink: 0 })}
 								>
 									Dismiss
@@ -841,7 +842,7 @@ export default function CompliantToken() {
 												<CheckCircle className={css({ width: "3.5", height: "3.5", color: "green.11" })} />
 											)}
 											{!isAddressInAllowlist(addr) && (
-												<Badge variant="subtle" colorPalette="amber" size="xs">
+												<Badge variant="subtle" colorPalette="amber" size="sm">
 													New
 												</Badge>
 											)}
@@ -916,7 +917,7 @@ export default function CompliantToken() {
 												{formatAddress(addr)}
 											</a>
 											{addr.toLowerCase() === address?.toLowerCase() && (
-												<Badge variant="subtle" colorPalette="green" size="xs">
+												<Badge variant="subtle" colorPalette="green" size="sm">
 													You
 												</Badge>
 											)}
@@ -924,7 +925,7 @@ export default function CompliantToken() {
 												<CheckCircle className={css({ width: "3.5", height: "3.5", color: "green.11" })} />
 											)}
 										{!spreadsheetData.some(a => a.toLowerCase() === addr.toLowerCase()) && (
-											<Badge variant="subtle" colorPalette="red" size="xs">
+											<Badge variant="subtle" colorPalette="red" size="sm">
 												Remove
 											</Badge>
 										)}
