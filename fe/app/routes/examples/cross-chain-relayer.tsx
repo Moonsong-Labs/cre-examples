@@ -9,7 +9,8 @@ import {
 	Sparkles,
 	XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
 import { formatUnits, maxUint256, pad, parseEventLogs, parseUnits } from "viem";
@@ -73,6 +74,8 @@ const CHAINS: ChainItem[] = [
 	{ value: "arbitrum-sepolia", label: "Arbitrum Sepolia", chainId: 421614 },
 ];
 
+const chainsCollection = createListCollection<ChainItem>({ items: CHAINS });
+
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
 	return Number(formatUnits(balance, 6)).toFixed(2);
@@ -80,19 +83,47 @@ function formatBalance(balance: bigint | undefined): string {
 
 const UNLIMITED_THRESHOLD = maxUint256 / 2n;
 
+const MINIMUM_AMOUNT = 1;
+
+interface BridgeFormData {
+	amount: string;
+	sourceChain: string[];
+	destChain: string[];
+}
+
 export default function CrossChainRelayer() {
 	const { isConnected, address } = useAccount();
 	const chainId = useChainId();
 	const { switchChainAsync } = useSwitchChain();
-	const [amount, setAmount] = useState("0");
-	const [sourceChain, setSourceChain] = useState<string[]>([]);
-	const [destChain, setDestChain] = useState<string[]>([]);
 	const whitelistFetcher = useFetcher<typeof whitelistAction>();
-	const lastWhitelistAddress = useRef<string | null>(null);
 
 	const currentChain = CHAINS.find((c) => c.chainId === chainId);
+
+	const {
+		control,
+		watch,
+		setValue,
+		formState: { errors },
+	} = useForm<BridgeFormData>({
+		mode: "onChange",
+		defaultValues: {
+			amount: "0",
+			sourceChain: [],
+			destChain: [],
+		},
+	});
+
+	const sourceChain = watch("sourceChain");
+	const destChain = watch("destChain");
+	const amount = watch("amount");
+
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
+	const destChainId = destChainData?.chainId;
+
+	const destChainsCollection = createListCollection<ChainItem>({
+		items: CHAINS.filter((c) => c.value !== sourceChain[0]),
+	});
 
 	const {
 		transfer,
@@ -104,21 +135,6 @@ export default function CrossChainRelayer() {
 		sourceChainId: sourceChainData?.chainId,
 		destChainId: destChainData?.chainId,
 	});
-
-	const destChainId = destChainData?.chainId;
-
-	const chainsCollection = useMemo(
-		() => createListCollection<ChainItem>({ items: CHAINS }),
-		[],
-	);
-
-	const destChainsCollection = useMemo(
-		() =>
-			createListCollection<ChainItem>({
-				items: CHAINS.filter((c) => c.value !== sourceChain[0]),
-			}),
-		[sourceChain],
-	);
 
 	const { data: sourceBalance, refetch: refetchSourceBalance } =
 		useReadContract({
@@ -191,21 +207,25 @@ export default function CrossChainRelayer() {
 		}
 	}, [isApproveSuccess, refetchAllowance]);
 
+	const [whitelistedAddress, setWhitelistedAddress] = useState<string | null>(
+		null,
+	);
+
 	useEffect(() => {
 		if (!isConnected || !address) {
-			lastWhitelistAddress.current = null;
+			setWhitelistedAddress(null);
 			return;
 		}
 
-		if (lastWhitelistAddress.current === address) return;
+		if (whitelistedAddress === address) return;
 		if (whitelistFetcher.state !== "idle") return;
 
-		lastWhitelistAddress.current = address;
+		setWhitelistedAddress(address);
 		whitelistFetcher.submit(
 			{ address },
 			{ method: "post", action: "/resources/whitelist" },
 		);
-	}, [isConnected, address, whitelistFetcher]);
+	}, [isConnected, address, whitelistFetcher, whitelistedAddress]);
 
 	const isWhitelisting = whitelistFetcher.state !== "idle";
 	const whitelistOk = !isWhitelisting && whitelistFetcher.data?.ok === true;
@@ -304,8 +324,10 @@ export default function CrossChainRelayer() {
 
 	const handleSwapChains = () => {
 		if (!sourceChain.length && !destChain.length) return;
-		setSourceChain(destChain.length ? [destChain[0]] : []);
-		setDestChain(sourceChain.length ? [sourceChain[0]] : []);
+		const newSource = destChain.length ? [destChain[0]] : [];
+		const newDest = sourceChain.length ? [sourceChain[0]] : [];
+		setValue("sourceChain", newSource, { shouldValidate: true });
+		setValue("destChain", newDest, { shouldValidate: true });
 	};
 
 	return (
@@ -538,31 +560,40 @@ export default function CrossChainRelayer() {
 							borderColor: "border",
 						})}
 					>
-						<Field.Root>
-							<Select.Root
-								collection={chainsCollection}
-								value={sourceChain}
-								onValueChange={(e) => setSourceChain(e.value)}
-								disabled={!isConnected}
-							>
-								<Select.Label>Source Chain</Select.Label>
-								<Select.Control>
-									<Select.Trigger>
-										<Select.ValueText placeholder="Select chain" />
-										<Select.Indicator />
-									</Select.Trigger>
-								</Select.Control>
-								<Select.Positioner>
-									<Select.Content>
-										{chainsCollection.items.map((chain) => (
-											<Select.Item key={chain.value} item={chain}>
-												<Select.ItemText>{chain.label}</Select.ItemText>
-												<Select.ItemIndicator />
-											</Select.Item>
-										))}
-									</Select.Content>
-								</Select.Positioner>
-							</Select.Root>
+						<Field.Root invalid={!!errors.sourceChain}>
+							<Controller
+								name="sourceChain"
+								control={control}
+								render={({ field }) => (
+									<Select.Root
+										collection={chainsCollection}
+										value={field.value}
+										onValueChange={(e) => field.onChange(e.value)}
+										disabled={!isConnected}
+									>
+										<Select.Label>Source Chain</Select.Label>
+										<Select.Control>
+											<Select.Trigger>
+												<Select.ValueText placeholder="Select chain" />
+												<Select.Indicator />
+											</Select.Trigger>
+										</Select.Control>
+										<Select.Positioner>
+											<Select.Content>
+												{chainsCollection.items.map((chain) => (
+													<Select.Item key={chain.value} item={chain}>
+														<Select.ItemText>{chain.label}</Select.ItemText>
+														<Select.ItemIndicator />
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
+								)}
+							/>
+							{errors.sourceChain && (
+								<Field.ErrorText>{errors.sourceChain.message}</Field.ErrorText>
+							)}
 						</Field.Root>
 
 						<div
@@ -587,47 +618,78 @@ export default function CrossChainRelayer() {
 							</Button>
 						</div>
 
-						<Field.Root>
-							<Select.Root
-								collection={destChainsCollection}
-								value={destChain}
-								onValueChange={(e) => setDestChain(e.value)}
-								disabled={!isConnected || !sourceChain.length}
-							>
-								<Select.Label>Destination Chain</Select.Label>
-								<Select.Control>
-									<Select.Trigger>
-										<Select.ValueText placeholder="Select chain" />
-										<Select.Indicator />
-									</Select.Trigger>
-								</Select.Control>
-								<Select.Positioner>
-									<Select.Content>
-										{destChainsCollection.items.map((chain) => (
-											<Select.Item key={chain.value} item={chain}>
-												<Select.ItemText>{chain.label}</Select.ItemText>
-												<Select.ItemIndicator />
-											</Select.Item>
-										))}
-									</Select.Content>
-								</Select.Positioner>
-							</Select.Root>
+						<Field.Root invalid={!!errors.destChain}>
+							<Controller
+								name="destChain"
+								control={control}
+								render={({ field }) => (
+									<Select.Root
+										collection={destChainsCollection}
+										value={field.value}
+										onValueChange={(e) => field.onChange(e.value)}
+										disabled={!isConnected || !sourceChain.length}
+									>
+										<Select.Label>Destination Chain</Select.Label>
+										<Select.Control>
+											<Select.Trigger>
+												<Select.ValueText placeholder="Select chain" />
+												<Select.Indicator />
+											</Select.Trigger>
+										</Select.Control>
+										<Select.Positioner>
+											<Select.Content>
+												{destChainsCollection.items.map((chain) => (
+													<Select.Item key={chain.value} item={chain}>
+														<Select.ItemText>{chain.label}</Select.ItemText>
+														<Select.ItemIndicator />
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
+								)}
+							/>
+							{errors.destChain && (
+								<Field.ErrorText>{errors.destChain.message}</Field.ErrorText>
+							)}
 						</Field.Root>
 					</div>
 
-					<Field.Root>
-						<NumberInput.Root
-							value={amount}
-							onValueChange={(e) => setAmount(e.value)}
-							min={0}
-							step={0.01}
-							formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
-							disabled={!isConnected}
-						>
-							<NumberInput.Label>Amount (USDC)</NumberInput.Label>
-							<NumberInput.Input />
-							{/* <NumberInput.Control  /> */}
-						</NumberInput.Root>
+					<Field.Root invalid={!!errors.amount}>
+						<Controller
+							name="amount"
+							control={control}
+							rules={{
+								validate: {
+									minimum: (val) =>
+										Number(val) >= MINIMUM_AMOUNT ||
+										`Minimum amount is ${MINIMUM_AMOUNT} USDC`,
+									balance: (val) => {
+										if (sourceBalance === undefined) return true;
+										return (
+											parseUnits(val, 6) <= sourceBalance ||
+											"Insufficient balance"
+										);
+									},
+								},
+							}}
+							render={({ field }) => (
+								<NumberInput.Root
+									value={field.value}
+									onValueChange={(e) => field.onChange(e.value)}
+									min={0}
+									step={0.01}
+									formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
+									disabled={!isConnected}
+								>
+									<NumberInput.Label>Amount (USDC)</NumberInput.Label>
+									<NumberInput.Input />
+								</NumberInput.Root>
+							)}
+						/>
+						{errors.amount && (
+							<Field.ErrorText>{errors.amount.message}</Field.ErrorText>
+						)}
 					</Field.Root>
 
 					{isConnected && sourceChain.length > 0 && (
@@ -704,7 +766,8 @@ export default function CrossChainRelayer() {
 							!isConnected ||
 							!sourceChain.length ||
 							!destChain.length ||
-							Number(amount) <= 0 ||
+							!!errors.amount ||
+							Number(amount) < MINIMUM_AMOUNT ||
 							!isApproved ||
 							isBurning ||
 							isBurnConfirming
@@ -724,7 +787,7 @@ export default function CrossChainRelayer() {
 
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>Context</Card.Title>
+					<Card.Title>Scenario Description</Card.Title>
 					<Card.Description></Card.Description>
 				</Card.Header>
 				<Card.Body

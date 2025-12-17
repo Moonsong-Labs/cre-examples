@@ -19,7 +19,6 @@
 			"recommended": true,
 			"suspicious": {
 				"noExplicitAny": "off"
-
 			}
 		}
 	},
