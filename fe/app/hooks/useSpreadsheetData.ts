@@ -22,10 +22,10 @@ export function useSpreadsheetData(): UseSpreadsheetDataResult {
 			setError(null);
 
 			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_BEARER_TOKEN;
+			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
 
 			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_BEARER_TOKEN)");
+				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
 			}
 
 			const response = await fetch(`${serverUrl}/02-compliance/allowlist`, {
