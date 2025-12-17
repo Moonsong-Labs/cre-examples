@@ -43,10 +43,14 @@ export const evmTargetSchema = z.object({
 	gasLimit: decimalString.optional(),
 });
 
-export const creConfigSchema = z.object({
+export const detectorConfigSchema = z.object({
+	schedule: z.string(),
+	mailboxUrl: z.url(),
+	evms: z.array(evmTargetSchema),
+});
+
+export const relayerConfigSchema = z.object({
 	schedule: z.string().optional(),
-	irisUrl: z.string().url().optional(),
-	mailboxUrl: z.string().url().optional(),
 	authorizedAddress: hexSchema.optional(),
 	evms: z.array(evmTargetSchema),
 });
@@ -64,7 +68,8 @@ export type IrisAttestation = {
 };
 
 export type EvmTarget = z.infer<typeof evmTargetSchema>;
-export type CREConfig = z.infer<typeof creConfigSchema>;
+export type DetectorConfig = z.infer<typeof detectorConfigSchema>;
+export type RelayerConfig = z.infer<typeof relayerConfigSchema>;
 export type RelayInput = z.infer<typeof relayInputSchema>;
 export type IrisResponse = z.infer<typeof irisResponseSchema>;
 export type IrisMessage = z.infer<typeof irisMessageSchema>;

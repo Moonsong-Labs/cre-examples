@@ -1,7 +1,6 @@
 {
 	"schedule": "*/30 * * * * *",
 	"irisUrl": "https://iris-api-sandbox.circle.com/v2",
-	"mailboxUrl": "https://cre.lunatic.boo/01-relay/mailbox",
 	"authorizedAddress": "0x2bC105D59c6F9aABC8e19b35b6C4B3045ddD5944",
 	"evms": [
 		{

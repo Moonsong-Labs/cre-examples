@@ -11,33 +11,15 @@ import {
 } from "@chainlink/cre-sdk";
 import invariant from "tiny-invariant";
 import { bytesToHex, encodeAbiParameters, type Hex } from "viem";
-import { type CREConfig, relayInputSchema } from "./schema";
-
-const ENVIRONMENT_INFO = {
-	0: {
-		name: "Sepolia",
-		relayerAddress: "0x9f430E32ffbbe270F48048BBe64F0D8d35127D10",
-		chainSelector: "ethereum-testnet-sepolia",
-		blockExplorerUrl: "https://sepolia.etherscan.io",
-	},
-	3: {
-		name: "Arbitrum Sepolia",
-		relayerAddress: "0xf4D3aBEA2360D4f5f614F375fAd8d5d00F32be36",
-		chainSelector: "ethereum-testnet-sepolia-arbitrum-1",
-		blockExplorerUrl: "https://sepolia.arbiscan.io",
-	},
-	6: {
-		name: "Base Sepolia",
-		relayerAddress: "0x8762FCCfF9b5C32F1FDAa31AA70c1D9d99734417",
-		chainSelector: "ethereum-testnet-sepolia-base-1",
-		blockExplorerUrl: "https://sepolia.basescan.org",
-	},
-} as const;
-
-type DestinationDomain = keyof typeof ENVIRONMENT_INFO;
+import {
+	type Domain,
+	ENVIRONMENT_INFO,
+	type RelayerConfig,
+	relayInputSchema,
+} from "../common";
 
 const onHttpTrigger = (
-	runtime: Runtime<CREConfig>,
+	runtime: Runtime<RelayerConfig>,
 	payload: HTTPPayload,
 ): string => {
 	runtime.log("Relayer workflow triggered via HTTP.");
@@ -72,22 +54,18 @@ const onHttpTrigger = (
 		`Unsupported destination domain ${input.destinationDomain}`,
 	);
 
-	submitSignedReport(
-		runtime,
-		signedReport,
-		input.destinationDomain as DestinationDomain,
-	);
+	submitSignedReport(runtime, signedReport, input.destinationDomain as Domain);
 
 	return "Relay submitted successfully";
 };
 
-const generateSignedReport = (runtime: Runtime<CREConfig>, payload: Hex) =>
+const generateSignedReport = (runtime: Runtime<RelayerConfig>, payload: Hex) =>
 	runtime.report(prepareReportRequest(payload)).result();
 
 const submitSignedReport = (
-	runtime: Runtime<CREConfig>,
+	runtime: Runtime<RelayerConfig>,
 	signedReport: Report,
-	destinationDomain: DestinationDomain,
+	destinationDomain: Domain,
 ) => {
 	if (!(destinationDomain in ENVIRONMENT_INFO)) {
 		runtime.log(
@@ -98,7 +76,7 @@ const submitSignedReport = (
 
 	const chainSelectorName = ENVIRONMENT_INFO[destinationDomain].chainSelector;
 	const evm = runtime.config.evms.find(
-		(e) => e.chainSelectorName === chainSelectorName,
+		(e: any) => e.chainSelectorName === chainSelectorName,
 	);
 	if (!evm) {
 		runtime.log(`No EVM target configured for ${chainSelectorName}, skipping.`);
@@ -150,7 +128,7 @@ const submitSignedReport = (
 	runtime.log(`Submitted report to ${evm.chainSelectorName}.`);
 };
 
-const initWorkflow = (config: CREConfig) => {
+const initWorkflow = (config: RelayerConfig) => {
 	const httpTrigger = new cre.capabilities.HTTPCapability();
 
 	return [
@@ -169,7 +147,7 @@ const initWorkflow = (config: CREConfig) => {
 };
 
 export async function main() {
-	const runner = await Runner.newRunner<CREConfig>();
+	const runner = await Runner.newRunner<RelayerConfig>();
 	await runner.run(initWorkflow);
 }
 

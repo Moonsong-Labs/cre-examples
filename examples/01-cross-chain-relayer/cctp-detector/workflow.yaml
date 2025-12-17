@@ -1,0 +1,11 @@
+# ==========================================================================
+# CRE WORKFLOW SETTINGS FILE
+# =========================================================================
+
+demo:
+  user-workflow:
+    workflow-name: "cctp-detector"
+  workflow-artifacts:
+    workflow-path: "./detector.ts"
+    config-path: "./config.json"
+    secrets-path: "../secrets.yaml"
