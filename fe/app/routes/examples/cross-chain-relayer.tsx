@@ -14,7 +14,6 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
-import { useToggle } from "usehooks-ts";
 import {
 	formatUnits,
 	isAddress,
@@ -127,8 +126,17 @@ export default function CrossChainRelayer() {
 	const destChain = watch("destChain");
 	const amount = watch("amount");
 
-	const [sameAsWallet, toggleSameAsWallet] = useToggle(true);
+	const [sameAsWallet, setSameAsWallet] = useState(true);
 	const [recipientAddress, setRecipientAddress] = useState("");
+
+	const handleToggleSameAsWallet = () => {
+		if (sameAsWallet) {
+			setSameAsWallet(false);
+		} else {
+			setSameAsWallet(true);
+			setRecipientAddress(address ?? "");
+		}
+	};
 
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
@@ -756,7 +764,7 @@ export default function CrossChainRelayer() {
 							<input
 								type="checkbox"
 								checked={sameAsWallet}
-								onChange={toggleSameAsWallet}
+								onChange={handleToggleSameAsWallet}
 								className={css({
 									width: "5",
 									height: "5",
