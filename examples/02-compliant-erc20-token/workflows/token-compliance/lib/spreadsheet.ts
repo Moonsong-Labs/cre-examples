@@ -5,22 +5,22 @@ const AddressSchema = z
   .string()
   .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address");
 
-const BlacklistSchema = z.object({
+const AllowlistSchema = z.object({
   addresses: z.array(AddressSchema),
   count: z.number(),
 });
 
-export type Blacklist = z.infer<typeof BlacklistSchema>;
+export type Allowlist = z.infer<typeof AllowlistSchema>;
 
 const SheetsApiResponseSchema = z.object({
   values: z.array(z.array(z.string())).optional(),
 });
 
-export function fetchBlacklist(
+export function fetchAllowlist(
   sendRequester: HTTPSendRequester,
   spreadsheetId: string,
   apiKey: string
-): Blacklist {
+): Allowlist {
   const range = encodeURIComponent("A:A");
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
 
@@ -38,7 +38,7 @@ export function fetchBlacklist(
   // Skip header row, extract addresses
   const addresses = rows.slice(1).map(row => row[0]?.toLowerCase() ?? "");
 
-  const result: Blacklist = { addresses, count: addresses.length };
+  const result: Allowlist = { addresses, count: addresses.length };
 
-  return BlacklistSchema.parse(result);
+  return AllowlistSchema.parse(result);
 }

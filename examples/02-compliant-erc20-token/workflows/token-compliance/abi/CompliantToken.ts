@@ -73,7 +73,7 @@ export const CompliantToken = [
   },
   {
     "type": "function",
-    "name": "blacklist",
+    "name": "allowlist",
     "inputs": [],
     "outputs": [
       {
@@ -151,7 +151,7 @@ export const CompliantToken = [
   },
   {
     "type": "function",
-    "name": "isBlacklisted",
+    "name": "isAllowed",
     "inputs": [
       {
         "name": "account",
@@ -402,7 +402,7 @@ export const CompliantToken = [
   },
   {
     "type": "event",
-    "name": "AddedToBlacklist",
+    "name": "AllowedUser",
     "inputs": [
       {
         "name": "account",
@@ -535,7 +535,7 @@ export const CompliantToken = [
   },
   {
     "type": "event",
-    "name": "RemovedFromBlacklist",
+    "name": "DisallowedUser",
     "inputs": [
       {
         "name": "account",
@@ -573,7 +573,7 @@ export const CompliantToken = [
   },
   {
     "type": "error",
-    "name": "ERC20BlacklistedAccount",
+    "name": "ERC20NotAllowed",
     "inputs": [
       {
         "name": "account",

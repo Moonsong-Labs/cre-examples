@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Home } from "lucide-react";
+import { ArrowLeftRight, Home, ShieldCheck } from "lucide-react";
 import type { ComponentType } from "react";
 
 export interface ExampleDefinition {
@@ -18,6 +18,14 @@ export const EXAMPLES: ExampleDefinition[] = [
 		description: "Bridge USDC across testnets with CRE attestations and CCTP.",
 		tag: "Live demo",
 		icon: ArrowLeftRight,
+	},
+	{
+		href: "/examples/compliant-token",
+		title: "Compliant Token",
+		navLabel: "Compliant Token",
+		description: "Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
+		tag: "Live demo",
+		icon: ShieldCheck,
 	},
 ];
 

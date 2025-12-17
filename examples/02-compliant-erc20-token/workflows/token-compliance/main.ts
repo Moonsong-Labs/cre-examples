@@ -9,14 +9,15 @@ import {
   LATEST_BLOCK_NUMBER,
   hexToBase64,
   TxStatus,
+  HTTPPayload,
 } from "@chainlink/cre-sdk";
 import { z } from "zod";
 import { type Address, decodeFunctionResult, zeroAddress, encodeFunctionData, encodeAbiParameters } from "viem";
-import { fetchBlacklist, type Blacklist } from "./lib/spreadsheet";
+import { fetchAllowlist, type Allowlist } from "./lib/spreadsheet";
 import { CompliantToken } from "./abi/CompliantToken";
 
 const ConfigSchema = z.object({
-  schedule: z.string().min(1, "Schedule is required"),
+  authorizedEVMAddress: z.string().min(1, "Authorized EVM address is required"),
   spreadsheetId: z.string().min(1, "Spreadsheet ID is required"),
   evms: z.array(
     z.object({
@@ -29,32 +30,32 @@ const ConfigSchema = z.object({
 
 type Config = z.infer<typeof ConfigSchema>;
 
-type BlacklistDelta = {
+type AllowlistDelta = {
   toAdd: Address[];
   toRemove: Address[];
 };
 
-const computeBlacklistDelta = (
+const computeAllowlistDelta = (
   spreadsheet: Set<Address>,
   contract: Set<Address>
-): BlacklistDelta => ({
+): AllowlistDelta => ({
   toAdd: [...spreadsheet].filter(addr => !contract.has(addr)),
   toRemove: [...contract].filter(addr => !spreadsheet.has(addr)),
 });
 
-const getSpreadsheetBlacklist = (runtime: Runtime<Config>): Set<Address> => {
+const getSpreadsheetAllowlist = (runtime: Runtime<Config>): Set<Address> => {
   const httpClient = new cre.capabilities.HTTPClient();
   const spreadsheetId = runtime.config.spreadsheetId;
   const apiKey = runtime.getSecret({ id: "GOOGLE_API_KEY" }).result().value;
 
   const result = httpClient
-    .sendRequest(runtime, fetchBlacklist, consensusIdenticalAggregation<Blacklist>())(spreadsheetId, apiKey)
+    .sendRequest(runtime, fetchAllowlist, consensusIdenticalAggregation<Allowlist>())(spreadsheetId, apiKey)
     .result();
 
   return new Set(result.addresses.map(a => a.toLowerCase() as Address));
 };
 
-const getContractBlacklist = (runtime: Runtime<Config>): Set<Address> => {
+const getContractAllowlist = (runtime: Runtime<Config>): Set<Address> => {
   const evmConfig = runtime.config.evms[0];
   const network = getNetwork({
     chainFamily: "evm",
@@ -75,7 +76,7 @@ const getContractBlacklist = (runtime: Runtime<Config>): Set<Address> => {
         to: evmConfig.tokenAddress as Address,
         data: encodeFunctionData({
           abi: CompliantToken,
-          functionName: "blacklist",
+          functionName: "allowlist",
         }),
       }),
       blockNumber: LATEST_BLOCK_NUMBER,
@@ -84,14 +85,14 @@ const getContractBlacklist = (runtime: Runtime<Config>): Set<Address> => {
 
   const addresses = decodeFunctionResult({
     abi: CompliantToken,
-    functionName: "blacklist",
+    functionName: "allowlist",
     data: bytesToHex(result.data),
   });
 
   return new Set(addresses.map(a => a.toLowerCase() as Address));
 };
 
-const updateContractBlacklist = (runtime: Runtime<Config>, delta: BlacklistDelta): string => {
+const updateContractAllowlist = (runtime: Runtime<Config>, delta: AllowlistDelta): string => {
   const evmConfig = runtime.config.evms[0];
   const network = getNetwork({
     chainFamily: "evm",
@@ -144,19 +145,19 @@ const updateContractBlacklist = (runtime: Runtime<Config>, delta: BlacklistDelta
   return txHash;
 };
 
-const onCronTrigger = (runtime: Runtime<Config>): string => {
-  runtime.log("Workflow triggered. Fetching blacklist...");
+const onHttpTrigger = (runtime: Runtime<Config>, _: HTTPPayload): string => {
+  runtime.log("Workflow triggered. Fetching allowlist...");
 
-  // Step 1: Read current blacklist from spreadsheet
-  const spreadsheetBlacklist = getSpreadsheetBlacklist(runtime);
-  runtime.log(`Fetched ${spreadsheetBlacklist.size} blacklisted addresses from spreadsheet`);
+  // Step 1: Read current allowlist from spreadsheet
+  const spreadsheetAllowlist = getSpreadsheetAllowlist(runtime);
+  runtime.log(`Fetched ${spreadsheetAllowlist.size} allowed addresses from spreadsheet`);
 
-  // Step 2: Read current blacklist from contract
-  const contractBlacklist = getContractBlacklist(runtime);
-  runtime.log(`Fetched ${contractBlacklist.size} blacklisted addresses from contract`);
+  // Step 2: Read current allowlist from contract
+  const contractAllowlist = getContractAllowlist(runtime);
+  runtime.log(`Fetched ${contractAllowlist.size} allowed addresses from contract`);
 
   // Step 3: Compute delta between spreadsheet and contract
-  const delta = computeBlacklistDelta(spreadsheetBlacklist, contractBlacklist);
+  const delta = computeAllowlistDelta(spreadsheetAllowlist, contractAllowlist);
   runtime.log(`Delta: ${delta.toAdd.length} to add, ${delta.toRemove.length} to remove`);
 
   // Step 4: Skip if no changes needed
@@ -165,19 +166,24 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
     return "no-op";
   }
 
-  // Step 5: Update contract blacklist
-  return updateContractBlacklist(runtime, delta);
+  // Step 5: Update contract allowlist
+  return updateContractAllowlist(runtime, delta);
 };
 
 const initWorkflow = (config: Config) => {
-  const cron = new cre.capabilities.CronCapability();
+  const httpTrigger = new cre.capabilities.HTTPCapability();
 
   return [
     cre.handler(
-      cron.trigger(
-        { schedule: config.schedule }
-      ), 
-      onCronTrigger
+      httpTrigger.trigger({
+        authorizedKeys: [
+          {
+            type: "KEY_TYPE_ECDSA_EVM",
+            publicKey: config.authorizedEVMAddress,
+          },
+        ],
+      }),
+      onHttpTrigger
     ),
   ];
 };
