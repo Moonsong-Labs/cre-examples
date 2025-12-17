@@ -57,7 +57,7 @@ function formatAddress(address: string): string {
 
 function formatBalance(balance: bigint | undefined): string {
 	if (balance === undefined) return "—";
-	return Number(formatUnits(balance, 18)).toFixed(2);
+	return Number(formatUnits(balance, 0)).toFixed(0);
 }
 
 export default function CompliantToken() {
@@ -153,8 +153,8 @@ export default function CompliantToken() {
 			return;
 		}
 
-		const amount = parseUnits(mintAmount, 18);
-		if (amount <= 0n || amount > parseUnits("1000", 18)) {
+		const amount = parseUnits(mintAmount, 0);
+		if (amount <= 0n || amount > parseUnits("1000", 0)) {
 			alert("Amount must be between 0 and 1000");
 			return;
 		}
@@ -548,12 +548,16 @@ export default function CompliantToken() {
 								<Field.Label>Amount (max 1000)</Field.Label>
 								<NumberInput.Root
 									value={mintAmount}
-									onValueChange={(e) => setMintAmount(e.value)}
+									onValueChange={(e) => {
+										const intValue = Math.floor(Number(e.value) || 0).toString();
+										setMintAmount(intValue);
+									}}
 									disabled={isMintPending}
 									min="0"
 									max="1000"
+									step="1"
 								>
-									<NumberInput.Input placeholder="0.00" />
+									<NumberInput.Input placeholder="0" />
 								</NumberInput.Root>
 							</Field.Root>
 						</div>
@@ -916,10 +920,10 @@ export default function CompliantToken() {
 													You
 												</Badge>
 											)}
-											{spreadsheetData.includes(addr) && (
+											{spreadsheetData.some(a => a.toLowerCase() === addr.toLowerCase()) && (
 												<CheckCircle className={css({ width: "3.5", height: "3.5", color: "green.11" })} />
 											)}
-										{!spreadsheetData.includes(addr) && (
+										{!spreadsheetData.some(a => a.toLowerCase() === addr.toLowerCase()) && (
 											<Badge variant="subtle" colorPalette="red" size="xs">
 												Remove
 											</Badge>
