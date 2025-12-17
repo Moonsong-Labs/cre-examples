@@ -7,13 +7,22 @@ import {
 	Loader2,
 	ShieldCheck,
 	Sparkles,
+	User,
 	XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { css } from "styled-system/css";
-import { formatUnits, maxUint256, pad, parseEventLogs, parseUnits } from "viem";
+import { useToggle } from "usehooks-ts";
+import {
+	formatUnits,
+	isAddress,
+	maxUint256,
+	pad,
+	parseEventLogs,
+	parseUnits,
+} from "viem";
 import {
 	useAccount,
 	useChainId,
@@ -29,6 +38,7 @@ import {
 	Button,
 	Card,
 	Field,
+	Input,
 	NumberInput,
 	Select,
 	Text,
@@ -116,6 +126,9 @@ export default function CrossChainRelayer() {
 	const sourceChain = watch("sourceChain");
 	const destChain = watch("destChain");
 	const amount = watch("amount");
+
+	const [sameAsWallet, toggleSameAsWallet] = useToggle(true);
+	const [recipientAddress, setRecipientAddress] = useState("");
 
 	const sourceChainData = CHAINS.find((c) => c.value === sourceChain[0]);
 	const destChainData = CHAINS.find((c) => c.value === destChain[0]);
@@ -253,12 +266,15 @@ export default function CrossChainRelayer() {
 		if (!sourceChainData || !destChainData || !address || !sourceUsdcAddress)
 			return;
 
+		const recipient = sameAsWallet ? address : recipientAddress;
+		if (!recipient || !isAddress(recipient)) return;
+
 		if (chainId !== sourceChainData.chainId) {
 			await switchChainAsync({ chainId: sourceChainData.chainId });
 		}
 
 		const amountInUnits = parseUnits(amount, 6);
-		const mintRecipient = pad(address, { size: 32 });
+		const mintRecipient = pad(recipient, { size: 32 });
 		const sourceDomain = CCTP_DOMAINS[sourceChainData.chainId];
 		const destinationDomain = CCTP_DOMAINS[destChainData.chainId];
 		const destinationCaller = pad("0x0", { size: 32 });
@@ -698,6 +714,102 @@ export default function CrossChainRelayer() {
 						)}
 					</Field.Root>
 
+					<div
+						className={css({
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+							p: "4",
+							bg: "gray.subtle.bg",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<User
+								className={css({
+									width: "4",
+									height: "4",
+									color: "blue.11",
+								})}
+							/>
+							<Text className={css({ fontWeight: "medium" })}>
+								Bridge Destination
+							</Text>
+						</div>
+
+						<label
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+								cursor: "pointer",
+							})}
+						>
+							<input
+								type="checkbox"
+								checked={sameAsWallet}
+								onChange={toggleSameAsWallet}
+								className={css({
+									width: "5",
+									height: "5",
+									accentColor: "teal",
+									cursor: "pointer",
+								})}
+							/>
+							<Text
+								className={css({
+									fontSize: "sm",
+									color: "fg.default",
+									userSelect: "none",
+								})}
+							>
+								Send to connected wallet
+							</Text>
+						</label>
+
+						<Field.Root
+							invalid={
+								!sameAsWallet &&
+								recipientAddress.length > 0 &&
+								!isAddress(recipientAddress)
+							}
+						>
+							<Field.Label
+								className={css({
+									fontSize: "sm",
+									color: "fg.muted",
+								})}
+							>
+								Recipient Address
+							</Field.Label>
+							<Input
+								value={recipientAddress}
+								onChange={(e) => setRecipientAddress(e.target.value)}
+								placeholder={
+									sameAsWallet ? (address ?? "Connect wallet") : "0x..."
+								}
+								disabled={sameAsWallet || !isConnected}
+								className={css({
+									fontFamily: "mono",
+									fontSize: "sm",
+								})}
+							/>
+							{!sameAsWallet &&
+								recipientAddress.length > 0 &&
+								!isAddress(recipientAddress) && (
+									<Field.ErrorText>Invalid Ethereum address</Field.ErrorText>
+								)}
+						</Field.Root>
+					</div>
+
 					{isConnected && sourceChain.length > 0 && (
 						<div
 							className={css({
@@ -776,7 +888,8 @@ export default function CrossChainRelayer() {
 							Number(amount) < MINIMUM_AMOUNT ||
 							!isApproved ||
 							isBurning ||
-							isBurnConfirming
+							isBurnConfirming ||
+							(!sameAsWallet && !isAddress(recipientAddress))
 						}
 						loading={isBurning || isBurnConfirming}
 						loadingText={isBurnConfirming ? "Confirming..." : "Signing..."}
