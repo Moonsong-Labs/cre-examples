@@ -4,8 +4,9 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"simulate": "cre workflow simulate workflow --target demo --non-interactive --trigger-index 0 --evm-tx-hash 0x71728849068e43d4076ff91b6a10f2005223ca80b9e2c14f7f9d54aa3cbc3398 --evm-event-index 4",
+		"simulate": "cre workflow simulate cctp-detector --non-interactive --trigger-index 0 --evm-tx-hash 0x71728849068e43d4076ff91b6a10f2005223ca80b9e2c14f7f9d54aa3cbc3398 --evm-event-index 4",
 		"broadcast": "bun simulate --broadcast",
+		"check": "biome check --write",
 		"forge:build": "cd contracts && forge build",
 		"forge:install": "cd contracts && forge soldeer install"
 	},
@@ -16,6 +17,8 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"tiny-invariant": "^1.3.3"
+		"tiny-invariant": "^1.3.3",
+		"viem": "^2.43.1",
+		"zod": "^4.2.1"
 	}
 }

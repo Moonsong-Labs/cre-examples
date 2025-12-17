@@ -17,38 +17,20 @@ import {
 	pad,
 	toHex,
 } from "viem";
-import { tokenMessengerV2Abi } from "./abi";
-import type { CREConfig, MailboxPayload } from "./schema";
-
-const ENVIRONMENT_INFO = {
-	0: {
-		name: "Sepolia",
-		chainSelector: "ethereum-testnet-sepolia",
-		usdcAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-	},
-	3: {
-		name: "Arbitrum Sepolia",
-		chainSelector: "ethereum-testnet-sepolia-arbitrum-1",
-		usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
-	},
-	6: {
-		name: "Base Sepolia",
-		chainSelector: "ethereum-testnet-sepolia-base-1",
-		usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-	},
-} as const;
-
-const TOKEN_MESSENGER_V2_TESTNET =
-	"0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA" as const;
-
-const MAILBOX_API_KEY_SECRET = "MAILBOX_API_KEY";
-
-type SourceDomain = keyof typeof ENVIRONMENT_INFO;
+import {
+	type DetectorConfig,
+	type Domain,
+	ENVIRONMENT_INFO,
+	MAILBOX_API_KEY_SECRET,
+	type MailboxPayload,
+	TOKEN_MESSENGER_V2_TESTNET,
+	tokenMessengerV2Abi,
+} from "../common";
 
 const onLogTrigger = (
-	runtime: Runtime<CREConfig>,
+	runtime: Runtime<DetectorConfig>,
 	log: EVMLog,
-	sourceDomain: SourceDomain,
+	sourceDomain: Domain,
 ): MailboxPayload => {
 	runtime.log("Detector workflow triggered.");
 	const rawTopics = log.topics.map((t) => bytesToHex(t));
@@ -79,7 +61,7 @@ const onLogTrigger = (
 };
 
 const postToMailbox = (
-	runtime: Runtime<CREConfig>,
+	runtime: Runtime<DetectorConfig>,
 	payload: MailboxPayload,
 ): number => {
 	const apiKey = runtime
@@ -94,7 +76,7 @@ const postToMailbox = (
 };
 
 const postToMailboxInner = (
-	nodeRuntime: NodeRuntime<CREConfig>,
+	nodeRuntime: NodeRuntime<DetectorConfig>,
 	payload: MailboxPayload,
 	apiKey: string,
 ): number => {
@@ -123,7 +105,7 @@ const postToMailboxInner = (
 	return resp.statusCode;
 };
 
-const initWorkflow = (config: CREConfig) =>
+const initWorkflow = (config: DetectorConfig) =>
 	config.evms.map(({ chainSelectorName, domain }) => {
 		const network = getNetwork({
 			chainFamily: "evm",
@@ -135,7 +117,7 @@ const initWorkflow = (config: CREConfig) =>
 		const evmClient = new cre.capabilities.EVMClient(
 			network.chainSelector.selector,
 		);
-		const sourceDomain = domain as SourceDomain;
+		const sourceDomain = domain as Domain;
 		const env = ENVIRONMENT_INFO[sourceDomain];
 		invariant(env, `Unsupported domain ${domain} for ${chainSelectorName}`);
 
@@ -159,13 +141,13 @@ const initWorkflow = (config: CREConfig) =>
 					},
 				],
 			}),
-			(runtime: Runtime<CREConfig>, log: EVMLog) =>
+			(runtime: Runtime<DetectorConfig>, log: EVMLog) =>
 				onLogTrigger(runtime, log, sourceDomain),
 		);
 	});
 
 export async function main() {
-	const runner = await Runner.newRunner<CREConfig>();
+	const runner = await Runner.newRunner<DetectorConfig>();
 	await runner.run(initWorkflow);
 }
 
