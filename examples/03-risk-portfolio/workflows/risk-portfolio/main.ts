@@ -9,29 +9,21 @@ import {
 } from "@chainlink/cre-sdk";
 import { encodeAbiParameters } from "viem";
 import { type Config, ConfigSchema } from "./config";
-import { getBootstrapReturns } from "./lib/bootstrap";
+import { fetchHistoricalReturns } from "./lib/historical";
 import { computeMetricsFromReturns } from "./lib/math";
 import { packCorrs, packVols } from "./lib/pack";
-import { fetchAllPrices } from "./lib/prices";
-import { AssetNames } from "./types";
+import { AssetNames, WINDOW_SIZE } from "./types";
 
 const onCronTrigger = (runtime: Runtime<Config>): string => {
 	runtime.log("Risk Portfolio workflow triggered");
 
-	runtime.log("Step 1: Fetching live prices from Chainlink feeds...");
-	const priceData = fetchAllPrices(runtime);
+	runtime.log("Step 1: Fetching historical prices from Chainlink feeds...");
+	runtime.log(`  Collecting ${WINDOW_SIZE + 1} price points per asset (~${WINDOW_SIZE} days)`);
 
-	for (let i = 0; i < priceData.prices.length; i++) {
-		runtime.log(
-			`  ${AssetNames[i]}: ${priceData.prices[i].toString()} (1e18 USD)`,
-		);
-	}
+	const returns = fetchHistoricalReturns(runtime);
+	runtime.log(`  Computed ${returns.length} days of log returns from live data`);
 
-	runtime.log("Step 2: Loading bootstrap returns data...");
-	const returns = getBootstrapReturns();
-	runtime.log(`  Loaded ${returns.length} days of historical returns`);
-
-	runtime.log("Step 3: Computing volatility and correlation metrics...");
+	runtime.log("Step 2: Computing volatility and correlation metrics...");
 	const metrics = computeMetricsFromReturns(returns);
 
 	runtime.log("  Volatilities (bps):");
@@ -62,13 +54,13 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
 		);
 	}
 
-	runtime.log("Step 4: Packing metrics for on-chain storage...");
+	runtime.log("Step 3: Packing metrics for on-chain storage...");
 	const packedVols = packVols(metrics.volsBps);
 	const packedCorrs = packCorrs(metrics.corrsBps);
 	runtime.log(`  packedVols: ${packedVols.toString()}`);
 	runtime.log(`  packedCorrs: ${packedCorrs.toString()}`);
 
-	runtime.log("Step 5: Encoding and signing report...");
+	runtime.log("Step 4: Encoding and signing report...");
 	const timestamp = BigInt(Math.floor(Date.now() / 1000));
 
 	const encodedPayload = encodeAbiParameters(
@@ -89,7 +81,7 @@ const onCronTrigger = (runtime: Runtime<Config>): string => {
 		})
 		.result();
 
-	runtime.log("Step 6: Writing report to RiskMetricsOracle contract...");
+	runtime.log("Step 5: Writing report to RiskMetricsOracle contract...");
 
 	const network = getNetwork({
 		chainFamily: "evm",
