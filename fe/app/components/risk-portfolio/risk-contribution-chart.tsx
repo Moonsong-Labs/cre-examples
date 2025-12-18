@@ -79,7 +79,7 @@ function RiskBars({
 										transition: "width 0.3s ease",
 									})}
 									style={{
-										width: `${Math.min(contrib, 100)}%`,
+										width: `${Math.max(0, Math.min(contrib, 100))}%`,
 										backgroundColor: ASSET_COLORS[asset],
 									}}
 								/>
