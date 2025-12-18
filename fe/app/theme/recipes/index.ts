@@ -1,3 +1,9 @@
+import { slider } from "./slider";
+import { alert } from "./alert";
+import { skeleton } from "./skeleton";
+import { progress } from "./progress";
+import { tooltip } from "./tooltip";
+import { tabs } from "./tabs";
 import { absoluteCenter } from "./absolute-center";
 import { badge } from "./badge";
 import { button } from "./button";
@@ -13,15 +19,21 @@ import { spinner } from "./spinner";
 import { text } from "./text";
 
 export const recipes = {
-	button,
-	group,
-	absoluteCenter,
-	spinner,
-	input,
-	text,
-	icon,
-	badge,
-	heading,
+    button,
+    group,
+    absoluteCenter,
+    spinner,
+    input,
+    text,
+    icon,
+    badge,
+    heading,
+    tabs,
+    tooltip,
+    progress,
+    skeleton,
+    alert,
+    slider
 };
 
 export const slotRecipes = {

@@ -11,6 +11,10 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "main.ts"
+    "main.ts",
+    "config.ts",
+    "types.ts",
+    "lib/**/*.ts",
+    "abi/**/*.ts"
   ]
 }
