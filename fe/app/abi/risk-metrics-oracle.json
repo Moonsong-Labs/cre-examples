@@ -1,0 +1,64 @@
+[
+  {
+    "inputs": [],
+    "name": "latestMetrics",
+    "outputs": [
+      { "internalType": "uint64", "name": "_updatedAt", "type": "uint64" },
+      { "internalType": "uint32", "name": "_count", "type": "uint32" },
+      { "internalType": "uint32", "name": "_idx", "type": "uint32" },
+      { "internalType": "uint256[5]", "name": "_volBps", "type": "uint256[5]" },
+      { "internalType": "int256[10]", "name": "_corrBps", "type": "int256[10]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "lastPricesE18",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLastPricesE18",
+    "outputs": [{ "internalType": "uint256[5]", "name": "", "type": "uint256[5]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "updatedAt",
+    "outputs": [{ "internalType": "uint64", "name": "", "type": "uint64" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "count",
+    "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "WINDOW",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ASSET_COUNT",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PAIR_COUNT",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
