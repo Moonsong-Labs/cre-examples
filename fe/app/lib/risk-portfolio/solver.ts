@@ -1,4 +1,4 @@
-import { RISK_BUDGETS, WEIGHT_CAP, WEIGHT_FLOOR } from "./constants";
+import { RISK_APPETITES, WEIGHT_FLOOR } from "./constants";
 import type { RiskContribution } from "./types";
 
 function dot(a: number[], b: number[]): number {
@@ -13,46 +13,69 @@ function portfolioVariance(cov: number[][], w: number[]): number {
 	return dot(w, matVec(cov, w));
 }
 
-function normalize(w: number[]): number[] {
-	const s = w.reduce((a, b) => a + b, 0);
-	return s === 0 ? w : w.map((x) => x / s);
+function applyFloors(weights: number[], floor: readonly number[]): number[] {
+	const floored = weights.map((w, i) => Math.max(w, floor[i]));
+	const sum = floored.reduce((a, b) => a + b, 0);
+	return floored.map((w) => w / sum);
 }
 
-function projectCapsFloors(
-	w: number[],
-	floor: number[],
-	cap: number[],
-): number[] {
-	const out = w.map((x, i) => Math.min(Math.max(x, floor[i]), cap[i]));
-	return normalize(out);
+function extractVolatilities(cov: number[][]): number[] {
+	return cov.map((row, i) => Math.sqrt(row[i]));
 }
 
-export function computeRiskBudgetWeights(
-	cov: number[][],
-	budgets: readonly number[],
-	floor: number[] = WEIGHT_FLOOR,
-	cap: number[] = WEIGHT_CAP,
-	iters = 200,
-	step = 0.5,
-): number[] {
-	let w = projectCapsFloors(normalize([1, 1, 1, 1, 1]), floor, cap);
+function extractCorrelationMatrix(cov: number[][]): number[][] {
+	const n = cov.length;
+	const vols = extractVolatilities(cov);
+	const corr: number[][] = [];
 
-	for (let t = 0; t < iters; t++) {
-		const m = matVec(cov, w);
-		const V = Math.max(portfolioVariance(cov, w), 1e-12);
-		const RC = w.map((wi, i) => wi * m[i]);
-
-		const wNew = w.map((wi, i) => {
-			const target = budgets[i] * V;
-			const denom = Math.max(RC[i], 1e-12);
-			const ratio = target / denom;
-			return wi * ratio ** step;
-		});
-
-		w = projectCapsFloors(wNew, floor, cap);
+	for (let i = 0; i < n; i++) {
+		corr[i] = [];
+		for (let j = 0; j < n; j++) {
+			if (i === j) {
+				corr[i][j] = 1;
+			} else {
+				const denom = vols[i] * vols[j];
+				corr[i][j] = denom > 0 ? cov[i][j] / denom : 0;
+			}
+		}
 	}
 
-	return w;
+	return corr;
+}
+
+function computeAvgCorrelation(corrMatrix: number[][]): number[] {
+	const n = corrMatrix.length;
+	return corrMatrix.map((row, i) => {
+		let sum = 0;
+		for (let j = 0; j < n; j++) {
+			if (i !== j) {
+				sum += Math.abs(row[j]);
+			}
+		}
+		return sum / (n - 1);
+	});
+}
+
+export function computeVolCorrWeights(
+	cov: number[][],
+	riskAppetite: number,
+	floor: readonly number[] = WEIGHT_FLOOR,
+): number[] {
+	const vols = extractVolatilities(cov);
+	const corrMatrix = extractCorrelationMatrix(cov);
+	const avgCorr = computeAvgCorrelation(corrMatrix);
+
+	const volFactor = vols.map((v) => Math.pow(Math.max(v, 0.0001), riskAppetite));
+
+	const divScore = avgCorr.map((ac) => Math.max(0.05, 1 - ac));
+	const corrExponent = -riskAppetite * 0.6;
+	const corrFactor = divScore.map((ds) => Math.pow(ds, corrExponent));
+
+	const raw = volFactor.map((vf, i) => vf * corrFactor[i]);
+	const sum = raw.reduce((a, b) => a + b, 0);
+	const normalized = raw.map((r) => r / sum);
+
+	return applyFloors(normalized, floor);
 }
 
 export function computeAllPortfolios(cov: number[][]): {
@@ -61,9 +84,9 @@ export function computeAllPortfolios(cov: number[][]): {
 	high: number[];
 } {
 	return {
-		low: computeRiskBudgetWeights(cov, RISK_BUDGETS.low),
-		balanced: computeRiskBudgetWeights(cov, RISK_BUDGETS.balanced),
-		high: computeRiskBudgetWeights(cov, RISK_BUDGETS.high),
+		low: computeVolCorrWeights(cov, RISK_APPETITES.low),
+		balanced: computeVolCorrWeights(cov, RISK_APPETITES.balanced),
+		high: computeVolCorrWeights(cov, RISK_APPETITES.high),
 	};
 }
 

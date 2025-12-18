@@ -22,16 +22,15 @@ export const CORRELATION_PAIRS: [number, number][] = [
 	[3, 4],
 ];
 
-export const RISK_BUDGETS = {
-	low: [0.2, 0.2, 0.15, 0.35, 0.1],
-	balanced: [0.25, 0.25, 0.2, 0.15, 0.15],
-	high: [0.25, 0.25, 0.2, 0.05, 0.25],
+export const RISK_APPETITES = {
+	low: -0.5,
+	balanced: 0.3,
+	high: 0.8,
 } as const;
 
-export type RiskProfile = keyof typeof RISK_BUDGETS;
+export type RiskProfile = keyof typeof RISK_APPETITES;
 
-export const WEIGHT_FLOOR = [0.02, 0.02, 0.02, 0.02, 0.01];
-export const WEIGHT_CAP = [0.4, 0.4, 0.3, 0.3, 0.15];
+export const WEIGHT_FLOOR = [0.02, 0.02, 0.02, 0.01, 0.01];
 
 export const STALE_THRESHOLD_SECONDS = 86400 * 2; // 2 days
 
