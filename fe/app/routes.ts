@@ -12,14 +12,8 @@ export default [
 			"examples/cross-chain-relayer",
 			"routes/examples/cross-chain-relayer.tsx",
 		),
-		route(
-			"examples/compliant-token",
-			"routes/examples/compliant-token.tsx",
-		),
-		route(
-			"examples/risk-portfolio",
-			"routes/examples/risk-portfolio.tsx",
-		),
+		route("examples/compliant-token", "routes/examples/compliant-token.tsx"),
+		route("examples/risk-portfolio", "routes/examples/risk-portfolio.tsx"),
 	]),
 	route("resources/whitelist", "routes/resources/whitelist.ts"),
 ] satisfies RouteConfig;

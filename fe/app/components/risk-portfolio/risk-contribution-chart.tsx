@@ -1,10 +1,10 @@
 import { css } from "styled-system/css";
 import { Tabs, Tooltip } from "~/components/ui";
 import {
-	ASSETS,
 	ASSET_COLORS,
-	type RiskProfile,
+	ASSETS,
 	computeRiskContribution,
+	type RiskProfile,
 } from "~/lib/risk-portfolio";
 
 interface RiskContributionChartProps {
@@ -26,7 +26,9 @@ function RiskBars({
 	portfolioVol: number;
 }) {
 	return (
-		<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+		>
 			<div className={css({ fontSize: "xs", color: "fg.muted", mb: "1" })}>
 				Portfolio Volatility:{" "}
 				<span className={css({ fontWeight: "semibold", color: "fg.default" })}>
@@ -119,7 +121,9 @@ export function RiskContributionChart({
 	};
 
 	return (
-		<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+		>
 			<span
 				className={css({
 					fontSize: "sm",

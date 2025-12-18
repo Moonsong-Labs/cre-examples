@@ -15,8 +15,11 @@
 #       url: "<select your own rpc url>"
 
 # ==========================================================================
-demo-settings:
+demo:
   rpcs:
     - chain-name: ethereum-testnet-sepolia
-      url: https://ethereum-sepolia-rpc.publicnode.com
-
+      url: https://1rpc.io/sepolia
+    - chain-name: ethereum-mainnet
+      url: https://1rpc.io/eth
+    - chain-name: binance_smart_chain-mainnet
+      url: https://bsc.drpc.org

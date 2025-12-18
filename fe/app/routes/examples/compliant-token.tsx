@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { css } from "styled-system/css";
 import { formatUnits, isAddress, parseUnits } from "viem";
+import { sepolia } from "viem/chains";
 import {
 	useAccount,
 	useChainId,
@@ -20,6 +21,7 @@ import {
 	useWaitForTransactionReceipt,
 	useWriteContract,
 } from "wagmi";
+import { AddToWalletButton } from "~/components/add-to-wallet-button";
 import {
 	Badge,
 	Button,
@@ -29,10 +31,8 @@ import {
 	NumberInput,
 	Text,
 } from "~/components/ui";
-import { AddToWalletButton } from "~/components/add-to-wallet-button";
+import { COMPLIANT_TOKEN_ADDRESS, compliantTokenAbi } from "~/config/contracts";
 import { useSpreadsheetData } from "~/hooks/useSpreadsheetData";
-import { compliantTokenAbi, COMPLIANT_TOKEN_ADDRESS } from "~/config/contracts";
-import { sepolia } from "viem/chains";
 import type { Route } from "./+types/compliant-token";
 
 export function meta(_args: Route.MetaArgs) {
@@ -71,13 +71,20 @@ export default function CompliantToken() {
 	const [syncError, setSyncError] = useState<string | null>(null);
 	const [isRefreshingAllowlist, setIsRefreshingAllowlist] = useState(false);
 
-	const { addresses: spreadsheetData, loading: loadingSpreadsheet, refetch: refetchSpreadsheet } =
-		useSpreadsheetData();
+	const {
+		addresses: spreadsheetData,
+		loading: loadingSpreadsheet,
+		refetch: refetchSpreadsheet,
+	} = useSpreadsheetData();
 
 	const isSepoliaChain = chainId === sepolia.id;
 
 	// Read allowlist
-	const { data: allowlist, refetch: refetchAllowlist, isLoading: isLoadingAllowlist } = useReadContract({
+	const {
+		data: allowlist,
+		refetch: refetchAllowlist,
+		isLoading: isLoadingAllowlist,
+	} = useReadContract({
 		chainId: sepolia.id,
 		address: COMPLIANT_TOKEN_ADDRESS,
 		abi: compliantTokenAbi,
@@ -182,7 +189,8 @@ export default function CompliantToken() {
 			setIsSyncing(true);
 			setSyncError(null);
 
-			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+			const serverUrl =
+				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
 			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
 
 			if (!apiKey) {
@@ -196,7 +204,9 @@ export default function CompliantToken() {
 
 			if (!response.ok) {
 				const errorBody = await response.text().catch(() => "");
-				throw new Error(`Failed to sync (HTTP ${response.status}): ${errorBody}`);
+				throw new Error(
+					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+				);
 			}
 
 			// Refresh both lists after successful sync
@@ -205,7 +215,8 @@ export default function CompliantToken() {
 			await refetchAllowlist();
 			setIsRefreshingAllowlist(false);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Failed to sync allowlist";
+			const message =
+				error instanceof Error ? error.message : "Failed to sync allowlist";
 			console.error(message, error);
 			setSyncError(message);
 		} finally {
@@ -378,7 +389,9 @@ export default function CompliantToken() {
 								})}
 							>
 								{formatAddress(COMPLIANT_TOKEN_ADDRESS)}
-								<ExternalLink className={css({ width: "2.5", height: "2.5" })} />
+								<ExternalLink
+									className={css({ width: "2.5", height: "2.5" })}
+								/>
 							</a>
 						</div>
 					</div>
@@ -484,8 +497,17 @@ export default function CompliantToken() {
 
 			{isConnected && !isSepoliaChain && (
 				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
-					<Card.Body className={css({ display: "flex", gap: "4", alignItems: "center" })}>
-						<XCircle className={css({ width: "5", height: "5", color: "red.11", flexShrink: 0 })} />
+					<Card.Body
+						className={css({ display: "flex", gap: "4", alignItems: "center" })}
+					>
+						<XCircle
+							className={css({
+								width: "5",
+								height: "5",
+								color: "red.11",
+								flexShrink: 0,
+							})}
+						/>
 						<div className={css({ flex: 1 })}>
 							<Text className={css({ fontWeight: "medium", mb: "1" })}>
 								Wrong Network
@@ -509,7 +531,13 @@ export default function CompliantToken() {
 				<Card.Root variant="elevated">
 					<Card.Header>
 						<Card.Title>
-							<div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+							<div
+								className={css({
+									display: "flex",
+									alignItems: "center",
+									gap: "2",
+								})}
+							>
 								<Coins className={css({ width: "5", height: "5" })} />
 								Mint Tokens
 							</div>
@@ -518,8 +546,20 @@ export default function CompliantToken() {
 							Mint tokens to an allowlisted address (max 1000 per mint)
 						</Card.Description>
 					</Card.Header>
-					<Card.Body className={css({ display: "flex", flexDirection: "column", gap: "6" })}>
-						<div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+					<Card.Body
+						className={css({
+							display: "flex",
+							flexDirection: "column",
+							gap: "6",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								flexDirection: "column",
+								gap: "4",
+							})}
+						>
 							<Field.Root>
 								<Field.Label>Recipient Address</Field.Label>
 								<Input
@@ -529,12 +569,11 @@ export default function CompliantToken() {
 									onChange={(e) => setMintRecipient(e.target.value)}
 									disabled={isMintPending}
 								/>
-								{mintRecipient &&
-									!isValidAddress(mintRecipient) && (
-										<Text className={css({ fontSize: "sm", color: "red.11" })}>
-											Invalid address format
-										</Text>
-									)}
+								{mintRecipient && !isValidAddress(mintRecipient) && (
+									<Text className={css({ fontSize: "sm", color: "red.11" })}>
+										Invalid address format
+									</Text>
+								)}
 								{mintRecipient &&
 									isValidAddress(mintRecipient) &&
 									!isAddressInAllowlist(mintRecipient) && (
@@ -550,7 +589,9 @@ export default function CompliantToken() {
 								<NumberInput.Root
 									value={mintAmount}
 									onValueChange={(e) => {
-										const intValue = Math.floor(Number(e.value) || 0).toString();
+										const intValue = Math.floor(
+											Number(e.value) || 0,
+										).toString();
 										setMintAmount(intValue);
 									}}
 									disabled={isMintPending}
@@ -577,7 +618,13 @@ export default function CompliantToken() {
 						>
 							{isMintPending ? (
 								<>
-									<Loader2 className={css({ width: "4", height: "4", animation: "spin" })} />
+									<Loader2
+										className={css({
+											width: "4",
+											height: "4",
+											animation: "spin",
+										})}
+									/>
 									Minting...
 								</>
 							) : (
@@ -601,9 +648,21 @@ export default function CompliantToken() {
 									gap: "2",
 								})}
 							>
-								<CheckCircle className={css({ width: "5", height: "5", color: "green.11" })} />
+								<CheckCircle
+									className={css({
+										width: "5",
+										height: "5",
+										color: "green.11",
+									})}
+								/>
 								<div>
-									<Text className={css({ fontWeight: "medium", fontSize: "sm", color: "green.12" })}>
+									<Text
+										className={css({
+											fontWeight: "medium",
+											fontSize: "sm",
+											color: "green.12",
+										})}
+									>
 										Mint successful!
 									</Text>
 									<a
@@ -620,7 +679,9 @@ export default function CompliantToken() {
 										})}
 									>
 										View Transaction
-										<ExternalLink className={css({ width: "2.5", height: "2.5" })} />
+										<ExternalLink
+											className={css({ width: "2.5", height: "2.5" })}
+										/>
 									</a>
 								</div>
 								<Button
@@ -652,9 +713,17 @@ export default function CompliantToken() {
 									gap: "2",
 								})}
 							>
-								<XCircle className={css({ width: "5", height: "5", color: "red.11" })} />
+								<XCircle
+									className={css({ width: "5", height: "5", color: "red.11" })}
+								/>
 								<div>
-									<Text className={css({ fontWeight: "medium", fontSize: "sm", color: "red.12" })}>
+									<Text
+										className={css({
+											fontWeight: "medium",
+											fontSize: "sm",
+											color: "red.12",
+										})}
+									>
 										Error: {mintError.message.split("\n")[0]}
 									</Text>
 								</div>
@@ -672,13 +741,29 @@ export default function CompliantToken() {
 				</Card.Root>
 			)}
 
-		{/* Allowed Accounts Comparison */}
+			{/* Allowed Accounts Comparison */}
 			{isConnected && isSepoliaChain && (
 				<Card.Root variant="outline">
 					<Card.Header>
-						<div className={css({ display: "flex", flexDirection: { base: "column", md: "row" }, justifyContent: "space-between", alignItems: { base: "flex-start", md: "flex-end" }, gap: "4" })}>
+						<div
+							className={css({
+								display: "flex",
+								flexDirection: { base: "column", md: "row" },
+								justifyContent: "space-between",
+								alignItems: { base: "flex-start", md: "flex-end" },
+								gap: "4",
+							})}
+						>
 							<Card.Title>Allowed Accounts</Card.Title>
-							<div className={css({ display: "flex", alignItems: "center", gap: "2", flexWrap: "wrap", justifyContent: { base: "flex-start", md: "flex-end" } })}>
+							<div
+								className={css({
+									display: "flex",
+									alignItems: "center",
+									gap: "2",
+									flexWrap: "wrap",
+									justifyContent: { base: "flex-start", md: "flex-end" },
+								})}
+							>
 								<a
 									href={SPREADSHEET_URL}
 									target="_blank"
@@ -698,25 +783,33 @@ export default function CompliantToken() {
 										_hover: { bg: "gray.subtle.bg" },
 									})}
 								>
-									<ExternalLink className={css({ width: "3.5", height: "3.5" })} />
+									<ExternalLink
+										className={css({ width: "3.5", height: "3.5" })}
+									/>
 									Open Sheet
 								</a>
 								<Button
 									onClick={() => {
 										void refetchSpreadsheet();
 										setIsRefreshingAllowlist(true);
-										void refetchAllowlist().finally(() => setIsRefreshingAllowlist(false));
+										void refetchAllowlist().finally(() =>
+											setIsRefreshingAllowlist(false),
+										);
 									}}
 									variant="outline"
 									size="sm"
 									disabled={loadingSpreadsheet || isRefreshingAllowlist}
 									className={css({ gap: "1" })}
 								>
-									<RefreshCw className={css({
-										width: "4",
-										height: "4",
-										...(loadingSpreadsheet || isRefreshingAllowlist ? { animation: "spin" } : {})
-									})} />
+									<RefreshCw
+										className={css({
+											width: "4",
+											height: "4",
+											...(loadingSpreadsheet || isRefreshingAllowlist
+												? { animation: "spin" }
+												: {}),
+										})}
+									/>
 									Refresh All
 								</Button>
 								<Button
@@ -728,12 +821,20 @@ export default function CompliantToken() {
 								>
 									{isSyncing ? (
 										<>
-											<Loader2 className={css({ width: "3.5", height: "3.5", animation: "spin" })} />
+											<Loader2
+												className={css({
+													width: "3.5",
+													height: "3.5",
+													animation: "spin",
+												})}
+											/>
 											Publishing...
 										</>
 									) : (
 										<>
-											<Upload className={css({ width: "3.5", height: "3.5" })} />
+											<Upload
+												className={css({ width: "3.5", height: "3.5" })}
+											/>
 											Publish
 										</>
 									)}
@@ -741,7 +842,13 @@ export default function CompliantToken() {
 							</div>
 						</div>
 					</Card.Header>
-					<Card.Body className={css({ display: "flex", flexDirection: "column", gap: "6" })}>
+					<Card.Body
+						className={css({
+							display: "flex",
+							flexDirection: "column",
+							gap: "6",
+						})}
+					>
 						{syncError && (
 							<div
 								className={css({
@@ -755,9 +862,17 @@ export default function CompliantToken() {
 									gap: "2",
 								})}
 							>
-								<XCircle className={css({ width: "5", height: "5", color: "red.11" })} />
+								<XCircle
+									className={css({ width: "5", height: "5", color: "red.11" })}
+								/>
 								<div className={css({ flex: 1 })}>
-									<Text className={css({ fontWeight: "medium", fontSize: "sm", color: "red.12" })}>
+									<Text
+										className={css({
+											fontWeight: "medium",
+											fontSize: "sm",
+											color: "red.12",
+										})}
+									>
 										{syncError.split("\n")[0]}
 									</Text>
 								</div>
@@ -778,172 +893,226 @@ export default function CompliantToken() {
 								gap: "6",
 							})}
 						>
-						{/* Spreadsheet Column */}
-						<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-									pb: "3",
-									borderBottom: "1px solid",
-									borderColor: "border",
-								})}
-							>
-								<FileSpreadsheet className={css({ width: "4", height: "4" })} />
-								<div>
-									<Text className={css({ fontWeight: "medium" })}>
-										Spreadsheet
-									</Text>
-									<Text className={css({ fontSize: "xs", color: "fg.muted" })}>
-										{spreadsheetData.length} addresses
-									</Text>
-								</div>
-							</div>
-
+							{/* Spreadsheet Column */}
 							<div
 								className={css({
 									display: "flex",
 									flexDirection: "column",
-									gap: "2",
-									maxHeight: "300px",
-									overflowY: "auto",
+									gap: "3",
 								})}
 							>
-								{spreadsheetData.length > 0 ? (
-									spreadsheetData.map((addr) => (
-										<div
-											key={addr}
-											className={css({
-												p: "2",
-												borderRadius: "md",
-												border: "1px solid",
-												borderColor: "border",
-												bg: "gray.subtle.bg",
-												fontSize: "sm",
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "space-between",
-												gap: "2",
-											})}
+								<div
+									className={css({
+										display: "flex",
+										alignItems: "center",
+										gap: "2",
+										pb: "3",
+										borderBottom: "1px solid",
+										borderColor: "border",
+									})}
+								>
+									<FileSpreadsheet
+										className={css({ width: "4", height: "4" })}
+									/>
+									<div>
+										<Text className={css({ fontWeight: "medium" })}>
+											Spreadsheet
+										</Text>
+										<Text
+											className={css({ fontSize: "xs", color: "fg.muted" })}
 										>
-											<a
-												href={`${ETHERSCAN_BASE}/address/${addr}`}
-												target="_blank"
-												rel="noopener noreferrer"
+											{spreadsheetData.length} addresses
+										</Text>
+									</div>
+								</div>
+
+								<div
+									className={css({
+										display: "flex",
+										flexDirection: "column",
+										gap: "2",
+										maxHeight: "300px",
+										overflowY: "auto",
+									})}
+								>
+									{spreadsheetData.length > 0 ? (
+										spreadsheetData.map((addr) => (
+											<div
+												key={addr}
 												className={css({
-													color: "teal.11",
-													_hover: { textDecoration: "underline" },
+													p: "2",
+													borderRadius: "md",
+													border: "1px solid",
+													borderColor: "border",
+													bg: "gray.subtle.bg",
+													fontSize: "sm",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "space-between",
+													gap: "2",
 												})}
 											>
-												{formatAddress(addr)}
-											</a>
-											{isAddressInAllowlist(addr) && (
-												<CheckCircle className={css({ width: "3.5", height: "3.5", color: "green.11" })} />
-											)}
-											{!isAddressInAllowlist(addr) && (
-												<Badge variant="subtle" colorPalette="amber" size="sm">
-													New
-												</Badge>
-											)}
-										</div>
-									))
-								) : (
-									<Text className={css({ color: "fg.muted", textAlign: "center", py: "4", fontSize: "sm" })}>
-										{loadingSpreadsheet ? "Loading..." : "No addresses"}
-									</Text>
-								)}
-							</div>
-						</div>
-
-						{/* Contract Column */}
-						<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-									pb: "3",
-									borderBottom: "1px solid",
-									borderColor: "border",
-								})}
-							>
-								<ShieldCheck className={css({ width: "4", height: "4" })} />
-								<div>
-									<Text className={css({ fontWeight: "medium" })}>
-										Token Contract
-									</Text>
-									<Text className={css({ fontSize: "xs", color: "fg.muted" })}>
-										{allowlistArray.length} addresses
-									</Text>
+												<a
+													href={`${ETHERSCAN_BASE}/address/${addr}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className={css({
+														color: "teal.11",
+														_hover: { textDecoration: "underline" },
+													})}
+												>
+													{formatAddress(addr)}
+												</a>
+												{isAddressInAllowlist(addr) && (
+													<CheckCircle
+														className={css({
+															width: "3.5",
+															height: "3.5",
+															color: "green.11",
+														})}
+													/>
+												)}
+												{!isAddressInAllowlist(addr) && (
+													<Badge
+														variant="subtle"
+														colorPalette="amber"
+														size="sm"
+													>
+														New
+													</Badge>
+												)}
+											</div>
+										))
+									) : (
+										<Text
+											className={css({
+												color: "fg.muted",
+												textAlign: "center",
+												py: "4",
+												fontSize: "sm",
+											})}
+										>
+											{loadingSpreadsheet ? "Loading..." : "No addresses"}
+										</Text>
+									)}
 								</div>
 							</div>
 
+							{/* Contract Column */}
 							<div
 								className={css({
 									display: "flex",
 									flexDirection: "column",
-									gap: "2",
-									maxHeight: "300px",
-									overflowY: "auto",
+									gap: "3",
 								})}
 							>
-								{allowlistArray.length > 0 ? (
-									allowlistArray.map((addr) => (
-										<div
-											key={addr}
-											className={css({
-												p: "2",
-												borderRadius: "md",
-												border: "1px solid",
-												borderColor: "border",
-												bg: "gray.subtle.bg",
-												fontSize: "sm",
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "space-between",
-												gap: "2",
-											})}
+								<div
+									className={css({
+										display: "flex",
+										alignItems: "center",
+										gap: "2",
+										pb: "3",
+										borderBottom: "1px solid",
+										borderColor: "border",
+									})}
+								>
+									<ShieldCheck className={css({ width: "4", height: "4" })} />
+									<div>
+										<Text className={css({ fontWeight: "medium" })}>
+											Token Contract
+										</Text>
+										<Text
+											className={css({ fontSize: "xs", color: "fg.muted" })}
 										>
-											<a
-												href={`${ETHERSCAN_BASE}/address/${addr}`}
-												target="_blank"
-												rel="noopener noreferrer"
+											{allowlistArray.length} addresses
+										</Text>
+									</div>
+								</div>
+
+								<div
+									className={css({
+										display: "flex",
+										flexDirection: "column",
+										gap: "2",
+										maxHeight: "300px",
+										overflowY: "auto",
+									})}
+								>
+									{allowlistArray.length > 0 ? (
+										allowlistArray.map((addr) => (
+											<div
+												key={addr}
 												className={css({
-													color: "teal.11",
-													_hover: { textDecoration: "underline" },
+													p: "2",
+													borderRadius: "md",
+													border: "1px solid",
+													borderColor: "border",
+													bg: "gray.subtle.bg",
+													fontSize: "sm",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "space-between",
+													gap: "2",
 												})}
 											>
-												{formatAddress(addr)}
-											</a>
-											{addr.toLowerCase() === address?.toLowerCase() && (
-												<Badge variant="subtle" colorPalette="green" size="sm">
-													You
-												</Badge>
-											)}
-											{spreadsheetData.some(a => a.toLowerCase() === addr.toLowerCase()) && (
-												<CheckCircle className={css({ width: "3.5", height: "3.5", color: "green.11" })} />
-											)}
-										{!spreadsheetData.some(a => a.toLowerCase() === addr.toLowerCase()) && (
-											<Badge variant="subtle" colorPalette="red" size="sm">
-												Remove
-											</Badge>
-										)}
-										</div>
-									))
-								) : (
-									<Text className={css({ color: "fg.muted", textAlign: "center", py: "4", fontSize: "sm" })}>
-										No addresses in allowlist
-									</Text>
-								)}
+												<a
+													href={`${ETHERSCAN_BASE}/address/${addr}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className={css({
+														color: "teal.11",
+														_hover: { textDecoration: "underline" },
+													})}
+												>
+													{formatAddress(addr)}
+												</a>
+												{addr.toLowerCase() === address?.toLowerCase() && (
+													<Badge
+														variant="subtle"
+														colorPalette="green"
+														size="sm"
+													>
+														You
+													</Badge>
+												)}
+												{spreadsheetData.some(
+													(a) => a.toLowerCase() === addr.toLowerCase(),
+												) && (
+													<CheckCircle
+														className={css({
+															width: "3.5",
+															height: "3.5",
+															color: "green.11",
+														})}
+													/>
+												)}
+												{!spreadsheetData.some(
+													(a) => a.toLowerCase() === addr.toLowerCase(),
+												) && (
+													<Badge variant="subtle" colorPalette="red" size="sm">
+														Remove
+													</Badge>
+												)}
+											</div>
+										))
+									) : (
+										<Text
+											className={css({
+												color: "fg.muted",
+												textAlign: "center",
+												py: "4",
+												fontSize: "sm",
+											})}
+										>
+											No addresses in allowlist
+										</Text>
+									)}
+								</div>
 							</div>
-
-						</div>
 						</div>
 					</Card.Body>
 				</Card.Root>
 			)}
-
 		</div>
 	);
 }

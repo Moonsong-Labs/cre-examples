@@ -1,13 +1,8 @@
 import { Info, PieChart, RefreshCw } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
-import { useReadContract } from "wagmi";
 import { sepolia } from "viem/chains";
-import { Alert, Badge, Button, Card, Skeleton, Text } from "~/components/ui";
-import {
-	riskMetricsOracleAbi,
-	RISK_METRICS_ORACLE_ADDRESS,
-} from "~/config/contracts";
+import { useReadContract } from "wagmi";
 import {
 	CorrelationHeatmap,
 	DataStatusBadge,
@@ -17,13 +12,26 @@ import {
 	VolatilityBarChart,
 } from "~/components/risk-portfolio";
 import {
+	Alert,
+	Badge,
+	Button,
+	Card,
+	Skeleton,
+	Text,
+	Toaster,
+	toaster,
+} from "~/components/ui";
+import {
+	RISK_METRICS_ORACLE_ADDRESS,
+	riskMetricsOracleAbi,
+} from "~/config/contracts";
+import {
 	buildCovarianceMatrix,
 	computeAllPortfolios,
+	type DataStatus,
 	MOCK_METRICS,
 	normalizeMetrics,
 	STALE_THRESHOLD_SECONDS,
-	WINDOW_SIZE,
-	type DataStatus,
 } from "~/lib/risk-portfolio";
 import type { Route } from "./+types/risk-portfolio";
 
@@ -42,11 +50,12 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export default function RiskPortfolio() {
 	const isContractDeployed = RISK_METRICS_ORACLE_ADDRESS !== ZERO_ADDRESS;
+	const [isRefetching, setIsRefetching] = useState(false);
 
 	const {
 		data: metricsData,
 		refetch,
-		isLoading,
+		isError,
 	} = useReadContract({
 		chainId: sepolia.id,
 		address: RISK_METRICS_ORACLE_ADDRESS,
@@ -58,38 +67,51 @@ export default function RiskPortfolio() {
 		},
 	});
 
+	const useMockData = !isContractDeployed || isError || !metricsData;
+
+	const handleRefresh = async () => {
+		setIsRefetching(true);
+		toaster.promise(
+			refetch().finally(() => setIsRefetching(false)),
+			{
+				loading: { title: "Refreshing metrics..." },
+				success: { title: "Metrics updated", duration: 2000 },
+				error: { title: "Failed to fetch metrics", duration: 3000 },
+			},
+		);
+	};
+
 	const metrics = useMemo(() => {
-		if (!isContractDeployed || !metricsData) {
+		if (useMockData) {
 			return {
 				updatedAt: MOCK_METRICS.updatedAt,
-				count: MOCK_METRICS.count,
-				idx: MOCK_METRICS.idx,
 				volBps: MOCK_METRICS.volBps,
 				corrBps: MOCK_METRICS.corrBps,
 			};
 		}
 
-		const [updatedAt, count, idx, volBps, corrBps] = metricsData as [
-			bigint,
-			number,
-			number,
-			readonly bigint[],
-			readonly bigint[],
-		];
+		const data = metricsData as {
+			updatedAt: bigint;
+			vols: readonly number[];
+			corrs: readonly number[];
+		};
 
-		return { updatedAt, count, idx, volBps, corrBps };
-	}, [metricsData, isContractDeployed]);
+		return {
+			updatedAt: data.updatedAt,
+			volBps: data.vols.map((v) => BigInt(v)),
+			corrBps: data.corrs.map((c) => BigInt(c)),
+		};
+	}, [metricsData, useMockData]);
 
 	const dataStatus: DataStatus = useMemo(() => {
-		if (isLoading && isContractDeployed) return "loading";
-		if (metrics.count < WINDOW_SIZE) return "warming-up";
+		if (!metricsData && isContractDeployed && !isError) return "loading";
 
 		const now = Math.floor(Date.now() / 1000);
 		const age = now - Number(metrics.updatedAt);
 		if (age > STALE_THRESHOLD_SECONDS) return "stale";
 
 		return "ready";
-	}, [isLoading, metrics, isContractDeployed]);
+	}, [metricsData, metrics, isContractDeployed, isError]);
 
 	const updatedAtDate = useMemo(() => {
 		if (!metrics.updatedAt) return null;
@@ -211,15 +233,15 @@ export default function RiskPortfolio() {
 						</Badge>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
 							CRE workflows compute 30-day rolling volatilities and correlations
-							from on-chain price feeds, enabling dynamic risk-budgeted portfolio
-							allocations that adapt to market conditions.
+							from on-chain price feeds, enabling dynamic risk-budgeted
+							portfolio allocations that adapt to market conditions.
 						</Text>
 					</div>
 				</Card.Body>
 			</Card.Root>
 
 			{/* Mock Data Alert */}
-			{!isContractDeployed && (
+			{useMockData && (
 				<Alert.Root>
 					<Alert.Indicator>
 						<Info className={css({ width: "4", height: "4" })} />
@@ -227,7 +249,9 @@ export default function RiskPortfolio() {
 					<Alert.Content>
 						<Alert.Title>Demo Mode</Alert.Title>
 						<Alert.Description>
-							Contract not deployed. Displaying mock data for demonstration.
+							{isError
+								? "Contract call failed. Displaying mock data for demonstration."
+								: "Contract not deployed. Displaying mock data for demonstration."}
 						</Alert.Description>
 					</Alert.Content>
 				</Alert.Root>
@@ -254,7 +278,11 @@ export default function RiskPortfolio() {
 								})}
 							>
 								<Skeleton
-									className={css({ width: "180px", height: "180px", borderRadius: "full" })}
+									className={css({
+										width: "180px",
+										height: "180px",
+										borderRadius: "full",
+									})}
 								/>
 								<Skeleton className={css({ width: "120px", height: "4" })} />
 							</Card.Body>
@@ -278,7 +306,10 @@ export default function RiskPortfolio() {
 							})}
 						>
 							<PortfolioPieChart title="Low Risk" weights={portfolios.low} />
-							<PortfolioPieChart title="Balanced" weights={portfolios.balanced} />
+							<PortfolioPieChart
+								title="Balanced"
+								weights={portfolios.balanced}
+							/>
 							<PortfolioPieChart title="High Risk" weights={portfolios.high} />
 						</div>
 					</Card.Body>
@@ -313,21 +344,20 @@ export default function RiskPortfolio() {
 							>
 								<DataStatusBadge
 									status={dataStatus}
-									count={metrics.count}
 									updatedAt={updatedAtDate}
 								/>
 								{isContractDeployed && (
 									<Button
-										onClick={() => refetch()}
+										onClick={handleRefresh}
 										variant="subtle"
 										size="sm"
-										disabled={isLoading}
+										disabled={isRefetching}
 									>
 										<RefreshCw
 											className={css({
 												width: "4",
 												height: "4",
-												...(isLoading ? { animation: "spin" } : {}),
+												...(isRefetching ? { animation: "spin" } : {}),
 											})}
 										/>
 										Refresh
@@ -344,7 +374,13 @@ export default function RiskPortfolio() {
 								gap: "6",
 							})}
 						>
-							<div className={css({ display: "flex", flexDirection: "column", gap: "6" })}>
+							<div
+								className={css({
+									display: "flex",
+									flexDirection: "column",
+									gap: "6",
+								})}
+							>
 								<div
 									className={css({
 										p: "4",
@@ -387,11 +423,29 @@ export default function RiskPortfolio() {
 			{/* Price Simulation */}
 			{dataStatus !== "loading" && (
 				<Card.Root variant="outline">
+					<Card.Header>
+						<div
+							className={css({
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "center",
+							})}
+						>
+							<div>
+								<Card.Title>Price Simulation</Card.Title>
+								<Card.Description>
+									Adjust asset prices to see portfolio impact
+								</Card.Description>
+							</div>
+						</div>
+					</Card.Header>
 					<Card.Body>
 						<PriceSimulation portfolios={portfolios} />
 					</Card.Body>
 				</Card.Root>
 			)}
+
+			<Toaster />
 		</div>
 	);
 }

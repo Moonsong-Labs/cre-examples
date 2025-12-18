@@ -1,4 +1,4 @@
 export * from "./constants";
-export * from "./types";
 export * from "./covariance";
 export * from "./solver";
+export * from "./types";

@@ -1,7 +1,5 @@
 export interface OnChainMetrics {
 	updatedAt: bigint;
-	count: number;
-	idx: number;
 	volBps: readonly bigint[];
 	corrBps: readonly bigint[];
 }
@@ -24,4 +22,4 @@ export interface RiskContribution {
 	portfolioVol: number;
 }
 
-export type DataStatus = "loading" | "warming-up" | "stale" | "ready";
+export type DataStatus = "loading" | "stale" | "ready";

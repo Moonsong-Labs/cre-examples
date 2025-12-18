@@ -46,7 +46,7 @@ export function computeRiskBudgetWeights(
 			const target = budgets[i] * V;
 			const denom = Math.max(RC[i], 1e-12);
 			const ratio = target / denom;
-			return wi * Math.pow(ratio, step);
+			return wi * ratio ** step;
 		});
 
 		w = projectCapsFloors(wNew, floor, cap);

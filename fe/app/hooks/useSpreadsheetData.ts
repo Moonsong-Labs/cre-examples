@@ -21,7 +21,8 @@ export function useSpreadsheetData(): UseSpreadsheetDataResult {
 			setLoading(true);
 			setError(null);
 
-			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+			const serverUrl =
+				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
 			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
 
 			if (!apiKey) {
@@ -45,7 +46,8 @@ export function useSpreadsheetData(): UseSpreadsheetDataResult {
 			setAddresses(result.addresses || []);
 			setError(null);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : "Failed to fetch spreadsheet data";
+			const message =
+				err instanceof Error ? err.message : "Failed to fetch spreadsheet data";
 			console.error(message, err);
 			setError(message);
 			setAddresses([]);

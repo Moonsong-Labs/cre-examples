@@ -1,6 +1,6 @@
 import { css } from "styled-system/css";
 import { Tooltip } from "~/components/ui";
-import { ASSETS, ASSET_COLORS } from "~/lib/risk-portfolio";
+import { ASSET_COLORS, ASSETS } from "~/lib/risk-portfolio";
 
 interface VolatilityBarChartProps {
 	volBps: number[];
@@ -10,7 +10,9 @@ export function VolatilityBarChart({ volBps }: VolatilityBarChartProps) {
 	const maxVol = Math.max(...volBps, 10000);
 
 	return (
-		<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+		>
 			<span
 				className={css({
 					fontSize: "sm",
@@ -21,7 +23,9 @@ export function VolatilityBarChart({ volBps }: VolatilityBarChartProps) {
 				Annualized Volatility
 			</span>
 
-			<div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
+			<div
+				className={css({ display: "flex", flexDirection: "column", gap: "2" })}
+			>
 				{ASSETS.map((asset, i) => {
 					const vol = volBps[i];
 					const percent = (vol / 100).toFixed(1);

@@ -1,5 +1,5 @@
 import { css } from "styled-system/css";
-import { ASSETS, ASSET_COLORS, type Asset } from "~/lib/risk-portfolio";
+import { ASSET_COLORS, ASSETS, type Asset } from "~/lib/risk-portfolio";
 
 interface PortfolioPieChartProps {
 	title: string;

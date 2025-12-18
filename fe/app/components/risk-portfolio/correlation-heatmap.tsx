@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { css } from "styled-system/css";
 import { Tooltip } from "~/components/ui";
 import { ASSETS, buildCorrelationMatrix } from "~/lib/risk-portfolio";
@@ -20,7 +21,9 @@ export function CorrelationHeatmap({ corrBps }: CorrelationHeatmapProps) {
 	const matrix = buildCorrelationMatrix(corrBps);
 
 	return (
-		<div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+		>
 			<span
 				className={css({
 					fontSize: "sm",
@@ -55,9 +58,8 @@ export function CorrelationHeatmap({ corrBps }: CorrelationHeatmapProps) {
 				))}
 
 				{ASSETS.map((rowAsset, i) => (
-					<>
+					<Fragment key={`row-${rowAsset}`}>
 						<div
-							key={`row-${rowAsset}`}
 							className={css({
 								fontWeight: "medium",
 								color: "fg.muted",
@@ -96,7 +98,7 @@ export function CorrelationHeatmap({ corrBps }: CorrelationHeatmapProps) {
 								</Tooltip>
 							);
 						})}
-					</>
+					</Fragment>
 				))}
 			</div>
 

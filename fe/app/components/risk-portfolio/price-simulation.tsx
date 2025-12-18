@@ -2,7 +2,7 @@ import { RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { css } from "styled-system/css";
 import { Button, Slider, Text, Tooltip } from "~/components/ui";
-import { ASSETS, ASSET_COLORS, type RiskProfile } from "~/lib/risk-portfolio";
+import { ASSET_COLORS, ASSETS, type RiskProfile } from "~/lib/risk-portfolio";
 
 interface PriceSimulationProps {
 	portfolios: {
@@ -10,6 +10,7 @@ interface PriceSimulationProps {
 		balanced: number[];
 		high: number[];
 	};
+	onReset?: () => void;
 }
 
 function calculatePortfolioReturn(
@@ -30,7 +31,7 @@ function getReturnColor(value: number): string {
 	return "fg.muted";
 }
 
-export function PriceSimulation({ portfolios }: PriceSimulationProps) {
+export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 	const [priceChanges, setPriceChanges] = useState<number[]>([0, 0, 0, 0, 0]);
 
 	const handlePriceChange = (index: number, value: number) => {
@@ -43,6 +44,7 @@ export function PriceSimulation({ portfolios }: PriceSimulationProps) {
 
 	const resetAll = () => {
 		setPriceChanges([0, 0, 0, 0, 0]);
+		onReset?.();
 	};
 
 	const profiles: { key: RiskProfile; label: string }[] = [
@@ -57,85 +59,90 @@ export function PriceSimulation({ portfolios }: PriceSimulationProps) {
 		high: calculatePortfolioReturn(portfolios.high, priceChanges),
 	};
 
+	const hasChanges = priceChanges.some((v) => v !== 0);
+
 	return (
-		<div className={css({ display: "flex", flexDirection: "column", gap: "5" })}>
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "4" })}
+		>
+			{/* Scale indicator with reset button */}
 			<div
 				className={css({
 					display: "flex",
 					justifyContent: "space-between",
 					alignItems: "center",
+					fontSize: "xs",
+					color: "fg.muted",
 				})}
 			>
-				<div>
-					<Text
-						className={css({
-							fontSize: "sm",
-							fontWeight: "semibold",
-							color: "fg.default",
-						})}
-					>
-						Price Simulation
-					</Text>
-					<Text className={css({ fontSize: "xs", color: "fg.muted" })}>
-						Adjust asset prices to see portfolio impact
-					</Text>
+				<span>-50%</span>
+				<div
+					className={css({ display: "flex", alignItems: "center", gap: "4" })}
+				>
+					<span>0%</span>
+					{hasChanges && (
+						<Button onClick={resetAll} variant="subtle" size="xs">
+							<RotateCcw className={css({ width: "3", height: "3" })} />
+							Reset
+						</Button>
+					)}
 				</div>
-				<Button onClick={resetAll} variant="outline" size="sm">
-					<RotateCcw className={css({ width: "3.5", height: "3.5" })} />
-					Reset
-				</Button>
+				<span>+50%</span>
 			</div>
 
 			{/* Price Sliders */}
-			<div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+			<div
+				className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+			>
 				{ASSETS.map((asset, i) => (
-					<div key={asset}>
-						<Slider.Root
-							min={-50}
-							max={50}
-							step={1}
-							value={[priceChanges[i]]}
-							onValueChange={(details) => handlePriceChange(i, details.value[0])}
+					<Slider.Root
+						key={asset}
+						min={-50}
+						max={50}
+						step={1}
+						value={[priceChanges[i]]}
+						onValueChange={(details) => handlePriceChange(i, details.value[0])}
+					>
+						<div
+							className={css({
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "center",
+								mb: "1",
+							})}
 						>
-							<div
+							<Slider.Label
 								className={css({
-									display: "flex",
-									justifyContent: "space-between",
-									alignItems: "center",
-									mb: "1",
+									fontSize: "sm",
+									fontWeight: "medium",
+									minWidth: "12",
 								})}
 							>
-								<Slider.Label
-									className={css({
-										fontSize: "xs",
-										fontWeight: "medium",
-										color: "fg.muted",
-									})}
-								>
-									{asset}
-								</Slider.Label>
-								<span
-									className={css({
-										fontSize: "xs",
-										fontWeight: "semibold",
-										minWidth: "12",
-										textAlign: "right",
-									})}
-									style={{ color: `var(--colors-${getReturnColor(priceChanges[i])})` }}
-								>
-									{formatPercent(priceChanges[i])}
-								</span>
-							</div>
-							<Slider.Control>
-								<Slider.Track>
-									<Slider.Range
-										style={{ backgroundColor: ASSET_COLORS[asset] }}
-									/>
-								</Slider.Track>
-								<Slider.Thumbs />
-							</Slider.Control>
-						</Slider.Root>
-					</div>
+								{asset}
+							</Slider.Label>
+							<Slider.ValueText
+								className={css({
+									fontSize: "sm",
+									fontWeight: "semibold",
+									minWidth: "14",
+									textAlign: "right",
+								})}
+								style={{
+									color: `var(--colors-${getReturnColor(priceChanges[i])})`,
+								}}
+							>
+								{formatPercent(priceChanges[i])}
+							</Slider.ValueText>
+						</div>
+						<Slider.Control>
+							<Slider.Track>
+								<Slider.Range
+									style={{ backgroundColor: ASSET_COLORS[asset] }}
+								/>
+							</Slider.Track>
+							<Slider.Thumbs />
+						</Slider.Control>
+					</Slider.Root>
 				))}
 			</div>
 

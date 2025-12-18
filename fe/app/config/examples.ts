@@ -23,7 +23,8 @@ export const EXAMPLES: ExampleDefinition[] = [
 		href: "/examples/compliant-token",
 		title: "Compliant Token",
 		navLabel: "Compliant Token",
-		description: "Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
+		description:
+			"Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
 		tag: "Live demo",
 		icon: ShieldCheck,
 	},
@@ -31,7 +32,8 @@ export const EXAMPLES: ExampleDefinition[] = [
 		href: "/examples/risk-portfolio",
 		title: "Risk Portfolio",
 		navLabel: "Risk Portfolio",
-		description: "Dynamic portfolio allocations driven by on-chain volatility and correlation metrics.",
+		description:
+			"Dynamic portfolio allocations driven by on-chain volatility and correlation metrics.",
 		tag: "Demo",
 		icon: PieChart,
 	},

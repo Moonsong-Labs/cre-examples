@@ -10,7 +10,9 @@ export const USDC_ADDRESSES: Record<number, Address> = {
 };
 
 export const CIRCLE_FAUCET_URL = "https://faucet.circle.com/";
-export const COMPLIANT_TOKEN_ADDRESS: Address = "0xADFe793A0369a2a0c4b231391d361d9073dad6CF";
-export const RISK_METRICS_ORACLE_ADDRESS: Address = "0x0000000000000000000000000000000000000000";
+export const COMPLIANT_TOKEN_ADDRESS: Address =
+	"0xADFe793A0369a2a0c4b231391d361d9073dad6CF";
+export const RISK_METRICS_ORACLE_ADDRESS: Address =
+	"0x2d46748AE30D26c11b45Ac9d9A4a96DD4172000A";
 
 export { erc20Abi, compliantTokenAbi, riskMetricsOracleAbi };

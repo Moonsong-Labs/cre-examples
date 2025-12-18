@@ -17,9 +17,9 @@
 # ==========================================================================
 demo:
   user-workflow:
-    workflow-name: "risk-portfolio-staging"
+    workflow-name: "risk-portfolio"
   workflow-artifacts:
     workflow-path: "./main.ts"
-    config-path: "./config.staging.json"
+    config-path: "./config.json"
     secrets-path: ""
     

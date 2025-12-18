@@ -1,12 +1,10 @@
-import { AlertTriangle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { css } from "styled-system/css";
 import { Badge } from "~/components/ui";
 import type { DataStatus } from "~/lib/risk-portfolio";
-import { WINDOW_SIZE } from "~/lib/risk-portfolio";
 
 interface DataStatusBadgeProps {
 	status: DataStatus;
-	count: number;
 	updatedAt: Date | null;
 }
 
@@ -19,11 +17,7 @@ function formatTimeAgo(date: Date): string {
 	return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-export function DataStatusBadge({
-	status,
-	count,
-	updatedAt,
-}: DataStatusBadgeProps) {
+export function DataStatusBadge({ status, updatedAt }: DataStatusBadgeProps) {
 	if (status === "loading") {
 		return (
 			<Badge variant="subtle" colorPalette="gray" size="md">
@@ -31,15 +25,6 @@ export function DataStatusBadge({
 					className={css({ width: "3.5", height: "3.5", animation: "spin" })}
 				/>
 				Loading metrics...
-			</Badge>
-		);
-	}
-
-	if (status === "warming-up") {
-		return (
-			<Badge variant="subtle" colorPalette="amber" size="md">
-				<Clock className={css({ width: "3.5", height: "3.5" })} />
-				Warming up ({count}/{WINDOW_SIZE} samples)
 			</Badge>
 		);
 	}

@@ -48,7 +48,9 @@ export function AddToWalletButton({
 			setIsAdding(true);
 
 			if (!walletClient) {
-				const error = new Error("Wallet not connected. Please connect your wallet first.");
+				const error = new Error(
+					"Wallet not connected. Please connect your wallet first.",
+				);
 				onError?.(error);
 				alert(error.message);
 				setIsAdding(false);
@@ -87,7 +89,9 @@ export function AddToWalletButton({
 		>
 			{isAdding ? (
 				<>
-					<Loader2 className={css({ width: "3.5", height: "3.5", animation: "spin" })} />
+					<Loader2
+						className={css({ width: "3.5", height: "3.5", animation: "spin" })}
+					/>
 					Adding...
 				</>
 			) : (

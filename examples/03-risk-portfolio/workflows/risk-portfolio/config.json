@@ -1,6 +1,6 @@
 {
-  "schedule": "*/30 * * * * *",
-  "oracleAddress": "0x0000000000000000000000000000000000000000",
-  "chainSelectorName": "ethereum-testnet-sepolia",
-  "gasLimit": "500000"
+	"schedule": "15 * * * *",
+	"oracleAddress": "0x2d46748AE30D26c11b45Ac9d9A4a96DD4172000A",
+	"chainSelectorName": "ethereum-testnet-sepolia",
+	"gasLimit": "500000"
 }
