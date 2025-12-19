@@ -5,8 +5,11 @@ import {
 	Info,
 	PieChart,
 	RefreshCw,
+	Scale,
+	Shield,
 	TriangleAlert,
 	Workflow,
+	Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
@@ -464,6 +467,41 @@ export default function RiskPortfolio() {
 							/>
 							<PortfolioPieChart title="High Risk" weights={portfolios.high} />
 						</div>
+
+						{/* Strategy Rules */}
+						<div
+							className={css({
+								mt: "8",
+								pt: "6",
+								borderTop: "1px solid",
+								borderColor: "border",
+								display: "grid",
+								gridTemplateColumns: { base: "1fr", md: "1fr 1fr 1fr" },
+								gap: "4",
+							})}
+						>
+							<StrategyCard
+								icon={Shield}
+								title="Conservative"
+								rule="Inverse Volatility"
+								description="Minimizes drawdown by heavily weighting low-volatility assets and seeking uncorrelated diversifiers."
+								colorPalette="teal"
+							/>
+							<StrategyCard
+								icon={Scale}
+								title="Balanced"
+								rule="Risk Parity"
+								description="Balances growth potential with stability. Allocates to volatility while maintaining a hedging baseline."
+								colorPalette="blue"
+							/>
+							<StrategyCard
+								icon={Zap}
+								title="Aggressive"
+								rule="Momentum / Beta"
+								description="Maximizes exposure to high-volatility assets, assuming they offer the highest upside potential."
+								colorPalette="amber"
+							/>
+						</div>
 					</Card.Body>
 				</Card.Root>
 			)}
@@ -653,3 +691,72 @@ function MathBox({
 		</div>
 	);
 }
+
+function StrategyCard({
+	icon: Icon,
+	title,
+	rule,
+	description,
+	colorPalette,
+}: {
+	icon: React.ElementType;
+	title: string;
+	rule: string;
+	description: string;
+	colorPalette: "teal" | "blue" | "amber";
+}) {
+	return (
+		<div
+			className={css({
+				display: "flex",
+				flexDirection: "column",
+				gap: "2",
+				p: "4",
+				borderRadius: "lg",
+				bg: "gray.subtle.bg",
+				border: "1px solid",
+				borderColor: "border",
+			})}
+		>
+			<div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+				<Icon
+					className={css({
+						width: "4",
+						height: "4",
+						color: `${colorPalette}.fg`,
+					})}
+				/>
+				<Text
+					className={css({
+						fontWeight: "semibold",
+						fontSize: "sm",
+						color: "fg.default",
+					})}
+				>
+					{title}
+				</Text>
+			</div>
+			<div
+				className={css({
+					fontSize: "xs",
+					fontWeight: "medium",
+					color: `${colorPalette}.fg`,
+					textTransform: "uppercase",
+					letterSpacing: "wider",
+				})}
+			>
+				{rule}
+			</div>
+			<Text
+				className={css({
+					fontSize: "xs",
+					color: "fg.muted",
+					lineHeight: "relaxed",
+				})}
+			>
+				{description}
+			</Text>
+		</div>
+	);
+}
+

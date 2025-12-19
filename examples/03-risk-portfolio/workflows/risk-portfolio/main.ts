@@ -12,19 +12,17 @@ import { type Config, ConfigSchema } from "./config";
 import { fetchHistoricalReturns } from "./lib/historical";
 import { computeMetricsFromReturns } from "./lib/math";
 import { packCorrs, packVols } from "./lib/pack";
-import { AssetNames, WINDOW_SIZE } from "./types";
+import { AssetNames } from "./types";
 
 const onCronTrigger = (runtime: Runtime<Config>): string => {
 	runtime.log("Risk Portfolio workflow triggered");
 
 	runtime.log("Step 1: Fetching historical prices from Chainlink feeds...");
-	runtime.log(`  Collecting ${WINDOW_SIZE + 1} price points per asset (~${WINDOW_SIZE} days)`);
 
-	const returns = fetchHistoricalReturns(runtime);
-	runtime.log(`  Computed ${returns.length} days of log returns from live data`);
+	const { returns, annualizationFactor } = fetchHistoricalReturns(runtime);
 
 	runtime.log("Step 2: Computing volatility and correlation metrics...");
-	const metrics = computeMetricsFromReturns(returns);
+	const metrics = computeMetricsFromReturns(returns, annualizationFactor);
 
 	runtime.log("  Volatilities (bps):");
 	for (let i = 0; i < metrics.volsBps.length; i++) {

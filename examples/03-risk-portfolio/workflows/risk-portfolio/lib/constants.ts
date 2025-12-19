@@ -20,6 +20,19 @@ export const FeedDecimals = {
 	uniUsd: 8,
 } as const;
 
-export const ANNUALIZATION_FACTOR = 365;
-
 export const VolFloorBps: readonly number[] = [0, 0, 0, 50, 0];
+
+export const ALIGNMENT_TOLERANCE_SECONDS = 4n * 24n * 60n * 60n; // 4 days
+export const ANCHOR_LOOKBACK_DAYS = 90;
+export const FREQUENCY_ESTIMATION_DAYS = 30;
+export const PHASE_OFFSET = 64n;
+export const MAX_ANCHOR_ROUNDS = 20;
+export const TARGET_OBSERVATIONS = 25;
+
+export const EstimatedRoundsPerDay: Record<string, number> = {
+	btcUsd: 47,
+	ethUsd: 73,
+	linkUsd: 51,
+	daiUsd: 24,
+	uniUsd: 30,
+};

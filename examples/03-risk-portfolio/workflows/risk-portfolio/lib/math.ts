@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { ASSET_COUNT, type ComputedMetrics, CorrelationPairs } from "../types";
-import { ANNUALIZATION_FACTOR, VolFloorBps } from "./constants";
+import { VolFloorBps } from "./constants";
 
 Decimal.set({ precision: 50 });
 
@@ -16,6 +16,7 @@ export function computeLogReturn(
 
 export function computeMetricsFromReturns(
 	returns: Decimal[][],
+	annualizationFactor: number,
 ): ComputedMetrics {
 	const n = returns.length;
 	if (n < 5) {
@@ -23,8 +24,8 @@ export function computeMetricsFromReturns(
 	}
 
 	const means = computeMeans(returns);
-	const covDaily = computeCovarianceMatrix(returns, means);
-	const covAnn = annualizeCovarianceMatrix(covDaily);
+	const covPeriod = computeCovarianceMatrix(returns, means);
+	const covAnn = annualizeCovarianceMatrix(covPeriod, annualizationFactor);
 	const vols = extractVolatilities(covAnn);
 	const corrs = extractCorrelations(covAnn, vols);
 
@@ -72,9 +73,9 @@ function computeCovarianceMatrix(
 	return cov;
 }
 
-function annualizeCovarianceMatrix(covDaily: Decimal[][]): Decimal[][] {
-	const A = new Decimal(ANNUALIZATION_FACTOR);
-	return covDaily.map((row) => row.map((c) => c.mul(A)));
+function annualizeCovarianceMatrix(covPeriod: Decimal[][], annualizationFactor: number): Decimal[][] {
+	const A = new Decimal(annualizationFactor);
+	return covPeriod.map((row) => row.map((c) => c.mul(A)));
 }
 
 function extractVolatilities(covAnn: Decimal[][]): Decimal[] {

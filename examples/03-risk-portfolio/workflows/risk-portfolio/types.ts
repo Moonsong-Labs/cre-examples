@@ -1,4 +1,5 @@
 import type { Decimal } from "decimal.js";
+import type { Address } from "viem";
 
 export const ASSET_COUNT = 5;
 export const PAIR_COUNT = 10;
@@ -37,4 +38,25 @@ export type ComputedMetrics = {
 export type PackedMetrics = {
 	packedVols: bigint;
 	packedCorrs: bigint;
+};
+
+export type FeedMetadata = {
+	address: Address;
+	decimals: number;
+	name: string;
+	latestRoundId: bigint;
+	latestTimestamp: bigint;
+	roundsPerDay: number;
+};
+
+export type RoundData = {
+	roundId: bigint;
+	answer: bigint;
+	updatedAt: bigint;
+};
+
+export type AlignedObservation = {
+	anchorTimestamp: bigint;
+	prices: bigint[];
+	actualTimestamps: bigint[];
 };

@@ -11,41 +11,48 @@ import {
 	type Address,
 	decodeFunctionResult,
 	encodeFunctionData,
+	type Hex,
 	zeroAddress,
 } from "viem";
 import { AggregatorV3ABI } from "../abi/AggregatorV3";
+import { Multicall3ABI, MULTICALL3_ADDRESS } from "../abi/Multicall3";
 import type { Config } from "../config";
-import { ASSET_COUNT, WINDOW_SIZE } from "../types";
 import {
+	ASSET_COUNT,
+	type AlignedObservation,
+	type RoundData,
+} from "../types";
+import {
+	ALIGNMENT_TOLERANCE_SECONDS,
+	ANCHOR_LOOKBACK_DAYS,
 	ChainlinkFeeds,
+	EstimatedRoundsPerDay,
 	ETH_MAINNET_CHAIN_SELECTOR,
 	FeedDecimals,
+	PHASE_OFFSET,
+	TARGET_OBSERVATIONS,
 } from "./constants";
 import { computeLogReturn } from "./math";
-
-const SECONDS_PER_DAY = 86400n;
-const PHASE_OFFSET = 64n;
-const ANCHOR_STEP = 100n;
-const LOCAL_SEARCH_RANGE = 5n;
-const MAX_TIMESTAMP_DRIFT = SECONDS_PER_DAY; // 24 hours acceptable drift
-
-type RoundData = {
-	roundId: bigint;
-	answer: bigint;
-	updatedAt: bigint;
-};
-
-type AnchorPoint = {
-	roundId: bigint;
-	timestamp: bigint;
-	price: bigint;
-};
 
 type FeedConfig = {
 	address: Address;
 	decimals: number;
 	name: string;
+	key: string;
 };
+
+type MulticallResult = {
+	success: boolean;
+	returnData: Hex;
+};
+
+const FEEDS: FeedConfig[] = [
+	{ address: ChainlinkFeeds.ethMainnet.btcUsd, decimals: FeedDecimals.btcUsd, name: "BTC", key: "btcUsd" },
+	{ address: ChainlinkFeeds.ethMainnet.ethUsd, decimals: FeedDecimals.ethUsd, name: "ETH", key: "ethUsd" },
+	{ address: ChainlinkFeeds.ethMainnet.linkUsd, decimals: FeedDecimals.linkUsd, name: "LINK", key: "linkUsd" },
+	{ address: ChainlinkFeeds.ethMainnet.daiUsd, decimals: FeedDecimals.daiUsd, name: "sDAI", key: "daiUsd" },
+	{ address: ChainlinkFeeds.ethMainnet.uniUsd, decimals: FeedDecimals.uniUsd, name: "UNI", key: "uniUsd" },
+];
 
 function parseRoundId(roundId: bigint): { phaseId: bigint; aggregatorRoundId: bigint } {
 	const phaseId = roundId >> PHASE_OFFSET;
@@ -57,256 +64,184 @@ function makeRoundId(phaseId: bigint, aggregatorRoundId: bigint): bigint {
 	return (phaseId << PHASE_OFFSET) | aggregatorRoundId;
 }
 
-const FEEDS: FeedConfig[] = [
-	{ address: ChainlinkFeeds.ethMainnet.btcUsd, decimals: FeedDecimals.btcUsd, name: "BTC" },
-	{ address: ChainlinkFeeds.ethMainnet.ethUsd, decimals: FeedDecimals.ethUsd, name: "ETH" },
-	{ address: ChainlinkFeeds.ethMainnet.linkUsd, decimals: FeedDecimals.linkUsd, name: "LINK" },
-	{ address: ChainlinkFeeds.ethMainnet.daiUsd, decimals: FeedDecimals.daiUsd, name: "sDAI" },
-	{ address: ChainlinkFeeds.ethMainnet.uniUsd, decimals: FeedDecimals.uniUsd, name: "UNI" },
-];
-
 function scaleToE18(answer: bigint, decimals: number): bigint {
 	return answer * 10n ** BigInt(18 - decimals);
 }
 
-function callGetRoundData(
+function executeMulticall(
 	runtime: Runtime<Config>,
 	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feedAddress: Address,
-	roundId: bigint,
-): RoundData | null {
-	try {
-		const result = evmClient
-			.callContract(runtime, {
-				call: encodeCallMsg({
-					from: zeroAddress,
-					to: feedAddress,
-					data: encodeFunctionData({
-						abi: AggregatorV3ABI,
-						functionName: "getRoundData",
-						args: [roundId],
-					}),
-				}),
-				blockNumber: LATEST_BLOCK_NUMBER,
-			})
-			.result();
+	calls: Array<{ target: Address; allowFailure: boolean; callData: Hex }>,
+): MulticallResult[] {
+	if (calls.length === 0) return [];
 
-		const [returnedRoundId, answer, , updatedAt] = decodeFunctionResult({
-			abi: AggregatorV3ABI,
-			functionName: "getRoundData",
-			data: bytesToHex(result.data),
-		});
-
-		if (answer <= 0n) return null;
-
-		return { roundId: returnedRoundId, answer, updatedAt };
-	} catch {
-		return null;
-	}
-}
-
-function callLatestRoundData(
-	runtime: Runtime<Config>,
-	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feedAddress: Address,
-): RoundData {
 	const result = evmClient
 		.callContract(runtime, {
 			call: encodeCallMsg({
 				from: zeroAddress,
-				to: feedAddress,
+				to: MULTICALL3_ADDRESS,
 				data: encodeFunctionData({
-					abi: AggregatorV3ABI,
-					functionName: "latestRoundData",
+					abi: Multicall3ABI,
+					functionName: "aggregate3",
+					args: [calls],
 				}),
 			}),
 			blockNumber: LATEST_BLOCK_NUMBER,
 		})
 		.result();
 
-	const [roundId, answer, , updatedAt] = decodeFunctionResult({
-		abi: AggregatorV3ABI,
-		functionName: "latestRoundData",
+	const decoded = decodeFunctionResult({
+		abi: Multicall3ABI,
+		functionName: "aggregate3",
 		data: bytesToHex(result.data),
 	});
 
-	if (answer <= 0n) {
-		throw new Error(`Invalid latest price from feed ${feedAddress}`);
-	}
-
-	return { roundId, answer, updatedAt };
+	return decoded as MulticallResult[];
 }
 
-function collectAnchorPoints(
+function fetchSpacedRoundsForAllFeeds(
 	runtime: Runtime<Config>,
 	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feed: FeedConfig,
-): AnchorPoint[] {
-	const latest = callLatestRoundData(runtime, evmClient, feed.address);
-	const anchors: AnchorPoint[] = [{
-		roundId: latest.roundId,
-		timestamp: latest.updatedAt,
-		price: latest.answer,
-	}];
+	lookbackDays: number,
+	targetCount: number,
+): Map<Address, RoundData[]> {
+	const latestCalls = FEEDS.map((feed) => ({
+		target: feed.address,
+		allowFailure: false,
+		callData: encodeFunctionData({
+			abi: AggregatorV3ABI,
+			functionName: "latestRoundData",
+		}),
+	}));
 
-	const { phaseId, aggregatorRoundId } = parseRoundId(latest.roundId);
-	let currentAggRound = aggregatorRoundId;
-	const targetOldestTs = latest.updatedAt - BigInt(WINDOW_SIZE + 2) * SECONDS_PER_DAY;
+	const latestResults = executeMulticall(runtime, evmClient, latestCalls);
+	const latestRounds: Map<Address, RoundData> = new Map();
 
-	while (anchors[anchors.length - 1].timestamp > targetOldestTs && currentAggRound > ANCHOR_STEP) {
-		currentAggRound -= ANCHOR_STEP;
-		const round = callGetRoundData(runtime, evmClient, feed.address, makeRoundId(phaseId, currentAggRound));
-		if (round) {
-			anchors.push({
-				roundId: round.roundId,
-				timestamp: round.updatedAt,
-				price: round.answer,
+	for (let i = 0; i < FEEDS.length; i++) {
+		const [roundId, answer, , updatedAt] = decodeFunctionResult({
+			abi: AggregatorV3ABI,
+			functionName: "latestRoundData",
+			data: latestResults[i].returnData,
+		});
+		latestRounds.set(FEEDS[i].address, { roundId, answer, updatedAt });
+	}
+
+	type CallMeta = { feedIndex: number };
+	const historicalCalls: Array<{ target: Address; allowFailure: boolean; callData: Hex }> = [];
+	const callMeta: CallMeta[] = [];
+
+	for (let fi = 0; fi < FEEDS.length; fi++) {
+		const feed = FEEDS[fi];
+		const latest = latestRounds.get(feed.address)!;
+		const { phaseId, aggregatorRoundId } = parseRoundId(latest.roundId);
+		const estimatedRoundsPerDay = EstimatedRoundsPerDay[feed.key] || 30;
+		const totalRoundsInPeriod = Math.ceil(lookbackDays * estimatedRoundsPerDay);
+		const roundStep = Math.max(1, Math.floor(totalRoundsInPeriod / targetCount));
+
+		for (let i = 0; i < targetCount; i++) {
+			const targetAggRound = aggregatorRoundId - BigInt(i * roundStep);
+			if (targetAggRound < 1n) break;
+
+			historicalCalls.push({
+				target: feed.address,
+				allowFailure: true,
+				callData: encodeFunctionData({
+					abi: AggregatorV3ABI,
+					functionName: "getRoundData",
+					args: [makeRoundId(phaseId, targetAggRound)],
+				}),
 			});
+			callMeta.push({ feedIndex: fi });
 		}
 	}
 
-	// Get round 1 as final anchor if we haven't gone far enough back
-	if (anchors[anchors.length - 1].timestamp > targetOldestTs) {
-		const firstRound = callGetRoundData(runtime, evmClient, feed.address, makeRoundId(phaseId, 1n));
-		if (firstRound) {
-			anchors.push({
-				roundId: firstRound.roundId,
-				timestamp: firstRound.updatedAt,
-				price: firstRound.answer,
-			});
+	const historicalResults = executeMulticall(runtime, evmClient, historicalCalls);
+	const allRounds: Map<Address, RoundData[]> = new Map();
+
+	for (const feed of FEEDS) {
+		allRounds.set(feed.address, []);
+	}
+
+	for (let i = 0; i < historicalResults.length; i++) {
+		if (!historicalResults[i].success) continue;
+
+		const feedAddr = FEEDS[callMeta[i].feedIndex].address;
+		const [roundId, answer, , updatedAt] = decodeFunctionResult({
+			abi: AggregatorV3ABI,
+			functionName: "getRoundData",
+			data: historicalResults[i].returnData,
+		});
+
+		if (answer > 0n) {
+			allRounds.get(feedAddr)!.push({ roundId, answer, updatedAt });
 		}
 	}
 
-	runtime.log(`    ${feed.name}: collected ${anchors.length} anchor points`);
-	return anchors;
+	for (const feed of FEEDS) {
+		allRounds.get(feed.address)!.sort((a, b) => Number(a.updatedAt - b.updatedAt));
+	}
+
+	return allRounds;
 }
 
-function findSurroundingAnchors(
-	anchors: AnchorPoint[],
-	targetTs: bigint,
-): { before: AnchorPoint; after: AnchorPoint } {
-	// Anchors are sorted newest to oldest
-	for (let i = 0; i < anchors.length - 1; i++) {
-		const newer = anchors[i];
-		const older = anchors[i + 1];
-		if (targetTs <= newer.timestamp && targetTs >= older.timestamp) {
-			return { before: older, after: newer };
-		}
-	}
-	// Target is outside our range - use closest anchors
-	if (targetTs > anchors[0].timestamp) {
-		return { before: anchors[1] || anchors[0], after: anchors[0] };
-	}
-	const last = anchors[anchors.length - 1];
-	const secondLast = anchors[anchors.length - 2] || last;
-	return { before: last, after: secondLast };
-}
+function alignByTimestamp(
+	allRounds: Map<Address, RoundData[]>,
+	tolerance: bigint,
+): AlignedObservation[] {
+	const feedAddresses = FEEDS.map((f) => f.address);
+	const anchorRounds = allRounds.get(feedAddresses[0])!;
 
-function localSearch(
-	runtime: Runtime<Config>,
-	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feed: FeedConfig,
-	phaseId: bigint,
-	startAggRound: bigint,
-	targetTs: bigint,
-): RoundData | null {
-	let bestRound: RoundData | null = null;
-	let bestDiff = BigInt(Number.MAX_SAFE_INTEGER);
+	const aligned: AlignedObservation[] = [];
 
-	for (let offset = -LOCAL_SEARCH_RANGE; offset <= LOCAL_SEARCH_RANGE; offset++) {
-		const aggRound = startAggRound + offset;
-		if (aggRound < 1n) continue;
+	for (const anchor of anchorRounds) {
+		const targetTs = anchor.updatedAt;
+		const prices: bigint[] = [];
+		const actualTimestamps: bigint[] = [];
+		let allFound = true;
 
-		const round = callGetRoundData(runtime, evmClient, feed.address, makeRoundId(phaseId, aggRound));
-		if (round) {
-			const diff = round.updatedAt > targetTs
-				? round.updatedAt - targetTs
-				: targetTs - round.updatedAt;
-			if (diff < bestDiff) {
-				bestDiff = diff;
-				bestRound = round;
+		for (let fi = 0; fi < FEEDS.length; fi++) {
+			const feedRounds = allRounds.get(feedAddresses[fi])!;
+			let closest: RoundData | null = null;
+			let minDiff = tolerance + 1n;
+
+			for (const round of feedRounds) {
+				const diff = round.updatedAt > targetTs
+					? round.updatedAt - targetTs
+					: targetTs - round.updatedAt;
+
+				if (diff < minDiff) {
+					minDiff = diff;
+					closest = round;
+				}
+			}
+
+			if (closest && minDiff <= tolerance) {
+				prices.push(scaleToE18(closest.answer, FEEDS[fi].decimals));
+				actualTimestamps.push(closest.updatedAt);
+			} else {
+				allFound = false;
+				break;
 			}
 		}
-	}
 
-	return bestRound;
-}
-
-function findPriceAtTimestamp(
-	runtime: Runtime<Config>,
-	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feed: FeedConfig,
-	anchors: AnchorPoint[],
-	targetTs: bigint,
-): { price: bigint; actualTs: bigint } {
-	const { before, after } = findSurroundingAnchors(anchors, targetTs);
-
-	// Interpolate round ID between anchors
-	const timeRange = after.timestamp - before.timestamp;
-	const targetOffset = targetTs - before.timestamp;
-	const timeFraction = timeRange > 0n ? Number(targetOffset) / Number(timeRange) : 0.5;
-
-	const { aggregatorRoundId: beforeAgg, phaseId } = parseRoundId(before.roundId);
-	const { aggregatorRoundId: afterAgg } = parseRoundId(after.roundId);
-	const roundRange = afterAgg - beforeAgg;
-	const estimatedAgg = beforeAgg + BigInt(Math.round(Number(roundRange) * timeFraction));
-
-	// Fetch estimated round
-	const round = callGetRoundData(runtime, evmClient, feed.address, makeRoundId(phaseId, estimatedAgg));
-
-	if (round) {
-		const drift = round.updatedAt > targetTs
-			? round.updatedAt - targetTs
-			: targetTs - round.updatedAt;
-
-		if (drift <= MAX_TIMESTAMP_DRIFT) {
-			return { price: scaleToE18(round.answer, feed.decimals), actualTs: round.updatedAt };
-		}
-
-		// Estimate is off, do local search
-		const better = localSearch(runtime, evmClient, feed, phaseId, estimatedAgg, targetTs);
-		if (better) {
-			return { price: scaleToE18(better.answer, feed.decimals), actualTs: better.updatedAt };
+		if (allFound) {
+			aligned.push({
+				anchorTimestamp: targetTs,
+				prices,
+				actualTimestamps,
+			});
 		}
 	}
 
-	// Fallback: use closest anchor
-	const closerAnchor = (targetTs - before.timestamp < after.timestamp - targetTs) ? before : after;
-	return { price: scaleToE18(closerAnchor.price, feed.decimals), actualTs: closerAnchor.timestamp };
+	return aligned;
 }
 
-function fetchHistoricalPricesForFeed(
-	runtime: Runtime<Config>,
-	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
-	feed: FeedConfig,
-): bigint[] {
-	// Phase 1: Collect anchor points
-	const anchors = collectAnchorPoints(runtime, evmClient, feed);
+export type HistoricalReturnsResult = {
+	returns: Decimal[][];
+	annualizationFactor: number;
+};
 
-	if (anchors.length < 2) {
-		throw new Error(`Insufficient anchor points for ${feed.name}`);
-	}
-
-	const nowTs = anchors[0].timestamp;
-	const prices: bigint[] = [];
-
-	// Phase 2: Find price at each target timestamp
-	for (let i = WINDOW_SIZE; i >= 0; i--) {
-		const targetTs = nowTs - BigInt(i) * SECONDS_PER_DAY;
-		const { price, actualTs } = findPriceAtTimestamp(runtime, evmClient, feed, anchors, targetTs);
-
-		const driftHours = Math.abs(Number(actualTs - targetTs)) / 3600;
-		if (driftHours > 6) {
-			runtime.log(`    ${feed.name} day ${WINDOW_SIZE - i}: drift ${driftHours.toFixed(1)}h`);
-		}
-
-		prices.push(price);
-	}
-
-	return prices;
-}
-
-export function fetchHistoricalReturns(runtime: Runtime<Config>): Decimal[][] {
+export function fetchHistoricalReturns(runtime: Runtime<Config>): HistoricalReturnsResult {
 	const ethNetwork = getNetwork({
 		chainFamily: "evm",
 		chainSelectorName: ETH_MAINNET_CHAIN_SELECTOR,
@@ -319,30 +254,58 @@ export function fetchHistoricalReturns(runtime: Runtime<Config>): Decimal[][] {
 
 	const ethClient = new cre.capabilities.EVMClient(ethNetwork.chainSelector.selector);
 
-	runtime.log("Fetching historical prices using anchor-based interpolation...");
+	runtime.log("Fetching historical prices with timestamp-aligned sampling...");
 
-	// Fetch historical prices for each asset
-	const allPrices: bigint[][] = [];
+	const allRounds = fetchSpacedRoundsForAllFeeds(
+		runtime,
+		ethClient,
+		ANCHOR_LOOKBACK_DAYS,
+		TARGET_OBSERVATIONS,
+	);
+
 	for (const feed of FEEDS) {
-		const prices = fetchHistoricalPricesForFeed(runtime, ethClient, feed);
-		allPrices.push(prices);
+		const rounds = allRounds.get(feed.address)!;
+		runtime.log(`  ${feed.name}: ${rounds.length} sampled rounds`);
 	}
 
-	// Convert prices to log returns
-	const returns: Decimal[][] = [];
+	runtime.log("Aligning observations by timestamp...");
+	const aligned = alignByTimestamp(allRounds, ALIGNMENT_TOLERANCE_SECONDS);
+	runtime.log(`  Got ${aligned.length} aligned observations`);
 
-	for (let day = 0; day < WINDOW_SIZE; day++) {
-		const dayReturns: Decimal[] = [];
-		for (let asset = 0; asset < ASSET_COUNT; asset++) {
-			const priceOld = new Decimal(allPrices[asset][day].toString());
-			const priceNew = new Decimal(allPrices[asset][day + 1].toString());
-			const logReturn = computeLogReturn(priceNew, priceOld);
-			dayReturns.push(logReturn);
+	if (aligned.length < 6) {
+		throw new Error(`Insufficient aligned observations: ${aligned.length} (need at least 6)`);
+	}
+
+	for (let i = 0; i < FEEDS.length; i++) {
+		const feed = FEEDS[i];
+		let maxDriftHours = 0;
+		for (const obs of aligned) {
+			const drift = Math.abs(Number(obs.actualTimestamps[i] - obs.anchorTimestamp)) / 3600;
+			if (drift > maxDriftHours) maxDriftHours = drift;
 		}
-		returns.push(dayReturns);
+		runtime.log(`  ${feed.name}: max drift ${maxDriftHours.toFixed(1)} hours from anchor`);
 	}
 
-	return returns;
+	const returns: Decimal[][] = [];
+	for (let i = 0; i < aligned.length - 1; i++) {
+		const periodReturns: Decimal[] = [];
+		for (let asset = 0; asset < ASSET_COUNT; asset++) {
+			const priceOld = new Decimal(aligned[i].prices[asset].toString());
+			const priceNew = new Decimal(aligned[i + 1].prices[asset].toString());
+			periodReturns.push(computeLogReturn(priceNew, priceOld));
+		}
+		returns.push(periodReturns);
+	}
+
+	const firstTs = aligned[0].anchorTimestamp;
+	const lastTs = aligned[aligned.length - 1].anchorTimestamp;
+	const totalDays = Number(lastTs - firstTs) / 86400;
+	const observationsPerYear = (returns.length / totalDays) * 365;
+
+	runtime.log(`Computed ${returns.length} return observations over ${totalDays.toFixed(1)} days`);
+	runtime.log(`Annualization factor: ${observationsPerYear.toFixed(2)} observations/year`);
+
+	return { returns, annualizationFactor: observationsPerYear };
 }
 
 export function getLatestPricesFromHistory(runtime: Runtime<Config>): bigint[] {
@@ -358,8 +321,23 @@ export function getLatestPricesFromHistory(runtime: Runtime<Config>): bigint[] {
 
 	const ethClient = new cre.capabilities.EVMClient(ethNetwork.chainSelector.selector);
 
-	return FEEDS.map((feed) => {
-		const latest = callLatestRoundData(runtime, ethClient, feed.address);
-		return scaleToE18(latest.answer, feed.decimals);
+	const calls = FEEDS.map((feed) => ({
+		target: feed.address,
+		allowFailure: false,
+		callData: encodeFunctionData({
+			abi: AggregatorV3ABI,
+			functionName: "latestRoundData",
+		}),
+	}));
+
+	const results = executeMulticall(runtime, ethClient, calls);
+
+	return FEEDS.map((feed, i) => {
+		const [, answer] = decodeFunctionResult({
+			abi: AggregatorV3ABI,
+			functionName: "latestRoundData",
+			data: results[i].returnData,
+		});
+		return scaleToE18(answer, feed.decimals);
 	});
 }
