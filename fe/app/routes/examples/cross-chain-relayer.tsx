@@ -1,14 +1,24 @@
 import { createListCollection } from "@ark-ui/react/select";
 import {
+	Activity,
 	ArrowLeftRight,
+	Calculator,
 	CheckCircle,
 	ExternalLink,
+	Eye,
+	FileCheck,
+	FileCode,
 	Globe2,
 	Loader2,
+	Search,
+	Send,
 	ShieldCheck,
 	Sparkles,
+	TriangleAlert,
 	User,
+	Workflow,
 	XCircle,
+	Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -62,11 +72,11 @@ import type { Route } from "./+types/cross-chain-relayer";
 
 export function meta(_args: Route.MetaArgs) {
 	return [
-		{ title: "Cross-Chain Relayer - CRE Examples" },
+		{ title: "Automated Cross-Chain Relayer" },
 		{
 			name: "description",
 			content:
-				"Bridge USDC cross-chain using Circle's CCTP with CRE attestation relay",
+				"Zero-friction USDC bridging powered by Chainlink Runtime Environment (CRE)",
 		},
 	];
 }
@@ -385,11 +395,11 @@ export default function CrossChainRelayer() {
 							color: "fg.default",
 						})}
 					>
-						Cross-Chain Relayer
+						Automated Cross-Chain Relayer
 					</Text>
 					<Text className={css({ color: "fg.muted", fontSize: "lg" })}>
-						Bridge USDC cross-chain using Circle's CCTP with CRE attestation
-						relay
+						Zero-friction USDC bridging powered by Chainlink Runtime Environment
+						(CRE)
 					</Text>
 				</div>
 				<div
@@ -401,16 +411,212 @@ export default function CrossChainRelayer() {
 					})}
 				>
 					<Badge variant="surface" colorPalette="teal" size="md">
+						<Activity className={css({ width: "3.5", height: "3.5" })} />
 						EVMLog Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
+						<Search className={css({ width: "3.5", height: "3.5" })} />
 						HTTP API Read
 					</Badge>
 					<Badge variant="outline" colorPalette="blue" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
 						EVM Write
 					</Badge>
 				</div>
 			</div>
+
+			{/* How It Works Card */}
+			<Card.Root variant="outline">
+				<Card.Header>
+					<Card.Title>How It Works</Card.Title>
+					<Card.Description>
+						Overcoming cross-chain friction with the Chainlink Runtime
+						Environment (CRE)
+					</Card.Description>
+				</Card.Header>
+				<Card.Body
+					className={css({
+						display: "grid",
+						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
+						gap: "4",
+					})}
+				>
+					{/* Card 1: The Friction */}
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<TriangleAlert
+								className={css({ width: "4", height: "4", color: "amber.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="amber" size="sm">
+								Problem: Manual Claims
+							</Badge>
+						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Standard bridges require users to manually claim funds on the
+							destination chain. This "two-step" process creates friction,
+							requires gas on both chains, and often leads to unclaimed funds if
+							users forget the second step.
+						</Text>
+					</div>
+
+					{/* Card 2: The Solution */}
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<FileCode
+								className={css({ width: "4", height: "4", color: "teal.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="teal" size="sm">
+								Solution: Automated Relayer
+							</Badge>
+						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							By utilizing a CRE-based relayer, we can detect the deposit event on
+							the source chain and automatically execute the claim transaction on
+							the destination chain, creating a seamless "one-click" bridge
+							experience.
+						</Text>
+					</div>
+
+					{/* Card 3: Architecture Flow */}
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<Workflow
+								className={css({ width: "4", height: "4", color: "blue.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="blue" size="sm">
+								Implementation
+							</Badge>
+						</div>
+						<ul
+							className={css({
+								fontSize: "sm",
+								color: "fg.muted",
+								listStyleType: "disc",
+								pl: "4",
+								display: "flex",
+								flexDirection: "column",
+								gap: "1.5",
+							})}
+						>
+							<li>
+								<strong>Monitor:</strong> Relayer watches for DepositForBurn events
+								off-chain.
+							</li>
+							<li>
+								<strong>Verify:</strong> Validates source events and checks
+								authorized whitelist.
+							</li>
+							<li>
+								<strong>Execute:</strong> Automatically calls receiveMessage on the
+								destination chain.
+							</li>
+						</ul>
+					</div>
+
+					{/* Technical Breakdown */}
+					<div
+						className={css({
+							gridColumn: "1 / -1",
+							mt: "2",
+							pt: "4",
+							borderTop: "1px solid",
+							borderColor: "border",
+							display: "flex",
+							flexDirection: "column",
+							gap: "4",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+								color: "fg.default",
+							})}
+						>
+							<Calculator className={css({ width: "4", height: "4" })} />
+							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+								Protocol Mechanism
+							</Text>
+						</div>
+
+						<div
+							className={css({
+								display: "grid",
+								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+								gap: "4",
+							})}
+						>
+							<StepCard
+								title="Event Detection"
+								imageSrc="/eye-scanner.png"
+								description="Relayer captures CCTP Burn events including amount, domain, and recipient"
+							/>
+							<StepCard
+								title="Attestation"
+								imageSrc="/shield.png"
+								description="CRE retrieves the Circle attestation once finality is reached on source"
+							/>
+							<StepCard
+								title="Fulfillment"
+								imageSrc="/paper-plane.png"
+								description="Automated transaction submission to destination Messenger contract"
+							/>
+						</div>
+					</div>
+				</Card.Body>
+			</Card.Root>
 
 			<ConfigWarningBanner />
 
@@ -912,62 +1118,6 @@ export default function CrossChainRelayer() {
 
 			<BridgeProgress transfer={transfer} onReset={resetTransfer} />
 
-			<Card.Root variant="outline">
-				<Card.Header>
-					<Card.Title>Scenario Description</Card.Title>
-					<Card.Description></Card.Description>
-				</Card.Header>
-				<Card.Body
-					className={css({
-						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-						gap: "4",
-					})}
-				>
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "2",
-						})}
-					>
-						<Badge variant="outline" colorPalette="amber" size="sm">
-							Problem
-						</Badge>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							The extra claim transaction adds friction and can leave transfers
-							unclaimed if a user doesn't come back to original bridge site.
-						</Text>
-					</div>
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "2",
-						})}
-					>
-						<Badge variant="outline" colorPalette="teal" size="sm">
-							Remedy
-						</Badge>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							This example relays the destination claim txn for a whitelist of
-							users, completing the bridge automatically. In this example the
-							whitelist is populated with whomever interacts with this app.
-						</Text>
-					</div>
-				</Card.Body>
-			</Card.Root>
-
 			{!isConnected && (
 				<div
 					className={css({
@@ -984,6 +1134,65 @@ export default function CrossChainRelayer() {
 					</Text>
 				</div>
 			)}
+		</div>
+	);
+}
+
+function StepCard({
+	title,
+	imageSrc,
+	description,
+}: {
+	title: string;
+	imageSrc: string;
+	description: string;
+}) {
+	return (
+		<div
+			className={css({
+				display: "flex",
+				flexDirection: "column",
+				gap: "3",
+				p: "4",
+				borderRadius: "md",
+				bg: "bg.muted",
+				border: "1px solid",
+				borderColor: "border.subtle",
+				alignItems: "center",
+				textAlign: "center",
+				overflow: "hidden",
+			})}
+		>
+			<div
+				className={css({
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					mb: "1",
+				})}
+			>
+				<img
+					src={imageSrc}
+					alt={title}
+					className={css({
+						width: "20",
+						height: "20",
+						objectFit: "contain",
+					})}
+				/>
+			</div>
+			<Text
+				className={css({
+					fontSize: "sm",
+					fontWeight: "medium",
+					color: "fg.default",
+				})}
+			>
+				{title}
+			</Text>
+			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+				{description}
+			</Text>
 		</div>
 	);
 }
