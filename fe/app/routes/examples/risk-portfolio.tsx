@@ -275,9 +275,8 @@ export default function RiskPortfolio() {
 							</Badge>
 						</div>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							The CRE enables <strong>Scriptable Oracles</strong>: decentralized
-							workflows written in standard TypeScript. This allows us to fetch
-							historical data and execute sophisticated statistical analysis
+							Going beyond simply fetching a value, we can do data manipulation in the CRE using
+							typical typescript libraries e.g. Decimal.js. We use this feature to execute statistical analysis
 							off-chain, producing a verifiable result that is cryptographically
 							signed and delivered on-chain.
 						</Text>
