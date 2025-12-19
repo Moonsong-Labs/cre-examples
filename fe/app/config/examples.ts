@@ -30,10 +30,10 @@ export const EXAMPLES: ExampleDefinition[] = [
 	},
 	{
 		href: "/examples/risk-portfolio",
-		title: "Risk Portfolio",
-		navLabel: "Risk Portfolio",
+		title: "Risk-balanced Portfolio",
+		navLabel: "Risk-balanced Portfolio",
 		description:
-			"Dynamic portfolio allocations driven by on-chain volatility and correlation metrics.",
+			"Automated portfolio allocations driven by on-chain volatility and correlation metrics.",
 		tag: "Demo",
 		icon: PieChart,
 	},
