@@ -83,7 +83,7 @@ export default function CompliantToken() {
 	const {
 		data: allowlist,
 		refetch: refetchAllowlist,
-		isLoading: isLoadingAllowlist,
+		isLoading: _isLoadingAllowlist,
 	} = useReadContract({
 		chainId: sepolia.id,
 		address: COMPLIANT_TOKEN_ADDRESS,
@@ -611,8 +611,8 @@ export default function CompliantToken() {
 								!mintRecipient ||
 								!isValidAddress(mintRecipient) ||
 								!isAddressInAllowlist(mintRecipient) ||
-								parseInt(mintAmount) <= 0 ||
-								parseInt(mintAmount) > 1000
+								parseInt(mintAmount, 10) <= 0 ||
+								parseInt(mintAmount, 10) > 1000
 							}
 							className={css({ width: "100%" })}
 						>

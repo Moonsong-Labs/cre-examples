@@ -73,7 +73,10 @@ function computeCovarianceMatrix(
 	return cov;
 }
 
-function annualizeCovarianceMatrix(covPeriod: Decimal[][], annualizationFactor: number): Decimal[][] {
+function annualizeCovarianceMatrix(
+	covPeriod: Decimal[][],
+	annualizationFactor: number,
+): Decimal[][] {
 	const A = new Decimal(annualizationFactor);
 	return covPeriod.map((row) => row.map((c) => c.mul(A)));
 }

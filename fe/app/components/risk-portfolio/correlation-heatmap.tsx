@@ -1,5 +1,5 @@
 import { Activity, Link, ShieldCheck } from "lucide-react";
-import { Fragment, type ComponentProps } from "react";
+import { Fragment } from "react";
 import { css } from "styled-system/css";
 import { Tooltip } from "~/components/ui";
 import { ASSETS, buildCorrelationMatrix } from "~/lib/risk-portfolio";
@@ -37,181 +37,181 @@ function getCorrelationColor(rho: number): string {
 }
 
 export function CorrelationHeatmap({ corrBps }: CorrelationHeatmapProps) {
-		const matrix = buildCorrelationMatrix(corrBps);
-	
-		// Calculate insights
-		let maxCorr = -2;
-		let maxPair = ["-", "-"];
-		let minCorr = 2;
-		let minPair = ["-", "-"];
-		let sumAbsCorr = 0;
-		let count = 0;
-	
-		for (let i = 0; i < ASSETS.length; i++) {
-			for (let j = 0; j < i; j++) {
-				const val = matrix[i][j];
-				if (val > maxCorr) {
-					maxCorr = val;
-					maxPair = [ASSETS[j], ASSETS[i]];
-				}
-				if (val < minCorr) {
-					minCorr = val;
-					minPair = [ASSETS[j], ASSETS[i]];
-				}
-				sumAbsCorr += Math.abs(val);
-				count++;
+	const matrix = buildCorrelationMatrix(corrBps);
+
+	// Calculate insights
+	let maxCorr = -2;
+	let maxPair = ["-", "-"];
+	let minCorr = 2;
+	let minPair = ["-", "-"];
+	let sumAbsCorr = 0;
+	let count = 0;
+
+	for (let i = 0; i < ASSETS.length; i++) {
+		for (let j = 0; j < i; j++) {
+			const val = matrix[i][j];
+			if (val > maxCorr) {
+				maxCorr = val;
+				maxPair = [ASSETS[j], ASSETS[i]];
 			}
+			if (val < minCorr) {
+				minCorr = val;
+				minPair = [ASSETS[j], ASSETS[i]];
+			}
+			sumAbsCorr += Math.abs(val);
+			count++;
 		}
-		const avgCorr = count > 0 ? sumAbsCorr / count : 0;
-	
-		return (
+	}
+	const avgCorr = count > 0 ? sumAbsCorr / count : 0;
+
+	return (
+		<div
+			className={css({ display: "flex", flexDirection: "column", gap: "6" })}
+		>
 			<div
-				className={css({ display: "flex", flexDirection: "column", gap: "6" })}
+				className={css({ display: "flex", flexDirection: "column", gap: "3" })}
 			>
-				<div
-					className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+				<span
+					className={css({
+						fontSize: "sm",
+						fontWeight: "semibold",
+						color: "fg.default",
+					})}
 				>
-					<span
-						className={css({
-							fontSize: "sm",
-							fontWeight: "semibold",
-							color: "fg.default",
-						})}
-					>
-						Correlation Matrix
-					</span>
-	
-					<div
-						className={css({
-							display: "grid",
-							gridTemplateColumns: "auto repeat(5, 1fr)",
-							gap: "2",
-							fontSize: "sm",
-						})}
-					>
-						<div />
-						{ASSETS.map((asset) => (
-							<div
-								key={`header-${asset}`}
-								className={css({
-									textAlign: "center",
-									fontWeight: "medium",
-									color: "fg.muted",
-									py: "1",
-								})}
-							>
-								{asset}
-							</div>
-						))}
-	
-						{ASSETS.map((rowAsset, i) => (
-							<Fragment key={`row-${rowAsset}`}>
-								<div
-									className={css({
-										fontWeight: "medium",
-										color: "fg.muted",
-										pr: "2",
-										display: "flex",
-										alignItems: "center",
-									})}
-								>
-									{rowAsset}
-								</div>
-								{ASSETS.map((colAsset, j) => {
-									const value = matrix[i][j];
-									const displayValue = value.toFixed(2);
-									const isDiagonal = i === j;
-									const isUpperTriangle = j > i;
-	
-									return (
-										<div
-											key={`cell-${rowAsset}-${colAsset}`}
-											className={css({
-												width: "10",
-												height: "10",
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "center",
-												borderRadius: "md",
-												cursor: "default",
-												fontWeight: isDiagonal ? "normal" : "medium",
-												color: isDiagonal
-													? "fg.muted"
-													: Math.abs(value) > 0.5
-														? "white"
-														: "fg.default",
-												visibility: isUpperTriangle ? "hidden" : "visible",
-												bg: isDiagonal ? "gray.subtle.bg" : undefined,
-											})}
-											style={{
-												backgroundColor: isDiagonal
-													? undefined
-													: getCorrelationColor(value),
-											}}
-										>
-											{!isUpperTriangle && (
-												<Tooltip
-													content={`${rowAsset}-${colAsset}: ${displayValue}`}
-												>
-													<span>{displayValue}</span>
-												</Tooltip>
-											)}
-										</div>
-									);
-								})}
-							</Fragment>
-						))}
-					</div>
-				</div>
-	
-				{/* Market Insights Gadget */}
+					Correlation Matrix
+				</span>
+
 				<div
 					className={css({
 						display: "grid",
-						gridTemplateColumns: "1fr 1fr 1fr",
-						gap: "3",
+						gridTemplateColumns: "auto repeat(5, 1fr)",
+						gap: "2",
+						fontSize: "sm",
 					})}
 				>
-					<InsightCard
-						icon={Link}
-						label="Strongest"
-						subLabel={maxPair.join("-")}
-						value={maxCorr.toFixed(2)}
-						colorPalette="red"
-					/>
-					<InsightCard
-						icon={ShieldCheck}
-						label="Lowest"
-						subLabel={minPair.join("-")}
-						value={minCorr.toFixed(2)}
-						colorPalette="teal"
-					/>
-					<InsightCard
-						icon={Activity}
-						label="Cohesion"
-						subLabel="Avg Abs"
-						value={avgCorr.toFixed(2)}
-						colorPalette="blue"
-					/>
+					<div />
+					{ASSETS.map((asset) => (
+						<div
+							key={`header-${asset}`}
+							className={css({
+								textAlign: "center",
+								fontWeight: "medium",
+								color: "fg.muted",
+								py: "1",
+							})}
+						>
+							{asset}
+						</div>
+					))}
+
+					{ASSETS.map((rowAsset, i) => (
+						<Fragment key={`row-${rowAsset}`}>
+							<div
+								className={css({
+									fontWeight: "medium",
+									color: "fg.muted",
+									pr: "2",
+									display: "flex",
+									alignItems: "center",
+								})}
+							>
+								{rowAsset}
+							</div>
+							{ASSETS.map((colAsset, j) => {
+								const value = matrix[i][j];
+								const displayValue = value.toFixed(2);
+								const isDiagonal = i === j;
+								const isUpperTriangle = j > i;
+
+								return (
+									<div
+										key={`cell-${rowAsset}-${colAsset}`}
+										className={css({
+											width: "10",
+											height: "10",
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											borderRadius: "md",
+											cursor: "default",
+											fontWeight: isDiagonal ? "normal" : "medium",
+											color: isDiagonal
+												? "fg.muted"
+												: Math.abs(value) > 0.5
+													? "white"
+													: "fg.default",
+											visibility: isUpperTriangle ? "hidden" : "visible",
+											bg: isDiagonal ? "gray.subtle.bg" : undefined,
+										})}
+										style={{
+											backgroundColor: isDiagonal
+												? undefined
+												: getCorrelationColor(value),
+										}}
+									>
+										{!isUpperTriangle && (
+											<Tooltip
+												content={`${rowAsset}-${colAsset}: ${displayValue}`}
+											>
+												<span>{displayValue}</span>
+											</Tooltip>
+										)}
+									</div>
+								);
+							})}
+						</Fragment>
+					))}
 				</div>
-	
+			</div>
+
+			{/* Market Insights Gadget */}
+			<div
+				className={css({
+					display: "grid",
+					gridTemplateColumns: "1fr 1fr 1fr",
+					gap: "3",
+				})}
+			>
+				<InsightCard
+					icon={Link}
+					label="Strongest"
+					subLabel={maxPair.join("-")}
+					value={maxCorr.toFixed(2)}
+					colorPalette="red"
+				/>
+				<InsightCard
+					icon={ShieldCheck}
+					label="Lowest"
+					subLabel={minPair.join("-")}
+					value={minCorr.toFixed(2)}
+					colorPalette="teal"
+				/>
+				<InsightCard
+					icon={Activity}
+					label="Cohesion"
+					subLabel="Avg Abs"
+					value={avgCorr.toFixed(2)}
+					colorPalette="blue"
+				/>
+			</div>
+
+			<div
+				className={css({
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					gap: "2",
+					fontSize: "xs",
+					color: "fg.muted",
+				})}
+			>
+				<span>-1</span>
 				<div
 					className={css({
-						display: "flex",
-						justifyContent: "center",
-						alignItems: "center",
-						gap: "2",
-						fontSize: "xs",
-						color: "fg.muted",
-					})}
-				>
-					<span>-1</span>
-					<div
-						className={css({
-							width: "32",
-							height: "3",
-							borderRadius: "sm",
-							background: `linear-gradient(to right,
+						width: "32",
+						height: "3",
+						borderRadius: "sm",
+						background: `linear-gradient(to right,
 								rgb(59, 76, 192) 0%,
 								rgb(98, 130, 234) 12.5%,
 								rgb(141, 176, 254) 25%,
@@ -222,78 +222,78 @@ export function CorrelationHeatmap({ corrBps }: CorrelationHeatmapProps) {
 								rgb(222, 96, 77) 87.5%,
 								rgb(180, 4, 38) 100%
 							)`,
-						})}
-					/>
-					<span>+1</span>
-				</div>
+					})}
+				/>
+				<span>+1</span>
 			</div>
-		);
-	}
-	
-	function InsightCard({
-		icon: Icon,
-		label,
-		subLabel,
-		value,
-		colorPalette,
-	}: {
-		icon: React.ElementType;
-		label: string;
-		subLabel: string;
-		value: string;
-		colorPalette: "red" | "teal" | "blue";
-	}) {
-		return (
+		</div>
+	);
+}
+
+function InsightCard({
+	icon: Icon,
+	label,
+	subLabel,
+	value,
+	colorPalette,
+}: {
+	icon: React.ElementType;
+	label: string;
+	subLabel: string;
+	value: string;
+	colorPalette: "red" | "teal" | "blue";
+}) {
+	return (
+		<div
+			className={css({
+				bg: "gray.subtle.bg",
+				borderRadius: "md",
+				p: "2.5",
+				display: "flex",
+				flexDirection: "column",
+				gap: "2",
+				border: "1px solid",
+				borderColor: "border",
+			})}
+		>
 			<div
 				className={css({
-					bg: "gray.subtle.bg",
-					borderRadius: "md",
-					p: "2.5",
 					display: "flex",
-					flexDirection: "column",
-					gap: "2",
-					border: "1px solid",
-					borderColor: "border",
+					alignItems: "center",
+					gap: "1.5",
+					color: "fg.muted",
+					fontSize: "xs",
 				})}
 			>
+				<Icon className={css({ width: "3.5", height: "3.5" })} />
+				<span className={css({ fontWeight: "medium" })}>{label}</span>
+			</div>
+			<div>
 				<div
 					className={css({
-						display: "flex",
-						alignItems: "center",
-						gap: "1.5",
-						color: "fg.muted",
-						fontSize: "xs",
+						fontSize: "lg",
+						fontWeight: "bold",
+						lineHeight: "1",
+						color: {
+							base: `${colorPalette}.9`,
+							_dark: `${colorPalette}.3`,
+						},
 					})}
 				>
-					<Icon className={css({ width: "3.5", height: "3.5" })} />
-					<span className={css({ fontWeight: "medium" })}>{label}</span>
+					{value}
 				</div>
-				<div>
-					<div
-						className={css({
-							fontSize: "lg",
-							fontWeight: "bold",
-							lineHeight: "1",
-							color: {
-								base: `${colorPalette}.9`,
-								_dark: `${colorPalette}.3`,
-							},
-						})}
-					>
-						{value}
-					</div>
-					<div
-						className={css({
-							fontSize: "2xs",
-							color: "fg.subtle",
-							mt: "1",
-							fontWeight: "medium",
-							whiteSpace: "nowrap",
-						})}
-					>
-						{subLabel}
-					</div>
+				<div
+					className={css({
+						fontSize: "2xs",
+						color: "fg.subtle",
+						mt: "1",
+						fontWeight: "medium",
+						whiteSpace: "nowrap",
+					})}
+				>
+					{subLabel}
 				</div>
 			</div>
-		);
-	}
+		</div>
+	);
+}

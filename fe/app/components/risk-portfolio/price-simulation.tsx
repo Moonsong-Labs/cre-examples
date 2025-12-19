@@ -3,13 +3,12 @@ import {
 	Shuffle,
 	Snowflake,
 	Sparkles,
-	TrendingDown,
 	TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 import { css } from "styled-system/css";
-import { Button, Slider, Text, Tooltip } from "~/components/ui";
-import { ASSET_COLORS, ASSETS, type RiskProfile } from "~/lib/risk-portfolio";
+import { Button, Slider, Text } from "~/components/ui";
+import { ASSET_COLORS, ASSETS } from "~/lib/risk-portfolio";
 
 interface PriceSimulationProps {
 	portfolios: {
@@ -42,7 +41,11 @@ function DivergingBar({
 	label,
 	value,
 	maxValue = 30,
-}: { label: string; value: number; maxValue?: number }) {
+}: {
+	label: string;
+	value: number;
+	maxValue?: number;
+}) {
 	// Clamp value for visualization
 	const clampedValue = Math.max(-maxValue, Math.min(maxValue, value));
 	const percentage = (Math.abs(clampedValue) / maxValue) * 50; // 0 to 50%
@@ -222,7 +225,7 @@ export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 						</span>
 					</Button>
 					<Button
-						variant="ghost"
+						variant="plain"
 						size="sm"
 						onClick={() => applyScenario("shuffle")}
 						title="Shuffle"

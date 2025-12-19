@@ -22,12 +22,12 @@ export const FeedDecimals = {
 
 export const VolFloorBps: readonly number[] = [0, 0, 0, 50, 0];
 
-export const ALIGNMENT_TOLERANCE_SECONDS = 2n * 24n * 60n * 60n; // 2 days - tighter for dense sampling
-export const ANCHOR_LOOKBACK_DAYS = 30; // 30 days - single regime
+export const ALIGNMENT_TOLERANCE_SECONDS = 12n * 60n * 60n; // 12 hours - tight for daily sampling
+export const ANCHOR_LOOKBACK_DAYS = 30; // 30 days
 export const FREQUENCY_ESTIMATION_DAYS = 30;
 export const PHASE_OFFSET = 64n;
 export const MAX_ANCHOR_ROUNDS = 20;
-export const TARGET_OBSERVATIONS = 80; // Dense sampling, same 2 RPC calls
+export const TARGET_OBSERVATIONS = 150; // Balance coverage vs RPC limits
 
 export const EstimatedRoundsPerDay: Record<string, number> = {
 	btcUsd: 47,

@@ -627,7 +627,11 @@ function MathBox({
 	title,
 	formula,
 	description,
-}: { title: string; formula: string; description: string }) {
+}: {
+	title: string;
+	formula: string;
+	description: string;
+}) {
 	const html = katex.renderToString(formula, {
 		throwOnError: false,
 		displayMode: false,
@@ -725,7 +729,9 @@ function PortfolioCard({
 					gap: "3",
 				})}
 			>
-				<div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+				<div
+					className={css({ display: "flex", alignItems: "center", gap: "2" })}
+				>
 					<Icon
 						className={css({
 							width: "4",
@@ -758,4 +764,3 @@ function PortfolioCard({
 		</div>
 	);
 }
-

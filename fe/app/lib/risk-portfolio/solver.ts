@@ -65,11 +65,11 @@ export function computeVolCorrWeights(
 	const corrMatrix = extractCorrelationMatrix(cov);
 	const avgCorr = computeAvgCorrelation(corrMatrix);
 
-	const volFactor = vols.map((v) => Math.pow(Math.max(v, 0.0001), riskAppetite));
+	const volFactor = vols.map((v) => Math.max(v, 0.0001) ** riskAppetite);
 
 	const divScore = avgCorr.map((ac) => Math.max(0.05, 1 - ac));
 	const corrExponent = -riskAppetite * 0.6;
-	const corrFactor = divScore.map((ds) => Math.pow(ds, corrExponent));
+	const corrFactor = divScore.map((ds) => ds ** corrExponent);
 
 	const raw = volFactor.map((vf, i) => vf * corrFactor[i]);
 	const sum = raw.reduce((a, b) => a + b, 0);

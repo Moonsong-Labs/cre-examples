@@ -15,13 +15,9 @@ import {
 	zeroAddress,
 } from "viem";
 import { AggregatorV3ABI } from "../abi/AggregatorV3";
-import { Multicall3ABI, MULTICALL3_ADDRESS } from "../abi/Multicall3";
+import { MULTICALL3_ADDRESS, Multicall3ABI } from "../abi/Multicall3";
 import type { Config } from "../config";
-import {
-	ASSET_COUNT,
-	type AlignedObservation,
-	type RoundData,
-} from "../types";
+import { type AlignedObservation, ASSET_COUNT, type RoundData } from "../types";
 import {
 	ALIGNMENT_TOLERANCE_SECONDS,
 	ANCHOR_LOOKBACK_DAYS,
@@ -47,14 +43,42 @@ type MulticallResult = {
 };
 
 const FEEDS: FeedConfig[] = [
-	{ address: ChainlinkFeeds.ethMainnet.btcUsd, decimals: FeedDecimals.btcUsd, name: "BTC", key: "btcUsd" },
-	{ address: ChainlinkFeeds.ethMainnet.ethUsd, decimals: FeedDecimals.ethUsd, name: "ETH", key: "ethUsd" },
-	{ address: ChainlinkFeeds.ethMainnet.linkUsd, decimals: FeedDecimals.linkUsd, name: "LINK", key: "linkUsd" },
-	{ address: ChainlinkFeeds.ethMainnet.daiUsd, decimals: FeedDecimals.daiUsd, name: "sDAI", key: "daiUsd" },
-	{ address: ChainlinkFeeds.ethMainnet.uniUsd, decimals: FeedDecimals.uniUsd, name: "UNI", key: "uniUsd" },
+	{
+		address: ChainlinkFeeds.ethMainnet.btcUsd,
+		decimals: FeedDecimals.btcUsd,
+		name: "BTC",
+		key: "btcUsd",
+	},
+	{
+		address: ChainlinkFeeds.ethMainnet.ethUsd,
+		decimals: FeedDecimals.ethUsd,
+		name: "ETH",
+		key: "ethUsd",
+	},
+	{
+		address: ChainlinkFeeds.ethMainnet.linkUsd,
+		decimals: FeedDecimals.linkUsd,
+		name: "LINK",
+		key: "linkUsd",
+	},
+	{
+		address: ChainlinkFeeds.ethMainnet.daiUsd,
+		decimals: FeedDecimals.daiUsd,
+		name: "sDAI",
+		key: "daiUsd",
+	},
+	{
+		address: ChainlinkFeeds.ethMainnet.uniUsd,
+		decimals: FeedDecimals.uniUsd,
+		name: "UNI",
+		key: "uniUsd",
+	},
 ];
 
-function parseRoundId(roundId: bigint): { phaseId: bigint; aggregatorRoundId: bigint } {
+function parseRoundId(roundId: bigint): {
+	phaseId: bigint;
+	aggregatorRoundId: bigint;
+} {
 	const phaseId = roundId >> PHASE_OFFSET;
 	const aggregatorRoundId = roundId & ((1n << PHASE_OFFSET) - 1n);
 	return { phaseId, aggregatorRoundId };
@@ -126,8 +150,14 @@ function fetchSpacedRoundsForAllFeeds(
 		latestRounds.set(FEEDS[i].address, { roundId, answer, updatedAt });
 	}
 
+	// Fetch more rounds than needed to have good coverage for alignment
+	const oversampleFactor = 3;
 	type CallMeta = { feedIndex: number };
-	const historicalCalls: Array<{ target: Address; allowFailure: boolean; callData: Hex }> = [];
+	const historicalCalls: Array<{
+		target: Address;
+		allowFailure: boolean;
+		callData: Hex;
+	}> = [];
 	const callMeta: CallMeta[] = [];
 
 	for (let fi = 0; fi < FEEDS.length; fi++) {
@@ -136,9 +166,12 @@ function fetchSpacedRoundsForAllFeeds(
 		const { phaseId, aggregatorRoundId } = parseRoundId(latest.roundId);
 		const estimatedRoundsPerDay = EstimatedRoundsPerDay[feed.key] || 30;
 		const totalRoundsInPeriod = Math.ceil(lookbackDays * estimatedRoundsPerDay);
-		const roundStep = Math.max(1, Math.floor(totalRoundsInPeriod / targetCount));
+		const roundStep = Math.max(
+			1,
+			Math.floor(totalRoundsInPeriod / (targetCount * oversampleFactor)),
+		);
 
-		for (let i = 0; i < targetCount; i++) {
+		for (let i = 0; i < targetCount * oversampleFactor; i++) {
 			const targetAggRound = aggregatorRoundId - BigInt(i * roundStep);
 			if (targetAggRound < 1n) break;
 
@@ -155,7 +188,11 @@ function fetchSpacedRoundsForAllFeeds(
 		}
 	}
 
-	const historicalResults = executeMulticall(runtime, evmClient, historicalCalls);
+	const historicalResults = executeMulticall(
+		runtime,
+		evmClient,
+		historicalCalls,
+	);
 	const allRounds: Map<Address, RoundData[]> = new Map();
 
 	for (const feed of FEEDS) {
@@ -173,28 +210,38 @@ function fetchSpacedRoundsForAllFeeds(
 		});
 
 		if (answer > 0n) {
-			allRounds.get(feedAddr)!.push({ roundId, answer, updatedAt });
+			allRounds.get(feedAddr)?.push({ roundId, answer, updatedAt });
 		}
 	}
 
 	for (const feed of FEEDS) {
-		allRounds.get(feed.address)!.sort((a, b) => Number(a.updatedAt - b.updatedAt));
+		allRounds
+			.get(feed.address)
+			?.sort((a, b) => Number(a.updatedAt - b.updatedAt));
 	}
 
 	return allRounds;
 }
 
-function alignByTimestamp(
+function alignToFixedDailyIntervals(
 	allRounds: Map<Address, RoundData[]>,
 	tolerance: bigint,
+	lookbackDays: number,
 ): AlignedObservation[] {
 	const feedAddresses = FEEDS.map((f) => f.address);
-	const anchorRounds = allRounds.get(feedAddresses[0])!;
+
+	const nowSeconds = Math.floor(Date.now() / 1000);
+	const todayMidnight = Math.floor(nowSeconds / 86400) * 86400;
+
+	const targetTimestamps: bigint[] = [];
+	for (let d = 0; d < lookbackDays; d++) {
+		targetTimestamps.push(BigInt(todayMidnight - d * 86400));
+	}
+	targetTimestamps.reverse();
 
 	const aligned: AlignedObservation[] = [];
 
-	for (const anchor of anchorRounds) {
-		const targetTs = anchor.updatedAt;
+	for (const targetTs of targetTimestamps) {
 		const prices: bigint[] = [];
 		const actualTimestamps: bigint[] = [];
 		let allFound = true;
@@ -205,9 +252,10 @@ function alignByTimestamp(
 			let minDiff = tolerance + 1n;
 
 			for (const round of feedRounds) {
-				const diff = round.updatedAt > targetTs
-					? round.updatedAt - targetTs
-					: targetTs - round.updatedAt;
+				const diff =
+					round.updatedAt > targetTs
+						? round.updatedAt - targetTs
+						: targetTs - round.updatedAt;
 
 				if (diff < minDiff) {
 					minDiff = diff;
@@ -241,7 +289,9 @@ export type HistoricalReturnsResult = {
 	annualizationFactor: number;
 };
 
-export function fetchHistoricalReturns(runtime: Runtime<Config>): HistoricalReturnsResult {
+export function fetchHistoricalReturns(
+	runtime: Runtime<Config>,
+): HistoricalReturnsResult {
 	const ethNetwork = getNetwork({
 		chainFamily: "evm",
 		chainSelectorName: ETH_MAINNET_CHAIN_SELECTOR,
@@ -252,7 +302,9 @@ export function fetchHistoricalReturns(runtime: Runtime<Config>): HistoricalRetu
 		throw new Error(`Network not found: ${ETH_MAINNET_CHAIN_SELECTOR}`);
 	}
 
-	const ethClient = new cre.capabilities.EVMClient(ethNetwork.chainSelector.selector);
+	const ethClient = new cre.capabilities.EVMClient(
+		ethNetwork.chainSelector.selector,
+	);
 
 	runtime.log("Fetching historical prices with timestamp-aligned sampling...");
 
@@ -268,22 +320,35 @@ export function fetchHistoricalReturns(runtime: Runtime<Config>): HistoricalRetu
 		runtime.log(`  ${feed.name}: ${rounds.length} sampled rounds`);
 	}
 
-	runtime.log("Aligning observations by timestamp...");
-	const aligned = alignByTimestamp(allRounds, ALIGNMENT_TOLERANCE_SECONDS);
-	runtime.log(`  Got ${aligned.length} aligned observations`);
+	runtime.log(
+		"Aligning observations to fixed daily intervals (midnight UTC)...",
+	);
+	const aligned = alignToFixedDailyIntervals(
+		allRounds,
+		ALIGNMENT_TOLERANCE_SECONDS,
+		ANCHOR_LOOKBACK_DAYS,
+	);
+	runtime.log(
+		`  Got ${aligned.length} aligned observations (targeting ${ANCHOR_LOOKBACK_DAYS} daily closes)`,
+	);
 
 	if (aligned.length < 6) {
-		throw new Error(`Insufficient aligned observations: ${aligned.length} (need at least 6)`);
+		throw new Error(
+			`Insufficient aligned observations: ${aligned.length} (need at least 6)`,
+		);
 	}
 
 	for (let i = 0; i < FEEDS.length; i++) {
 		const feed = FEEDS[i];
 		let maxDriftHours = 0;
 		for (const obs of aligned) {
-			const drift = Math.abs(Number(obs.actualTimestamps[i] - obs.anchorTimestamp)) / 3600;
+			const drift =
+				Math.abs(Number(obs.actualTimestamps[i] - obs.anchorTimestamp)) / 3600;
 			if (drift > maxDriftHours) maxDriftHours = drift;
 		}
-		runtime.log(`  ${feed.name}: max drift ${maxDriftHours.toFixed(1)} hours from anchor`);
+		runtime.log(
+			`  ${feed.name}: max drift ${maxDriftHours.toFixed(1)} hours from anchor`,
+		);
 	}
 
 	const returns: Decimal[][] = [];
@@ -302,8 +367,12 @@ export function fetchHistoricalReturns(runtime: Runtime<Config>): HistoricalRetu
 	const totalDays = Number(lastTs - firstTs) / 86400;
 	const observationsPerYear = (returns.length / totalDays) * 365;
 
-	runtime.log(`Computed ${returns.length} return observations over ${totalDays.toFixed(1)} days`);
-	runtime.log(`Annualization factor: ${observationsPerYear.toFixed(2)} observations/year`);
+	runtime.log(
+		`Computed ${returns.length} return observations over ${totalDays.toFixed(1)} days`,
+	);
+	runtime.log(
+		`Annualization factor: ${observationsPerYear.toFixed(2)} observations/year`,
+	);
 
 	return { returns, annualizationFactor: observationsPerYear };
 }
@@ -319,7 +388,9 @@ export function getLatestPricesFromHistory(runtime: Runtime<Config>): bigint[] {
 		throw new Error(`Network not found: ${ETH_MAINNET_CHAIN_SELECTOR}`);
 	}
 
-	const ethClient = new cre.capabilities.EVMClient(ethNetwork.chainSelector.selector);
+	const ethClient = new cre.capabilities.EVMClient(
+		ethNetwork.chainSelector.selector,
+	);
 
 	const calls = FEEDS.map((feed) => ({
 		target: feed.address,

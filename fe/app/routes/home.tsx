@@ -129,7 +129,8 @@ export default function Home() {
 									className={css({
 										position: "relative",
 										overflow: "hidden",
-										background: "linear-gradient(135deg, #14b8a6 0%, #0891b2 50%, #6366f1 100%)",
+										background:
+											"linear-gradient(135deg, #14b8a6 0%, #0891b2 50%, #6366f1 100%)",
 										backgroundSize: "200% 200%",
 										color: "white",
 										fontWeight: "bold",
@@ -141,7 +142,8 @@ export default function Home() {
 											content: '""',
 											position: "absolute",
 											inset: 0,
-											background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)",
+											background:
+												"linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)",
 											animation: "shimmer 2s infinite",
 										},
 										_hover: {
@@ -249,7 +251,9 @@ export default function Home() {
 																transition: "colors 0.2s",
 															})}
 														>
-															<Icon className={css({ width: "5", height: "5" })} />
+															<Icon
+																className={css({ width: "5", height: "5" })}
+															/>
 														</div>
 													)}
 													<div
