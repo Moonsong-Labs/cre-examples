@@ -1,7 +1,7 @@
 import { Activity, Link, ShieldCheck } from "lucide-react";
 import { Fragment } from "react";
 import { css } from "styled-system/css";
-import { Tooltip } from "~/components/ui";
+import { Badge, Tooltip } from "~/components/ui";
 import { ASSETS, buildCorrelationMatrix } from "~/lib/risk-portfolio";
 
 interface CorrelationHeatmapProps {
@@ -278,21 +278,14 @@ function InsightCard({
 							base: `${colorPalette}.9`,
 							_dark: `${colorPalette}.3`,
 						},
+						mb: "2",
 					})}
 				>
 					{value}
 				</div>
-				<div
-					className={css({
-						fontSize: "2xs",
-						color: "fg.subtle",
-						mt: "1",
-						fontWeight: "medium",
-						whiteSpace: "nowrap",
-					})}
-				>
+				<Badge colorPalette={colorPalette} variant="surface" size="sm">
 					{subLabel}
-				</div>
+				</Badge>
 			</div>
 		</div>
 	);
