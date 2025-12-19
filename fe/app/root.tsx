@@ -22,6 +22,11 @@ export const links: Route.LinksFunction = () => [
 		href: "https://fonts.gstatic.com",
 		crossOrigin: "anonymous",
 	},
+	{
+		rel: "stylesheet",
+		href: "https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css",
+		crossOrigin: "anonymous",
+	},
 	{ rel: "stylesheet", href: stylesheet },
 ];
 

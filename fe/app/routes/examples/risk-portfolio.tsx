@@ -1,4 +1,6 @@
+import katex from "katex";
 import {
+	Calculator,
 	FileCode,
 	Info,
 	PieChart,
@@ -193,7 +195,7 @@ export default function RiskPortfolio() {
 			{/* Context Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>Context & Architecture</Card.Title>
+					<Card.Title>How It Works</Card.Title>
 					<Card.Description>
 						Overcoming on-chain compute limits with the Chainlink Runtime
 						Environment (CRE)
@@ -329,6 +331,63 @@ export default function RiskPortfolio() {
 								rebalance portfolio weights.
 							</li>
 						</ul>
+					</div>
+
+					{/* Mathematical Model */}
+					<div
+						className={css({
+							gridColumn: "1 / -1",
+							mt: "2",
+							pt: "4",
+							borderTop: "1px solid",
+							borderColor: "border",
+							display: "flex",
+							flexDirection: "column",
+							gap: "4",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+								color: "fg.default",
+							})}
+						>
+							<Calculator className={css({ width: "4", height: "4" })} />
+							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+								Mathematical Model
+							</Text>
+						</div>
+
+						<div
+							className={css({
+								display: "grid",
+								gridTemplateColumns: { base: "1fr", md: "repeat(4, 1fr)" },
+								gap: "4",
+							})}
+						>
+							<MathBox
+								title="Log Returns"
+								formula="r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)"
+								description="Enables time-additive performance measurement for risk analysis"
+							/>
+							<MathBox
+								title="Covariance"
+								formula="\Sigma_{ij} = \text{Cov}(r_i, r_j)"
+								description="Quantifies diversification potential between assets"
+							/>
+							<MathBox
+								title="Annualization"
+								formula="\Sigma_{\text{ann}} = \Sigma \times 365"
+								description="Aligns daily metrics with annual risk budgets"
+							/>
+							<MathBox
+								title="Correlation"
+								formula="\rho_{ij} = \frac{\Sigma_{ij}}{\sigma_i \sigma_j}"
+								description="Identifies hedging opportunities and concentration risk"
+							/>
+						</div>
 					</div>
 				</Card.Body>
 			</Card.Root>
@@ -539,6 +598,58 @@ export default function RiskPortfolio() {
 			)}
 
 			<Toaster />
+		</div>
+	);
+}
+
+function MathBox({
+	title,
+	formula,
+	description,
+}: { title: string; formula: string; description: string }) {
+	const html = katex.renderToString(formula, {
+		throwOnError: false,
+		displayMode: false,
+	});
+
+	return (
+		<div
+			className={css({
+				display: "flex",
+				flexDirection: "column",
+				gap: "3",
+				p: "4",
+				borderRadius: "md",
+				bg: "bg.muted",
+				border: "1px solid",
+				borderColor: "border.subtle",
+			})}
+		>
+			<Text
+				className={css({
+					fontSize: "xs",
+					fontWeight: "medium",
+					color: "fg.muted",
+					textTransform: "uppercase",
+					letterSpacing: "wide",
+				})}
+			>
+				{title}
+			</Text>
+			<div
+				className={css({
+					fontSize: "lg",
+					color: "fg.default",
+					overflow: "hidden",
+					display: "flex",
+					alignItems: "center",
+					minHeight: "10",
+				})}
+				dangerouslySetInnerHTML={{ __html: html }}
+			/>
+			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+				{description}
+			</Text>
 		</div>
 	);
 }
