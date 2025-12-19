@@ -27,7 +27,7 @@ export const ANCHOR_LOOKBACK_DAYS = 30; // 30 days
 export const FREQUENCY_ESTIMATION_DAYS = 30;
 export const PHASE_OFFSET = 64n;
 export const MAX_ANCHOR_ROUNDS = 20;
-export const TARGET_OBSERVATIONS = 150; // Balance coverage vs RPC limits
+export const TARGET_OBSERVATIONS = 75; // Tuned for DON compatibility
 
 export const EstimatedRoundsPerDay: Record<string, number> = {
 	btcUsd: 47,

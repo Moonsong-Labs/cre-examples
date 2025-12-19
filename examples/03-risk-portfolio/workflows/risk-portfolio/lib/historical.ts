@@ -123,12 +123,44 @@ function executeMulticall(
 	return decoded as MulticallResult[];
 }
 
+const MULTICALL_CHUNK_SIZE = 75;
+
+function executeChunkedMulticall(
+	runtime: Runtime<Config>,
+	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
+	calls: Array<{ target: Address; allowFailure: boolean; callData: Hex }>,
+	label: string,
+): MulticallResult[] {
+	if (calls.length === 0) return [];
+
+	const totalChunks = Math.ceil(calls.length / MULTICALL_CHUNK_SIZE);
+	runtime.log(
+		`  [${label}] Processing ${calls.length} calls in ${totalChunks} chunks...`,
+	);
+
+	const results: MulticallResult[] = [];
+	for (let i = 0; i < calls.length; i += MULTICALL_CHUNK_SIZE) {
+		const chunkIndex = Math.floor(i / MULTICALL_CHUNK_SIZE) + 1;
+		const chunk = calls.slice(i, i + MULTICALL_CHUNK_SIZE);
+		runtime.log(
+			`  [${label}] Chunk ${chunkIndex}/${totalChunks} (${chunk.length} calls)...`,
+		);
+		results.push(...executeMulticall(runtime, evmClient, chunk));
+		runtime.log(`  [${label}] Chunk ${chunkIndex}/${totalChunks} done`);
+	}
+	runtime.log(
+		`  [${label}] All chunks complete, got ${results.length} results`,
+	);
+	return results;
+}
+
 function fetchSpacedRoundsForAllFeeds(
 	runtime: Runtime<Config>,
 	evmClient: InstanceType<typeof cre.capabilities.EVMClient>,
 	lookbackDays: number,
 	targetCount: number,
 ): Map<Address, RoundData[]> {
+	runtime.log("  [latestRounds] Fetching latest round for each feed...");
 	const latestCalls = FEEDS.map((feed) => ({
 		target: feed.address,
 		allowFailure: false,
@@ -139,6 +171,7 @@ function fetchSpacedRoundsForAllFeeds(
 	}));
 
 	const latestResults = executeMulticall(runtime, evmClient, latestCalls);
+	runtime.log("  [latestRounds] Got latest rounds for all feeds");
 	const latestRounds: Map<Address, RoundData> = new Map();
 
 	for (let i = 0; i < FEEDS.length; i++) {
@@ -151,7 +184,7 @@ function fetchSpacedRoundsForAllFeeds(
 	}
 
 	// Fetch more rounds than needed to have good coverage for alignment
-	const oversampleFactor = 3;
+	const oversampleFactor = 2;
 	type CallMeta = { feedIndex: number };
 	const historicalCalls: Array<{
 		target: Address;
@@ -188,10 +221,14 @@ function fetchSpacedRoundsForAllFeeds(
 		}
 	}
 
-	const historicalResults = executeMulticall(
+	runtime.log(
+		`  [historical] Built ${historicalCalls.length} historical calls`,
+	);
+	const historicalResults = executeChunkedMulticall(
 		runtime,
 		evmClient,
 		historicalCalls,
+		"historical",
 	);
 	const allRounds: Map<Address, RoundData[]> = new Map();
 
