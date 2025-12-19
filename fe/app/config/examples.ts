@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Home, ShieldCheck } from "lucide-react";
+import { ArrowLeftRight, Home, PieChart, ShieldCheck } from "lucide-react";
 import type { ComponentType } from "react";
 
 export interface ExampleDefinition {
@@ -23,9 +23,19 @@ export const EXAMPLES: ExampleDefinition[] = [
 		href: "/examples/compliant-token",
 		title: "Compliant Token",
 		navLabel: "Compliant Token",
-		description: "Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
+		description:
+			"Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
 		tag: "Live demo",
 		icon: ShieldCheck,
+	},
+	{
+		href: "/examples/risk-portfolio",
+		title: "Risk-balanced Portfolio",
+		navLabel: "Risk-balanced Portfolio",
+		description:
+			"Automated portfolio allocations driven by on-chain volatility and correlation metrics.",
+		tag: "Demo",
+		icon: PieChart,
 	},
 ];
 
