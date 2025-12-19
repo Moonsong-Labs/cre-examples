@@ -3,6 +3,7 @@ import { alert } from "./alert";
 import { badge } from "./badge";
 import { button } from "./button";
 import { card } from "./card";
+import { dialog } from "./dialog";
 import { field } from "./field";
 import { group } from "./group";
 import { heading } from "./heading";
@@ -40,6 +41,7 @@ export const recipes = {
 
 export const slotRecipes = {
 	card,
+	dialog,
 	field,
 	numberInput,
 	select,
