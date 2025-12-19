@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router";
 import { css } from "styled-system/css";
 import { Text } from "~/components/ui";
 import { NAV_ITEMS } from "~/config/examples";
+import { AboutCREModal } from "./about-cre-modal";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
 	const location = useLocation();
@@ -44,7 +45,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 						CRE Examples
 					</Text>
 				</Link>
-				<ConnectButton showBalance={false} chainStatus="icon" />
+				<div className={css({ display: "flex", alignItems: "center", gap: "4" })}>
+					<AboutCREModal />
+					<ConnectButton showBalance={false} chainStatus="icon" />
+				</div>
 			</header>
 
 			<div className={css({ display: "flex", flex: "1" })}>

@@ -47,4 +47,32 @@ export const animationStyles = defineAnimationStyles({
 			animationName: "scale-out, fade-out",
 		},
 	},
+	"backdrop-in": {
+		value: {
+			animationName: "fade-in",
+			animationDuration: "200ms",
+			animationTimingFunction: "ease-in-out",
+		},
+	},
+	"backdrop-out": {
+		value: {
+			animationName: "fade-out",
+			animationDuration: "150ms",
+			animationTimingFunction: "ease-in-out",
+		},
+	},
+	"dialog-in": {
+		value: {
+			animationName: "scale-in, fade-in",
+			animationDuration: "200ms",
+			animationTimingFunction: "ease-in-out",
+		},
+	},
+	"dialog-out": {
+		value: {
+			animationName: "scale-out, fade-out",
+			animationDuration: "150ms",
+			animationTimingFunction: "ease-in-out",
+		},
+	},
 });

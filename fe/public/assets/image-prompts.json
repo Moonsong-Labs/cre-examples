@@ -1,0 +1,55 @@
+{
+  "style_guide": {
+    "art_style": "Isomorphic 3D icon",
+    "render_engine": "High-fidelity 3D render, likely Blender or Cinema 4D style",
+    "perspective": "Orthographic/Isomorphic view",
+    "lighting": "Soft studio lighting with a slight technological glow/bloom. Clean shadows.",
+    "color_palette": {
+      "primary_blue": "#0090ff",
+      "dark_blue": "#0d2847",
+      "slate_gray": "#64748b",
+      "teal_accent": "#14b8a6",
+      "white": "#ffffff"
+    },
+    "background": "Isolated on white or transparent background",
+    "vibe": "Modern, futuristic, clean, corporate blockchain technology, trustworthy"
+  },
+  "prompts": [
+    {
+      "name": "cross_chain_bridge",
+      "subject": "Two distinct floating platforms connected by a glowing digital bridge",
+      "details": "Platform A and Platform B are stylized distinct blockchain islands (maybe different geometric bases). A beam of blue light or a glass bridge connects them. Data packets (small cubes) travelling along the bridge.",
+      "colors": "Platforms in slate gray and white, bridge in vibrant primary blue (#0090ff) with teal accents."
+    },
+    {
+      "name": "relayer_bot",
+      "subject": "A friendly, high-tech automation robot or drone",
+      "details": "Floating, streamlined spherical or capsule-shaped robot. It has an antenna or a signal dish. It is carrying a digital payload (a glowing block). It looks efficient and fast.",
+      "colors": "Body in white and glossy blue (#0090ff). LED indicators in teal. Metal parts in silver/slate."
+    },
+    {
+      "name": "attestation_document",
+      "subject": "A floating digital contract with a verification seal",
+      "details": "A glass or holographic tablet displaying a smart contract code. A large, glowing 3D checkmark or wax seal floats in front of it, signifying 'verified' or 'attested'.",
+      "colors": "Tablet in translucent blue glass. Seal in vibrant teal or gold (if acceptable, otherwise blue). Code lines in white."
+    },
+    {
+      "name": "usdc_token",
+      "subject": "A stylized 3D coin representing a stablecoin",
+      "details": "A thick, coin-shaped object with the dollar sign '$' or a generic currency symbol embossed or floating in the center. The edge has ridges like a traditional coin but made of digital blocks.",
+      "colors": "Coin body in clean white or silver. The symbol is glowing primary blue (#0090ff)."
+    },
+    {
+      "name": "cctp_detector",
+      "subject": "A radar or scanning device",
+      "details": "A futuristic dish or magnifying glass scanning a blockchain block. It is emitting a fan of light (the scan zone) to detect events.",
+      "colors": "Base in dark blue (#0d2847). Scanning light in translucent teal. The block being scanned is slate gray."
+    },
+    {
+      "name": "blockchain_network",
+      "subject": "A network of interconnected cubes",
+      "details": "Several floating cubes connected by thin lines or pipes. One cube is highlighted or glowing, representing the current active node.",
+      "colors": "Cubes in frosted glass or white plastic. Connections in blue neon. Highlighted cube in vibrant blue."
+    }
+  ]
+}
