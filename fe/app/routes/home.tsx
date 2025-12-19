@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { css } from "styled-system/css";
 import { FloatingLines } from "~/components/backgrounds/floating-lines";
@@ -84,26 +84,20 @@ export default function Home() {
 							color: "white",
 						})}
 					>
-						<Badge
-							variant="surface"
-							colorPalette="teal"
-							size="md"
-							className={css({ alignSelf: "flex-start" })}
-						>
-							CRE Examples
-						</Badge>
 						<Heading
 							as="h1"
 							textStyle={{ base: "5xl", md: "7xl" }}
 							className={css({ fontWeight: "900", lineHeight: "1.05" })}
 						>
-							Build cross-chain experiences fast.
+							Solve Interoperability with Scriptable Oracles.
 						</Heading>
 
 						<TextType
 							text={[
 								"Ship interoperable dapps with Chainlink's Runtime Environment.",
-								"See how CCTP + CRE attestations move USDC between chains.",
+								"Orchestrate complex cross-chain workflows in TypeScript.",
+								"Connect private API data to public smart contracts.",
+								"Build next-gen DeFi with Scriptable Oracles.",
 							]}
 							typingSpeed={45}
 							cursorCharacter="_"
@@ -128,11 +122,46 @@ export default function Home() {
 						>
 							<Link
 								to={primaryExample?.href ?? "/examples/cross-chain-relayer"}
+								data-group
 							>
-								<Button size="xl" variant="surface" backdropBlur={"3xl"}>
+								<Button
+									size="xl"
+									className={css({
+										position: "relative",
+										overflow: "hidden",
+										background: "linear-gradient(135deg, #14b8a6 0%, #0891b2 50%, #6366f1 100%)",
+										backgroundSize: "200% 200%",
+										color: "white",
+										fontWeight: "bold",
+										border: "2px solid rgba(255, 255, 255, 0.2)",
+										borderRadius: "xl",
+										transition: "all 0.3s ease",
+										animation: "pulse-glow 2s ease-in-out infinite",
+										_before: {
+											content: '""',
+											position: "absolute",
+											inset: 0,
+											background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)",
+											animation: "shimmer 2s infinite",
+										},
+										_hover: {
+											transform: "scale(1.05)",
+											backgroundPosition: "100% 0",
+											borderColor: "rgba(255, 255, 255, 0.4)",
+										},
+									})}
+								>
 									Launch demo
 									<ArrowRight
-										className={css({ width: "5", height: "5", ml: "2" })}
+										className={css({
+											width: "5",
+											height: "5",
+											ml: "2",
+											transition: "transform 0.3s ease",
+											_groupHover: {
+												transform: "translateX(4px)",
+											},
+										})}
 									/>
 								</Button>
 							</Link>
@@ -148,7 +177,7 @@ export default function Home() {
 					>
 						<Card.Root
 							className={css({
-								bg: "rgba(15,23,42,0.4)",
+								bg: "rgba(15,23,42,0.3)",
 								border: "1px solid rgba(255,255,255,0.08)",
 								color: "white",
 								backdropFilter: "blur(12px)",
@@ -176,6 +205,7 @@ export default function Home() {
 										<Link
 											key={example.href}
 											to={example.href}
+											data-group
 											className={css({ textDecoration: "none" })}
 										>
 											<div
@@ -186,12 +216,11 @@ export default function Home() {
 													padding: "4",
 													borderRadius: "lg",
 													border: "1px solid",
-													borderColor: "rgba(255,255,255,0.08)",
-													bg: "rgba(255,255,255,0.03)",
+													borderColor: "rgba(255,255,255,0.05)",
+													bg: "rgba(255,255,255,0.02)",
 													_hover: {
-														borderColor: "rgba(255,255,255,0.2)",
-														bg: "rgba(255,255,255,0.08)",
-														transform: "translateY(-1px)",
+														borderColor: "rgba(255,255,255,0.15)",
+														bg: "rgba(255,255,255,0.06)",
 													},
 													transition: "all 0.2s ease",
 												})}
@@ -206,21 +235,21 @@ export default function Home() {
 													{Icon && (
 														<div
 															className={css({
-																width: "10",
+																width: "12",
 																height: "10",
 																borderRadius: "md",
 																display: "grid",
 																placeItems: "center",
-																bg: "rgba(255,255,255,0.1)",
+																bg: "rgba(255,255,255,0.08)",
+																color: "white",
+																_groupHover: {
+																	bg: "rgba(20,184,166,0.2)",
+																	color: "teal.300",
+																},
+																transition: "colors 0.2s",
 															})}
 														>
-															<Icon
-																className={css({
-																	width: "5",
-																	height: "5",
-																	color: "white",
-																})}
-															/>
+															<Icon className={css({ width: "5", height: "5" })} />
 														</div>
 													)}
 													<div
@@ -234,13 +263,14 @@ export default function Home() {
 															className={css({
 																fontWeight: "semibold",
 																fontSize: "md",
+																color: "white",
 															})}
 														>
 															{example.title}
 														</Text>
 														<Text
 															className={css({
-																color: "rgba(255,255,255,0.7)",
+																color: "rgba(255,255,255,0.6)",
 																fontSize: "sm",
 															})}
 														>
@@ -248,11 +278,38 @@ export default function Home() {
 														</Text>
 													</div>
 												</div>
-												{example.tag && (
-													<Badge variant="solid" colorPalette="teal" size="sm">
-														{example.tag}
-													</Badge>
-												)}
+												<div
+													className={css({
+														display: "flex",
+														alignItems: "center",
+														gap: "3",
+													})}
+												>
+													{example.tag && (
+														<Badge
+															variant="solid"
+															colorPalette="teal"
+															size="sm"
+															className={css({
+																display: { base: "none", sm: "inline-flex" },
+															})}
+														>
+															{example.tag}
+														</Badge>
+													)}
+													<ChevronRight
+														className={css({
+															width: "5",
+															height: "5",
+															color: "rgba(255,255,255,0.3)",
+															_groupHover: {
+																color: "white",
+																transform: "translateX(2px)",
+															},
+															transition: "all 0.2s",
+														})}
+													/>
+												</div>
 											</div>
 										</Link>
 									);
