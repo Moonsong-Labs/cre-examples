@@ -1,4 +1,11 @@
-import { RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
+import {
+	RotateCcw,
+	Shuffle,
+	Snowflake,
+	Sparkles,
+	TrendingDown,
+	TrendingUp,
+} from "lucide-react";
 import { useState } from "react";
 import { css } from "styled-system/css";
 import { Button, Slider, Text, Tooltip } from "~/components/ui";
@@ -31,6 +38,92 @@ function getReturnColor(value: number): string {
 	return "fg.muted";
 }
 
+function DivergingBar({
+	label,
+	value,
+	maxValue = 30,
+}: { label: string; value: number; maxValue?: number }) {
+	// Clamp value for visualization
+	const clampedValue = Math.max(-maxValue, Math.min(maxValue, value));
+	const percentage = (Math.abs(clampedValue) / maxValue) * 50; // 0 to 50%
+	const isPositive = value >= 0;
+
+	return (
+		<div
+			className={css({
+				display: "flex",
+				alignItems: "center",
+				gap: "4",
+				fontSize: "sm",
+			})}
+		>
+			<div className={css({ width: "24", fontWeight: "medium" })}>{label}</div>
+			<div
+				className={css({
+					flex: "1",
+					display: "flex",
+					position: "relative",
+					height: "8",
+					alignItems: "center",
+					bg: "gray.subtle.bg",
+					borderRadius: "md",
+					overflow: "hidden",
+				})}
+			>
+				{/* Center Line */}
+				<div
+					className={css({
+						position: "absolute",
+						left: "50%",
+						top: "0",
+						bottom: "0",
+						width: "1px",
+						bg: "border",
+						zIndex: "1",
+					})}
+				/>
+
+				{/* Bar */}
+				<div
+					style={{
+						position: "absolute",
+						left: isPositive ? "50%" : undefined,
+						right: isPositive ? undefined : "50%",
+						width: `${percentage}%`,
+						height: "100%",
+						backgroundColor: isPositive
+							? "var(--colors-green-9)"
+							: "var(--colors-red-9)",
+						opacity: 0.8,
+						transition: "width 0.3s ease",
+					}}
+				/>
+
+				{/* Value Text */}
+				<div
+					className={css({
+						position: "absolute",
+						width: "100%",
+						textAlign: isPositive ? "left" : "right",
+						pl: isPositive ? "calc(50% + 8px)" : 0,
+						pr: isPositive ? 0 : "calc(50% + 8px)",
+						fontWeight: "bold",
+						fontSize: "xs",
+						zIndex: "2",
+					})}
+					style={{
+						color: isPositive
+							? "var(--colors-green-11)"
+							: "var(--colors-red-11)",
+					}}
+				>
+					{formatPercent(value)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
 export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 	const [priceChanges, setPriceChanges] = useState<number[]>([0, 0, 0, 0, 0]);
 
@@ -42,16 +135,36 @@ export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 		});
 	};
 
+	const applyScenario = (type: "winter" | "alts" | "recovery" | "shuffle") => {
+		let newChanges: number[] = [];
+
+		switch (type) {
+			case "winter":
+				// BTC down, Alts down hard
+				newChanges = [-25, -45, -50, 0, -55];
+				break;
+			case "alts":
+				// BTC flat/up, Alts moon
+				newChanges = [5, 45, 30, 0, 60];
+				break;
+			case "recovery":
+				// Broad recovery
+				newChanges = [15, 20, 18, 0, 25];
+				break;
+			case "shuffle":
+				newChanges = ASSETS.map((a) => {
+					if (a === "sDAI") return 0; // Stablecoin mostly stable
+					return Math.floor(Math.random() * 101) - 50; // -50 to 50
+				});
+				break;
+		}
+		setPriceChanges(newChanges);
+	};
+
 	const resetAll = () => {
 		setPriceChanges([0, 0, 0, 0, 0]);
 		onReset?.();
 	};
-
-	const profiles: { key: RiskProfile; label: string }[] = [
-		{ key: "low", label: "Low Risk" },
-		{ key: "balanced", label: "Balanced" },
-		{ key: "high", label: "High Risk" },
-	];
 
 	const returns = {
 		low: calculatePortfolioReturn(portfolios.low, priceChanges),
@@ -63,36 +176,76 @@ export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 
 	return (
 		<div
-			className={css({ display: "flex", flexDirection: "column", gap: "4" })}
+			className={css({ display: "flex", flexDirection: "column", gap: "6" })}
 		>
-			{/* Scale indicator with reset button */}
+			{/* Scenarios & Controls */}
 			<div
 				className={css({
 					display: "flex",
 					justifyContent: "space-between",
-					alignItems: "center",
-					fontSize: "xs",
-					color: "fg.muted",
+					gap: "2",
+					flexWrap: "wrap",
 				})}
 			>
-				<span>-50%</span>
-				<div
-					className={css({ display: "flex", alignItems: "center", gap: "4" })}
-				>
-					<span>0%</span>
-					{hasChanges && (
-						<Button onClick={resetAll} variant="subtle" size="xs">
-							<RotateCcw className={css({ width: "3", height: "3" })} />
-							Reset
-						</Button>
-					)}
+				<div className={css({ display: "flex", gap: "2" })}>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => applyScenario("winter")}
+						title="Crypto Winter"
+					>
+						<Snowflake className={css({ width: "4", height: "4" })} />
+						<span className={css({ display: { base: "none", sm: "inline" } })}>
+							Winter
+						</span>
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => applyScenario("alts")}
+						title="Alt Season"
+					>
+						<Sparkles className={css({ width: "4", height: "4" })} />
+						<span className={css({ display: { base: "none", sm: "inline" } })}>
+							Alts
+						</span>
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => applyScenario("recovery")}
+						title="Recovery"
+					>
+						<TrendingUp className={css({ width: "4", height: "4" })} />
+						<span className={css({ display: { base: "none", sm: "inline" } })}>
+							Bull
+						</span>
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => applyScenario("shuffle")}
+						title="Shuffle"
+					>
+						<Shuffle className={css({ width: "4", height: "4" })} />
+					</Button>
 				</div>
-				<span>+50%</span>
+				{hasChanges && (
+					<Button onClick={resetAll} variant="subtle" size="sm">
+						<RotateCcw className={css({ width: "4", height: "4" })} />
+						Reset
+					</Button>
+				)}
 			</div>
 
 			{/* Price Sliders */}
 			<div
-				className={css({ display: "flex", flexDirection: "column", gap: "3" })}
+				className={css({
+					display: "grid",
+					gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+					columnGap: "8",
+					rowGap: "4",
+				})}
 			>
 				{ASSETS.map((asset, i) => (
 					<Slider.Root
@@ -146,72 +299,31 @@ export function PriceSimulation({ portfolios, onReset }: PriceSimulationProps) {
 				))}
 			</div>
 
-			{/* Portfolio Returns */}
+			{/* Performance Visualization */}
 			<div
 				className={css({
-					display: "grid",
-					gridTemplateColumns: "repeat(3, 1fr)",
-					gap: "3",
-					pt: "2",
+					display: "flex",
+					flexDirection: "column",
+					gap: "4",
+					pt: "4",
 					borderTop: "1px solid",
 					borderColor: "border",
 				})}
 			>
-				{profiles.map((profile) => {
-					const ret = returns[profile.key];
-					const Icon = ret >= 0 ? TrendingUp : TrendingDown;
-
-					return (
-						<Tooltip
-							key={profile.key}
-							content={`${profile.label} portfolio ${ret >= 0 ? "gains" : "loses"} ${Math.abs(ret).toFixed(2)}%`}
-						>
-							<div
-								className={css({
-									p: "3",
-									borderRadius: "lg",
-									border: "1px solid",
-									borderColor: "border",
-									bg: "gray.subtle.bg",
-									textAlign: "center",
-									cursor: "default",
-								})}
-							>
-								<Text
-									className={css({
-										fontSize: "xs",
-										color: "fg.muted",
-										mb: "1",
-									})}
-								>
-									{profile.label}
-								</Text>
-								<div
-									className={css({
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										gap: "1",
-									})}
-								>
-									<Icon
-										className={css({ width: "4", height: "4" })}
-										style={{ color: `var(--colors-${getReturnColor(ret)})` }}
-									/>
-									<Text
-										className={css({
-											fontSize: "lg",
-											fontWeight: "bold",
-										})}
-										style={{ color: `var(--colors-${getReturnColor(ret)})` }}
-									>
-										{formatPercent(ret)}
-									</Text>
-								</div>
-							</div>
-						</Tooltip>
-					);
-				})}
+				<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+					Estimated Performance
+				</Text>
+				<div
+					className={css({
+						display: "flex",
+						flexDirection: "column",
+						gap: "3",
+					})}
+				>
+					<DivergingBar label="Low Risk" value={returns.low} />
+					<DivergingBar label="Balanced" value={returns.balanced} />
+					<DivergingBar label="High Risk" value={returns.high} />
+				</div>
 			</div>
 		</div>
 	);

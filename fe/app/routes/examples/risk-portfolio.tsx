@@ -1,4 +1,11 @@
-import { Info, PieChart, RefreshCw } from "lucide-react";
+import {
+	FileCode,
+	Info,
+	PieChart,
+	RefreshCw,
+	TriangleAlert,
+	Workflow,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { sepolia } from "viem/chains";
@@ -186,15 +193,20 @@ export default function RiskPortfolio() {
 			{/* Context Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>Context</Card.Title>
+					<Card.Title>Context & Architecture</Card.Title>
+					<Card.Description>
+						Overcoming on-chain compute limits with the Chainlink Runtime
+						Environment (CRE)
+					</Card.Description>
 				</Card.Header>
 				<Card.Body
 					className={css({
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
 					})}
 				>
+					{/* Card 1: The Compute Bottleneck */}
 					<div
 						className={css({
 							p: "4",
@@ -204,18 +216,33 @@ export default function RiskPortfolio() {
 							bg: "gray.subtle.bg",
 							display: "flex",
 							flexDirection: "column",
-							gap: "2",
+							gap: "3",
 						})}
 					>
-						<Badge variant="outline" colorPalette="amber" size="sm">
-							Problem
-						</Badge>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<TriangleAlert
+								className={css({ width: "4", height: "4", color: "amber.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="amber" size="sm">
+								Problem: Gas & Trust
+							</Badge>
+						</div>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							Traditional portfolio allocation is static and doesn't adapt to
-							changing market conditions. Volatility and correlations shift over
-							time, making fixed allocations suboptimal.
+							Smart contracts are constrained by gas limits. Complex financial
+							modeling—like calculating 30-day rolling covariance matrices
+							across multiple assets—is prohibitively expensive to execute
+							on-chain and lacks cryptographic guarantees if run on a
+							centralized backend.
 						</Text>
 					</div>
+
+					{/* Card 2: Scriptable Oracles */}
 					<div
 						className={css({
 							p: "4",
@@ -225,17 +252,83 @@ export default function RiskPortfolio() {
 							bg: "gray.subtle.bg",
 							display: "flex",
 							flexDirection: "column",
-							gap: "2",
+							gap: "3",
 						})}
 					>
-						<Badge variant="outline" colorPalette="teal" size="sm">
-							Remedy
-						</Badge>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<FileCode
+								className={css({ width: "4", height: "4", color: "teal.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="teal" size="sm">
+								Solution: Scriptable Oracles
+							</Badge>
+						</div>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							CRE workflows compute 30-day rolling volatilities and correlations
-							from on-chain price feeds, enabling dynamic risk-budgeted
-							portfolio allocations that adapt to market conditions.
+							The CRE enables <strong>Scriptable Oracles</strong>: decentralized
+							workflows written in standard TypeScript. This allows us to fetch
+							historical data and execute sophisticated statistical analysis
+							off-chain, producing a verifiable result that is cryptographically
+							signed and delivered on-chain.
 						</Text>
+					</div>
+
+					{/* Card 3: Architecture Flow */}
+					<div
+						className={css({
+							p: "4",
+							borderRadius: "lg",
+							border: "1px solid",
+							borderColor: "border",
+							bg: "gray.subtle.bg",
+							display: "flex",
+							flexDirection: "column",
+							gap: "3",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<Workflow
+								className={css({ width: "4", height: "4", color: "blue.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="blue" size="sm">
+								Implementation
+							</Badge>
+						</div>
+						<ul
+							className={css({
+								fontSize: "sm",
+								color: "fg.muted",
+								listStyleType: "disc",
+								pl: "4",
+								display: "flex",
+								flexDirection: "column",
+								gap: "1.5",
+							})}
+						>
+							<li>
+								<strong>Workflow:</strong> Fetches price history & computes risk
+								matrix off-chain.
+							</li>
+							<li>
+								<strong>Oracle Contract:</strong> Receives and stores only the
+								verified risk metrics.
+							</li>
+							<li>
+								<strong>Dapp:</strong> Reads the contract to dynamically
+								rebalance portfolio weights.
+							</li>
+						</ul>
 					</div>
 				</Card.Body>
 			</Card.Root>
