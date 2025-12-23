@@ -1,0 +1,6 @@
+# Environment files
+*.env
+
+# Build artifacts
+tmp.js
+tmp.wasm
