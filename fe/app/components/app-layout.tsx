@@ -45,7 +45,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 						CRE Examples
 					</Text>
 				</Link>
-				<div className={css({ display: "flex", alignItems: "center", gap: "4" })}>
+				<div
+					className={css({ display: "flex", alignItems: "center", gap: "4" })}
+				>
 					<AboutCREModal />
 					<ConnectButton showBalance={false} chainStatus="icon" />
 				</div>

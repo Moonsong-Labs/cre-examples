@@ -78,8 +78,8 @@ export function AboutCREModal() {
 								<Text className={css({ color: "fg.muted" })}>
 									CRE is a workflow orchestration layer that lets developers
 									compose Chainlink capabilities—triggers, data fetching,
-									consensus, and chain writes—into unified workflows executed
-									by decentralized oracle networks (DONs).
+									consensus, and chain writes—into unified workflows executed by
+									decentralized oracle networks (DONs).
 								</Text>
 							</div>
 							<img
@@ -148,8 +148,6 @@ export function AboutCREModal() {
 								</Text>
 							</div>
 						</div>
-
-				
 					</div>
 
 					<div

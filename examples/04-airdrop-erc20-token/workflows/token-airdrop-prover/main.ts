@@ -2,14 +2,23 @@ import {
 	bytesToHex,
 	consensusIdenticalAggregation,
 	cre,
+	encodeCallMsg,
 	getNetwork,
 	type HTTPPayload,
 	hexToBase64,
+	LATEST_BLOCK_NUMBER,
 	Runner,
 	type Runtime,
 	TxStatus,
 } from "@chainlink/cre-sdk";
-import { encodeAbiParameters, type Hex } from "viem";
+import {
+	decodeFunctionResult,
+	encodeAbiParameters,
+	encodeFunctionData,
+	type Hex,
+	zeroAddress,
+} from "viem";
+import { AirdropToken } from "./abi/AirdropToken";
 import { z } from "zod";
 import { buildMerkleTree, type MerkleTreeData } from "./lib/merkle";
 import { type ProofsUploadResult, uploadProofs } from "./lib/proofs";
@@ -61,6 +70,43 @@ const postProofsToServer = (
 			consensusIdenticalAggregation<ProofsUploadResult>(),
 		)(baseUrl, apiKey, merkleTreeData)
 		.result();
+};
+
+const getContractMerkleRoot = (runtime: Runtime<Config>): Hex => {
+	const evmConfig = runtime.config.evms[0];
+	const network = getNetwork({
+		chainFamily: "evm",
+		chainSelectorName: evmConfig.chainSelectorName,
+		isTestnet: true,
+	});
+
+	if (!network) {
+		throw new Error(`Network not found: ${evmConfig.chainSelectorName}`);
+	}
+
+	const evmClient = new cre.capabilities.EVMClient(
+		network.chainSelector.selector,
+	);
+
+	const result = evmClient
+		.callContract(runtime, {
+			call: encodeCallMsg({
+				from: zeroAddress,
+				to: evmConfig.tokenAddress as Hex,
+				data: encodeFunctionData({
+					abi: AirdropToken,
+					functionName: "merkleRoot",
+				}),
+			}),
+			blockNumber: LATEST_BLOCK_NUMBER,
+		})
+		.result();
+
+	return decodeFunctionResult({
+		abi: AirdropToken,
+		functionName: "merkleRoot",
+		data: bytesToHex(result.data),
+	});
 };
 
 const postMerkleRootOnChain = (
@@ -143,16 +189,21 @@ const onHttpTrigger = (runtime: Runtime<Config>, _: HTTPPayload): string => {
 	const merkleTreeData = buildMerkleTree(allocations.entries);
 	runtime.log(`Merkle root: ${merkleTreeData.root}`);
 
-	// Step 3: Upload proofs to server
+	// Step 3: Check if merkle root is already set on-chain
+	const currentRoot = getContractMerkleRoot(runtime);
+	if (currentRoot.toLowerCase() === merkleTreeData.root.toLowerCase()) {
+		runtime.log("Merkle root unchanged, skipping on-chain update");
+		return "root-unchanged";
+	}
+
+	// Step 4: Upload proofs to server
 	const result = postProofsToServer(runtime, merkleTreeData);
 	runtime.log(
 		`Proofs uploaded: inserted=${result.inserted}, updated=${result.updated}, skipped=${result.skipped}, deleted=${result.deleted}`,
 	);
 
-	// Step 4: Post merkle root on-chain
-	const txHash = postMerkleRootOnChain(runtime, merkleTreeData.root as Hex);
-
-	return txHash;
+	// Step 5: Post merkle root on-chain
+	return postMerkleRootOnChain(runtime, merkleTreeData.root as Hex);
 };
 
 const initWorkflow = (config: Config) => {
