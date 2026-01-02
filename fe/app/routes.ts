@@ -14,6 +14,7 @@ export default [
 		),
 		route("examples/compliant-token", "routes/examples/compliant-token.tsx"),
 		route("examples/risk-portfolio", "routes/examples/risk-portfolio.tsx"),
+		route("examples/token-airdrop", "routes/examples/token-airdrop.tsx"),
 	]),
 	route("resources/whitelist", "routes/resources/whitelist.ts"),
 ] satisfies RouteConfig;

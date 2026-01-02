@@ -504,10 +504,10 @@ export default function CrossChainRelayer() {
 							</Badge>
 						</div>
 						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							By utilizing a CRE-based relayer, we can detect the deposit event on
-							the source chain and automatically execute the claim transaction on
-							the destination chain, creating a seamless "one-click" bridge
-							experience.
+							By utilizing a CRE-based relayer, we can detect the deposit event
+							on the source chain and automatically execute the claim
+							transaction on the destination chain, creating a seamless
+							"one-click" bridge experience.
 						</Text>
 					</div>
 
@@ -550,16 +550,16 @@ export default function CrossChainRelayer() {
 							})}
 						>
 							<li>
-								<strong>Monitor:</strong> Relayer watches for DepositForBurn events
-								off-chain.
+								<strong>Monitor:</strong> Relayer watches for DepositForBurn
+								events off-chain.
 							</li>
 							<li>
 								<strong>Verify:</strong> Validates source events and checks
 								authorized whitelist.
 							</li>
 							<li>
-								<strong>Execute:</strong> Automatically calls receiveMessage on the
-								destination chain.
+								<strong>Execute:</strong> Automatically calls receiveMessage on
+								the destination chain.
 							</li>
 						</ul>
 					</div>

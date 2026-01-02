@@ -1,6 +1,6 @@
 import { Dialog as ArkDialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react/portal";
 import { ark } from "@ark-ui/react/factory";
+import { Portal } from "@ark-ui/react/portal";
 import { forwardRef, type ReactNode } from "react";
 import { createStyleContext } from "styled-system/jsx";
 import { dialog } from "styled-system/recipes";

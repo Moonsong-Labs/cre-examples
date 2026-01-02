@@ -1,0 +1,11 @@
+{
+	"authorizedEVMAddress": "0x2bC105D59c6F9aABC8e19b35b6C4B3045ddD5944",
+	"airdropBaseUrl": "https://cre.lunatic.boo/04-airdrop",
+	"evms": [
+		{
+			"tokenAddress": "0xc864a70B9092D416B66E9c0e4AFb62b5163fD839",
+			"chainSelectorName": "ethereum-testnet-sepolia",
+			"gasLimit": "1000000"
+		}
+	]
+}

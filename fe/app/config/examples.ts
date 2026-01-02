@@ -1,4 +1,10 @@
-import { ArrowLeftRight, Home, PieChart, ShieldCheck } from "lucide-react";
+import {
+	ArrowLeftRight,
+	Gift,
+	Home,
+	PieChart,
+	ShieldCheck,
+} from "lucide-react";
 import type { ComponentType } from "react";
 
 export interface ExampleDefinition {
@@ -36,6 +42,14 @@ export const EXAMPLES: ExampleDefinition[] = [
 			"Automated portfolio allocations driven by on-chain volatility and correlation metrics.",
 		tag: "Demo",
 		icon: PieChart,
+	},
+	{
+		href: "/examples/token-airdrop",
+		title: "Token Airdrop",
+		navLabel: "Token Airdrop",
+		description: "Distribute tokens via merkle proof airdrop using CRE.",
+		tag: "Live demo",
+		icon: Gift,
 	},
 ];
 

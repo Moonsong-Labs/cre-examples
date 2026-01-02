@@ -1,5 +1,6 @@
 import { type Address, erc20Abi } from "viem";
 import { arbitrumSepolia, baseSepolia, sepolia } from "viem/chains";
+import airdropTokenAbi from "../abi/airdrop-token.json";
 import compliantTokenAbi from "../abi/compliant-token.json";
 import riskMetricsOracleAbi from "../abi/risk-metrics-oracle.json";
 
@@ -14,5 +15,7 @@ export const COMPLIANT_TOKEN_ADDRESS: Address =
 	"0xADFe793A0369a2a0c4b231391d361d9073dad6CF";
 export const RISK_METRICS_ORACLE_ADDRESS: Address =
 	"0x2d46748AE30D26c11b45Ac9d9A4a96DD4172000A";
+export const AIRDROP_TOKEN_ADDRESS: Address =
+	"0xc864a70B9092D416B66E9c0e4AFb62b5163fD839";
 
-export { erc20Abi, compliantTokenAbi, riskMetricsOracleAbi };
+export { erc20Abi, compliantTokenAbi, riskMetricsOracleAbi, airdropTokenAbi };
