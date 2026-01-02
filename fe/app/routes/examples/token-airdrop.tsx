@@ -141,16 +141,36 @@ export default function TokenAirdrop() {
 			const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
 
 			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
+				if (response.status >= 500) {
+					throw new Error(
+						"Server is temporarily unavailable. Please try again later.",
+					);
+				}
+				if (response.status === 404) {
+					// Address not found - show as not allocated
+					setAirdropStatus({
+						address: addr,
+						allocatedAmount: "0",
+						provedAmount: "0",
+						status: "available",
+					});
+					return;
+				}
+				throw new Error(`Request failed (HTTP ${response.status})`);
 			}
 
 			const data = await response.json();
 			setAirdropStatus(data);
 		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "Failed to fetch status";
+			let message: string;
+			if (error instanceof TypeError && error.message.includes("fetch")) {
+				message = "Unable to connect to server. Please check your connection.";
+			} else {
+				message =
+					error instanceof Error ? error.message : "Failed to fetch status";
+			}
 			setStatusError(message);
-			setAirdropStatus(null);
+			// Don't clear airdropStatus on server errors - keep previous data if available
 		} finally {
 			setStatusLoading(false);
 		}
@@ -752,7 +772,7 @@ export default function TokenAirdrop() {
 								</a>
 								<Button
 									onClick={handleSync}
-									disabled={isSyncing}
+									disabled={isSyncing || !!statusError}
 									variant="outline"
 									size="sm"
 									className={css({ gap: "1" })}

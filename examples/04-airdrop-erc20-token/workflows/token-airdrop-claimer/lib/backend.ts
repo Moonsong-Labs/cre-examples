@@ -1,4 +1,4 @@
-import { type HTTPSendRequester, ok, text } from "@chainlink/cre-sdk";
+import { type HTTPSendRequester, ok } from "@chainlink/cre-sdk";
 import type { Hex } from "viem";
 
 export type ClaimCompleteResult = {
