@@ -16,21 +16,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { formatUnits, isAddress } from "viem";
 import { sepolia } from "viem/chains";
-import {
-	useAccount,
-	useChainId,
-	useReadContract,
-	useSwitchChain,
-} from "wagmi";
+import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
-import {
-	Badge,
-	Button,
-	Card,
-	Field,
-	Input,
-	Text,
-} from "~/components/ui";
+import { Badge, Button, Card, Field, Input, Text } from "~/components/ui";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
 import type { Route } from "./+types/token-airdrop";
 
@@ -39,13 +27,14 @@ export function meta(_args: Route.MetaArgs) {
 		{ title: "Token Airdrop - CRE Examples" },
 		{
 			name: "description",
-			content:
-				"Distribute tokens via merkle proof airdrop using CRE",
+			content: "Distribute tokens via merkle proof airdrop using CRE",
 		},
 	];
 }
 
 const ETHERSCAN_BASE = "https://sepolia.etherscan.io";
+const SPREADSHEET_URL =
+	"https://docs.google.com/spreadsheets/d/1rSiwh0ATppPnRqh9-bh-eKA2h37Zy8qd1IWXAXm8kvQ/edit";
 
 function formatAddress(address: string): string {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -73,7 +62,9 @@ export default function TokenAirdrop() {
 	const effectiveAddress = queryAddress || address;
 
 	// API status state
-	const [airdropStatus, setAirdropStatus] = useState<AirdropStatus | null>(null);
+	const [airdropStatus, setAirdropStatus] = useState<AirdropStatus | null>(
+		null,
+	);
 	const [statusLoading, setStatusLoading] = useState(false);
 	const [statusError, setStatusError] = useState<string | null>(null);
 
@@ -115,9 +106,13 @@ export default function TokenAirdrop() {
 		address: AIRDROP_TOKEN_ADDRESS,
 		abi: airdropTokenAbi,
 		functionName: "totalClaimed",
-		args: effectiveAddress && isAddress(effectiveAddress) ? [effectiveAddress as `0x${string}`] : undefined,
+		args:
+			effectiveAddress && isAddress(effectiveAddress)
+				? [effectiveAddress as `0x${string}`]
+				: undefined,
 		query: {
-			enabled: isSepoliaChain && !!effectiveAddress && isAddress(effectiveAddress),
+			enabled:
+				isSepoliaChain && !!effectiveAddress && isAddress(effectiveAddress),
 		},
 	});
 
@@ -141,7 +136,8 @@ export default function TokenAirdrop() {
 		setStatusError(null);
 
 		try {
-			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+			const serverUrl =
+				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
 			const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
 
 			if (!response.ok) {
@@ -151,7 +147,8 @@ export default function TokenAirdrop() {
 			const data = await response.json();
 			setAirdropStatus(data);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Failed to fetch status";
+			const message =
+				error instanceof Error ? error.message : "Failed to fetch status";
 			setStatusError(message);
 			setAirdropStatus(null);
 		} finally {
@@ -180,7 +177,12 @@ export default function TokenAirdrop() {
 			}, 10000);
 			return () => clearInterval(interval);
 		}
-	}, [airdropStatus?.status, effectiveAddress, fetchAirdropStatus, refetchTotalClaimed]);
+	}, [
+		airdropStatus?.status,
+		effectiveAddress,
+		fetchAirdropStatus,
+		refetchTotalClaimed,
+	]);
 
 	// Network switch handler
 	const handleSwitchToSepolia = async () => {
@@ -198,7 +200,8 @@ export default function TokenAirdrop() {
 			setSyncError(null);
 			setSyncSuccess(false);
 
-			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+			const serverUrl =
+				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
 			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
 
 			if (!apiKey) {
@@ -212,7 +215,9 @@ export default function TokenAirdrop() {
 
 			if (!response.ok) {
 				const errorBody = await response.text().catch(() => "");
-				throw new Error(`Failed to sync (HTTP ${response.status}): ${errorBody}`);
+				throw new Error(
+					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+				);
 			}
 
 			setSyncSuccess(true);
@@ -240,21 +245,27 @@ export default function TokenAirdrop() {
 			setClaimError(null);
 			setClaimSuccess(false);
 
-			const serverUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+			const serverUrl =
+				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
 			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
 
 			if (!apiKey) {
 				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
 			}
 
-			const response = await fetch(`${serverUrl}/04-airdrop/${effectiveAddress}/claim`, {
-				method: "POST",
-				headers: { "X-API-Key": apiKey },
-			});
+			const response = await fetch(
+				`${serverUrl}/04-airdrop/${effectiveAddress}/claim`,
+				{
+					method: "POST",
+					headers: { "X-API-Key": apiKey },
+				},
+			);
 
 			if (!response.ok) {
 				const errorBody = await response.text().catch(() => "");
-				throw new Error(`Failed to claim (HTTP ${response.status}): ${errorBody}`);
+				throw new Error(
+					`Failed to claim (HTTP ${response.status}): ${errorBody}`,
+				);
 			}
 
 			setClaimSuccess(true);
@@ -262,7 +273,8 @@ export default function TokenAirdrop() {
 			// Refresh status
 			await fetchAirdropStatus(effectiveAddress);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Failed to claim";
+			const message =
+				error instanceof Error ? error.message : "Failed to claim";
 			console.error(message, error);
 			setClaimError(message);
 		} finally {
@@ -366,7 +378,8 @@ export default function TokenAirdrop() {
 				<Card.Header>
 					<Card.Title>How It Works</Card.Title>
 					<Card.Description>
-						Scalable token distribution with gasless claims powered by the Chainlink Runtime Environment (CRE)
+						Scalable token distribution with gasless claims powered by the
+						Chainlink Runtime Environment (CRE)
 					</Card.Description>
 				</Card.Header>
 				<Card.Body
@@ -398,9 +411,10 @@ export default function TokenAirdrop() {
 								</Badge>
 							</div>
 							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Distributing tokens to many addresses requires building merkle trees,
-								managing proofs, and users need ETH to pay gas for claiming—creating
-								friction and complexity for both operators and recipients.
+								Distributing tokens to many addresses requires building merkle
+								trees, managing proofs, and users need ETH to pay gas for
+								claiming—creating friction and complexity for both operators and
+								recipients.
 							</Text>
 						</Card.Body>
 					</Card.Root>
@@ -712,6 +726,30 @@ export default function TokenAirdrop() {
 									gap: "2",
 								})}
 							>
+								<a
+									href={SPREADSHEET_URL}
+									target="_blank"
+									rel="noopener noreferrer"
+									className={css({
+										display: "inline-flex",
+										alignItems: "center",
+										gap: "1.5",
+										px: "3",
+										py: "2",
+										borderRadius: "md",
+										border: "1px solid",
+										borderColor: "border",
+										color: "teal.11",
+										fontSize: "sm",
+										fontWeight: "medium",
+										_hover: { bg: "gray.subtle.bg" },
+									})}
+								>
+									<ExternalLink
+										className={css({ width: "3.5", height: "3.5" })}
+									/>
+									Open Sheet
+								</a>
 								<Button
 									onClick={handleSync}
 									disabled={isSyncing}
@@ -802,7 +840,11 @@ export default function TokenAirdrop() {
 								})}
 							>
 								<CheckCircle
-									className={css({ width: "5", height: "5", color: "green.11" })}
+									className={css({
+										width: "5",
+										height: "5",
+										color: "green.11",
+									})}
 								/>
 								<div className={css({ flex: 1 })}>
 									<Text
@@ -835,7 +877,10 @@ export default function TokenAirdrop() {
 								alignItems: { base: "stretch", md: "flex-end" },
 							})}
 						>
-							<Field.Root className={css({ flex: 1 })} invalid={!isValidQueryAddress}>
+							<Field.Root
+								className={css({ flex: 1 })}
+								invalid={!isValidQueryAddress}
+							>
 								<Field.Label>Address to Check</Field.Label>
 								<Input
 									type="text"
@@ -869,7 +914,9 @@ export default function TokenAirdrop() {
 									}}
 									variant="outline"
 									size="sm"
-									disabled={!effectiveAddress || !isValidQueryAddress || statusLoading}
+									disabled={
+										!effectiveAddress || !isValidQueryAddress || statusLoading
+									}
 								>
 									<RefreshCw
 										className={css({
@@ -942,7 +989,9 @@ export default function TokenAirdrop() {
 										color: needsSync ? "amber.11" : "fg.default",
 									})}
 								>
-									{statusLoading ? "—" : airdropStatus?.allocatedAmount ?? "0"}
+									{statusLoading
+										? "—"
+										: (airdropStatus?.allocatedAmount ?? "0")}
 								</Text>
 								{needsSync && (
 									<Text className={css({ fontSize: "xs", color: "amber.11" })}>
@@ -969,7 +1018,7 @@ export default function TokenAirdrop() {
 									Synced
 								</Text>
 								<Text className={css({ fontSize: "xl", fontWeight: "bold" })}>
-									{statusLoading ? "—" : airdropStatus?.provedAmount ?? "0"}
+									{statusLoading ? "—" : (airdropStatus?.provedAmount ?? "0")}
 								</Text>
 							</div>
 
@@ -1002,7 +1051,8 @@ export default function TokenAirdrop() {
 									borderRadius: "md",
 									border: "1px solid",
 									borderColor: claimableAmount > 0n ? "green.7" : "border",
-									bg: claimableAmount > 0n ? "green.subtle.bg" : "gray.subtle.bg",
+									bg:
+										claimableAmount > 0n ? "green.subtle.bg" : "gray.subtle.bg",
 									display: "flex",
 									flexDirection: "column",
 									alignItems: "center",
@@ -1023,7 +1073,13 @@ export default function TokenAirdrop() {
 								</Text>
 								{airdropStatus?.status === "pending" && (
 									<Badge variant="surface" colorPalette="amber" size="sm">
-										<Loader2 className={css({ width: "3", height: "3", animation: "spin" })} />
+										<Loader2
+											className={css({
+												width: "3",
+												height: "3",
+												animation: "spin",
+											})}
+										/>
 										Pending
 									</Badge>
 								)}
@@ -1083,7 +1139,11 @@ export default function TokenAirdrop() {
 								})}
 							>
 								<CheckCircle
-									className={css({ width: "5", height: "5", color: "green.11" })}
+									className={css({
+										width: "5",
+										height: "5",
+										color: "green.11",
+									})}
 								/>
 								<div className={css({ flex: 1 })}>
 									<Text
@@ -1146,7 +1206,8 @@ export default function TokenAirdrop() {
 									/>
 									Claim in Progress...
 								</>
-							) : airdropStatus?.allocatedAmount === "0" && airdropStatus?.provedAmount === "0" ? (
+							) : airdropStatus?.allocatedAmount === "0" &&
+								airdropStatus?.provedAmount === "0" ? (
 								<>
 									<Gift className={css({ width: "4", height: "4" })} />
 									Not Allocated

@@ -18,8 +18,8 @@ import {
 	type Hex,
 	zeroAddress,
 } from "viem";
-import { AirdropToken } from "./abi/AirdropToken";
 import { z } from "zod";
+import { AirdropToken } from "./abi/AirdropToken";
 import { buildMerkleTree, type MerkleTreeData } from "./lib/merkle";
 import { type ProofsUploadResult, uploadProofs } from "./lib/proofs";
 import { type Allocations, fetchAllocations } from "./lib/spreadsheet";
