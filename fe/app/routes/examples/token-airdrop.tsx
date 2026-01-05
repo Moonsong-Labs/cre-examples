@@ -408,7 +408,7 @@ export default function TokenAirdrop() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							videoSrc="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+							youtubeId="aqz-KE-bpKQ"
 							title="Token Airdrop Walkthrough"
 						/>
 					</div>

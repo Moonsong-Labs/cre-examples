@@ -3,11 +3,11 @@ import { css } from "styled-system/css";
 import { Dialog, IconButton } from "~/components/ui";
 
 interface VideoModalProps {
-	videoSrc: string;
+	youtubeId: string;
 	title?: string;
 }
 
-export function VideoModal({ videoSrc, title }: VideoModalProps) {
+export function VideoModal({ youtubeId, title }: VideoModalProps) {
 	return (
 		<Dialog.Root>
 			<Dialog.Trigger asChild>
@@ -81,16 +81,18 @@ export function VideoModal({ videoSrc, title }: VideoModalProps) {
 							<XIcon />
 						</IconButton>
 					</Dialog.CloseTrigger>
-					<video
-						autoPlay
-						muted
-						controls
-						playsInline
-						className={css({ width: "100%", display: "block" })}
-					>
-						<source src={videoSrc} type="video/mp4" />
-						Your browser does not support the video tag.
-					</video>
+					<iframe
+						src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&rel=0`}
+						title={title ?? "Video"}
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowFullScreen
+						className={css({
+							width: "100%",
+							aspectRatio: "16 / 9",
+							display: "block",
+							border: "none",
+						})}
+					/>
 				</Dialog.Content>
 			</Dialog.Positioner>
 		</Dialog.Root>
