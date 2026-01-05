@@ -2,7 +2,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, NavLink, useLocation } from "react-router";
 import { css } from "styled-system/css";
 import { Text } from "~/components/ui";
-import { NAV_ITEMS } from "~/config/examples";
+import { NAV_ITEMS, preloadImages } from "~/config/examples";
 import { AboutCREModal } from "./about-cre-modal";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -95,6 +95,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 											<NavLink
 												to={item.href}
 												end={item.href === "/"}
+												prefetch="intent"
+												onMouseEnter={() => preloadImages(item.images)}
+												onFocus={() => preloadImages(item.images)}
 												className={({ isActive }) =>
 													css({
 														display: "flex",

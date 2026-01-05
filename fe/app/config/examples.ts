@@ -14,6 +14,7 @@ export interface ExampleDefinition {
 	tag?: string;
 	icon?: ComponentType<{ className?: string }>;
 	navLabel?: string;
+	images?: string[];
 }
 
 export const EXAMPLES: ExampleDefinition[] = [
@@ -24,6 +25,14 @@ export const EXAMPLES: ExampleDefinition[] = [
 		description: "Bridge USDC across testnets with CRE attestations and CCTP.",
 		tag: "Live demo",
 		icon: ArrowLeftRight,
+		images: [
+			"/eye-scanner-80.png",
+			"/eye-scanner-160.png",
+			"/shield-80.png",
+			"/shield-160.png",
+			"/paper-plane-80.png",
+			"/paper-plane-160.png",
+		],
 	},
 	{
 		href: "/examples/compliant-token",
@@ -33,6 +42,14 @@ export const EXAMPLES: ExampleDefinition[] = [
 			"Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
 		tag: "Live demo",
 		icon: ShieldCheck,
+		images: [
+			"/written-code-80.png",
+			"/written-code-160.png",
+			"/workflow-nodes-80.png",
+			"/workflow-nodes-160.png",
+			"/shield-80.png",
+			"/shield-160.png",
+		],
 	},
 	{
 		href: "/examples/risk-portfolio",
@@ -50,14 +67,31 @@ export const EXAMPLES: ExampleDefinition[] = [
 		description: "Distribute tokens via merkle proof airdrop using CRE.",
 		tag: "Live demo",
 		icon: Gift,
+		images: [
+			"/written-code-80.png",
+			"/written-code-160.png",
+			"/workflow-nodes-80.png",
+			"/workflow-nodes-160.png",
+			"/shield-80.png",
+			"/shield-160.png",
+		],
 	},
 ];
 
 export const NAV_ITEMS = [
-	{ href: "/", label: "Home", icon: Home },
+	{ href: "/", label: "Home", icon: Home, images: undefined as string[] | undefined },
 	...EXAMPLES.map((example) => ({
 		href: example.href,
 		label: example.navLabel ?? example.title,
 		icon: example.icon,
+		images: example.images,
 	})),
 ];
+
+export function preloadImages(urls: string[] | undefined): void {
+	if (!urls?.length) return;
+	for (const url of urls) {
+		const img = new Image();
+		img.src = url;
+	}
+}
