@@ -1,4 +1,5 @@
 import katex from "katex";
+import { VideoModal } from "~/components/video-modal";
 import {
 	Calculator,
 	Clock,
@@ -204,7 +205,19 @@ export default function RiskPortfolio() {
 			{/* Context Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							videoSrc="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+							title="Risk Portfolio Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Overcoming on-chain compute limits with the Chainlink Runtime
 						Environment (CRE)

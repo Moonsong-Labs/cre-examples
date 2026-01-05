@@ -14,6 +14,7 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { formatUnits, isAddress } from "viem";
@@ -398,7 +399,19 @@ export default function TokenAirdrop() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							videoSrc="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+							title="Token Airdrop Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Scalable token distribution with gasless claims powered by the
 						Chainlink Runtime Environment (CRE)
@@ -546,17 +559,20 @@ export default function TokenAirdrop() {
 						>
 							<StepCard
 								title="Allocation Data"
-								imageSrc="/written-code.png"
+								imageSrc="/written-code-80.png"
+								imageSrcSet="/written-code-160.png 2x"
 								description="Community managers define token allocations in a Google Spreadsheet"
 							/>
 							<StepCard
 								title="Prover Workflow"
-								imageSrc="/workflow-nodes.png"
+								imageSrc="/workflow-nodes-80.png"
+								imageSrcSet="/workflow-nodes-160.png 2x"
 								description="Builds merkle tree from allocations, stores proofs, and publishes root on-chain"
 							/>
 							<StepCard
 								title="Claimer Workflow"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="Executes gasless claims by submitting proofs and sponsoring transactions"
 							/>
 						</div>
@@ -1261,10 +1277,12 @@ export default function TokenAirdrop() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
@@ -1293,6 +1311,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",

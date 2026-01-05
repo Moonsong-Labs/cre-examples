@@ -16,6 +16,7 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useState } from "react";
 import { css } from "styled-system/css";
 import { formatUnits, isAddress, parseUnits } from "viem";
@@ -295,7 +296,19 @@ export default function CompliantToken() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							videoSrc="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+							title="Compliant Token Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Bridging compliance and blockchain with the Chainlink Runtime
 						Environment (CRE)
@@ -442,17 +455,20 @@ export default function CompliantToken() {
 						>
 							<StepCard
 								title="Data Entry"
-								imageSrc="/written-code.png"
+								imageSrc="/written-code-80.png"
+								imageSrcSet="/written-code-160.png 2x"
 								description="Compliance team manages addresses in a secure Google Spreadsheet"
 							/>
 							<StepCard
 								title="CRE Sync"
-								imageSrc="/workflow-nodes.png"
+								imageSrc="/workflow-nodes-80.png"
+								imageSrcSet="/workflow-nodes-160.png 2x"
 								description="The Chainlink Runtime Environment detects changes and prepares the update"
 							/>
 							<StepCard
 								title="Enforcement"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="The smart contract automatically enforces the new allowlist for all operations"
 							/>
 						</div>
@@ -1243,10 +1259,12 @@ export default function CompliantToken() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
@@ -1275,6 +1293,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",

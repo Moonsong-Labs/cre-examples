@@ -83,7 +83,8 @@ export function AboutCREModal() {
 								</Text>
 							</div>
 							<img
-								src="/workflow-nodes.png"
+								src="/workflow-nodes-128.png"
+								srcSet="/workflow-nodes-256.png 2x"
 								alt="Workflow Nodes"
 								className={css({
 									width: "32",
@@ -109,7 +110,8 @@ export function AboutCREModal() {
 									})}
 								>
 									<img
-										src="/paper-plane.png"
+										src="/paper-plane-24.png"
+										srcSet="/paper-plane-48.png 2x"
 										alt="Capabilities"
 										className={css({ width: "6", height: "6" })}
 									/>
@@ -133,7 +135,8 @@ export function AboutCREModal() {
 									})}
 								>
 									<img
-										src="/shield.png"
+										src="/shield-24.png"
+										srcSet="/shield-48.png 2x"
 										alt="Workflows"
 										className={css({ width: "6", height: "6" })}
 									/>

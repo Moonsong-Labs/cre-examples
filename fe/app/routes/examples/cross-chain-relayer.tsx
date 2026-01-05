@@ -17,6 +17,7 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
@@ -425,7 +426,19 @@ export default function CrossChainRelayer() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							videoSrc="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+							title="Cross-Chain Relayer Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Overcoming cross-chain friction with the Chainlink Runtime
 						Environment (CRE)
@@ -597,17 +610,20 @@ export default function CrossChainRelayer() {
 						>
 							<StepCard
 								title="Event Detection"
-								imageSrc="/eye-scanner.png"
+								imageSrc="/eye-scanner-80.png"
+								imageSrcSet="/eye-scanner-160.png 2x"
 								description="Relayer captures CCTP Burn events including amount, domain, and recipient"
 							/>
 							<StepCard
 								title="Attestation"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="CRE retrieves the Circle attestation once finality is reached on source"
 							/>
 							<StepCard
 								title="Fulfillment"
-								imageSrc="/paper-plane.png"
+								imageSrc="/paper-plane-80.png"
+								imageSrcSet="/paper-plane-160.png 2x"
 								description="Automated transaction submission to destination Messenger contract"
 							/>
 						</div>
@@ -1138,10 +1154,12 @@ export default function CrossChainRelayer() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
@@ -1170,6 +1188,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",
