@@ -21,7 +21,8 @@ import { VideoModal } from "~/components/video-modal";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import {
 	formatUnits,
 	isAddress,
@@ -452,18 +453,7 @@ export default function CrossChainRelayer() {
 					})}
 				>
 					{/* Card 1: The Friction */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -487,18 +477,7 @@ export default function CrossChainRelayer() {
 					</div>
 
 					{/* Card 2: The Solution */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -522,18 +501,7 @@ export default function CrossChainRelayer() {
 					</div>
 
 					{/* Card 3: Architecture Flow */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -1164,19 +1132,14 @@ function StepCard({
 }) {
 	return (
 		<div
-			className={css({
-				display: "flex",
-				flexDirection: "column",
-				gap: "3",
-				p: "4",
-				borderRadius: "md",
-				bg: "bg.muted",
-				border: "1px solid",
-				borderColor: "border.subtle",
-				alignItems: "center",
-				textAlign: "center",
-				overflow: "hidden",
-			})}
+			className={cx(
+				section({ hoverable: true }),
+				css({
+					alignItems: "center",
+					textAlign: "center",
+					overflow: "hidden",
+				}),
+			)}
 		>
 			<div
 				className={css({

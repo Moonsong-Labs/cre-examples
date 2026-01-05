@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { VideoModal } from "~/components/video-modal";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import { formatUnits, isAddress } from "viem";
 import { sepolia } from "viem/chains";
 import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
@@ -425,7 +426,7 @@ export default function TokenAirdrop() {
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -455,7 +456,7 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -480,7 +481,7 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -1287,19 +1288,14 @@ function StepCard({
 }) {
 	return (
 		<div
-			className={css({
-				display: "flex",
-				flexDirection: "column",
-				gap: "3",
-				p: "4",
-				borderRadius: "md",
-				bg: "bg.muted",
-				border: "1px solid",
-				borderColor: "border.subtle",
-				alignItems: "center",
-				textAlign: "center",
-				overflow: "hidden",
-			})}
+			className={cx(
+				section({ hoverable: true }),
+				css({
+					alignItems: "center",
+					textAlign: "center",
+					overflow: "hidden",
+				}),
+			)}
 		>
 			<div
 				className={css({

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import { sepolia } from "viem/chains";
 import { useReadContract } from "wagmi";
 import {
@@ -231,18 +232,7 @@ export default function RiskPortfolio() {
 					})}
 				>
 					{/* Card 1: The Compute Bottleneck */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -267,18 +257,7 @@ export default function RiskPortfolio() {
 					</div>
 
 					{/* Card 2: Scriptable Oracles */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -303,18 +282,7 @@ export default function RiskPortfolio() {
 					</div>
 
 					{/* Card 3: Architecture Flow */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
