@@ -700,7 +700,11 @@ export default function TokenAirdrop() {
 			{isConnected && !isSepoliaChain && (
 				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
 					<Card.Body
-						className={css({ display: "flex", gap: "4", alignItems: "center" })}
+						className={css({
+							flexDirection: "row",
+							gap: "4",
+							alignItems: "center",
+						})}
 					>
 						<XCircle
 							className={css({
