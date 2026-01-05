@@ -5,12 +5,14 @@ import {
 	ExternalLink,
 	FileCode,
 	Gift,
+	Globe,
 	Loader2,
 	RefreshCw,
 	Search,
 	TriangleAlert,
 	Workflow,
 	XCircle,
+	Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { css } from "styled-system/css";
@@ -378,17 +380,17 @@ export default function TokenAirdrop() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						Merkle Proof
+					<Badge variant="surface" colorPalette="blue" size="md">
+						<Globe className={css({ width: "3.5", height: "3.5" })} />
+						HTTP Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						EVM Read
+						HTTP Client
 					</Badge>
-					<Badge variant="subtle" colorPalette="blue" size="md">
-						<Workflow className={css({ width: "3.5", height: "3.5" })} />
-						HTTP API
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>

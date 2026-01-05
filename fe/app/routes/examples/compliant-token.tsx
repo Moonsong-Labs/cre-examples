@@ -1,6 +1,7 @@
 import {
 	Activity,
 	CheckCircle,
+	Clock,
 	Coins,
 	ExternalLink,
 	FileCode,
@@ -13,6 +14,7 @@ import {
 	Upload,
 	Workflow,
 	XCircle,
+	Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { css } from "styled-system/css";
@@ -275,13 +277,17 @@ export default function CompliantToken() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						Contract Read/Write
+					<Badge variant="surface" colorPalette="purple" size="md">
+						<Clock className={css({ width: "3.5", height: "3.5" })} />
+						Cron Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						Google Sheets
+						HTTP Client
+					</Badge>
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>

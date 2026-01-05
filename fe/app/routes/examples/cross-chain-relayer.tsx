@@ -5,13 +5,10 @@ import {
 	Calculator,
 	CheckCircle,
 	ExternalLink,
-	Eye,
-	FileCheck,
 	FileCode,
 	Globe2,
 	Loader2,
 	Search,
-	Send,
 	ShieldCheck,
 	Sparkles,
 	TriangleAlert,
@@ -410,15 +407,15 @@ export default function CrossChainRelayer() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
+					<Badge variant="surface" colorPalette="amber" size="md">
 						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						EVMLog Trigger
+						EVM Log Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						HTTP API Read
+						HTTP Client
 					</Badge>
-					<Badge variant="outline" colorPalette="blue" size="md">
+					<Badge variant="outline" colorPalette="teal" size="md">
 						<Zap className={css({ width: "3.5", height: "3.5" })} />
 						EVM Write
 					</Badge>

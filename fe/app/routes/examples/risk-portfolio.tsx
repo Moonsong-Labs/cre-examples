@@ -1,11 +1,12 @@
 import katex from "katex";
 import {
 	Calculator,
+	Clock,
 	FileCode,
 	Info,
-	PieChart,
 	RefreshCw,
 	Scale,
+	Search,
 	Shield,
 	TriangleAlert,
 	Workflow,
@@ -185,12 +186,17 @@ export default function RiskPortfolio() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<PieChart className={css({ width: "3.5", height: "3.5" })} />
-						Risk Budgeting
+					<Badge variant="surface" colorPalette="purple" size="md">
+						<Clock className={css({ width: "3.5", height: "3.5" })} />
+						Cron Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
-						5 Assets
+						<Search className={css({ width: "3.5", height: "3.5" })} />
+						HTTP Client
+					</Badge>
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>
