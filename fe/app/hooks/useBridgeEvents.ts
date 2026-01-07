@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { useInterval } from "usehooks-ts";
+import { useCallback } from "react";
+import { useInterval, useSessionStorage } from "usehooks-ts";
 import { type Address, formatUnits } from "viem";
 import { useWatchContractEvent } from "wagmi";
 import {
@@ -24,6 +24,24 @@ export type TransferStatus =
 	| "minted"
 	| "failed";
 
+const VALID_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
+	pending: ["deposited"],
+	deposited: ["attesting", "relaying"],
+	attesting: ["relaying"],
+	relaying: ["minted", "failed"],
+	minted: [],
+	failed: [],
+};
+
+function canTransition(
+	from: TransferStatus | null,
+	to: TransferStatus,
+): boolean {
+	if (from === null) return true;
+	if (from === to) return true;
+	return VALID_TRANSITIONS[from].includes(to);
+}
+
 export interface BridgeTransfer {
 	id: string;
 	status: TransferStatus;
@@ -41,6 +59,17 @@ export interface BridgeTransfer {
 	errorMessage?: string | null;
 }
 
+function serializeTransfer(value: BridgeTransfer | null): string {
+	if (!value) return "null";
+	return JSON.stringify({ ...value, amount: value.amount.toString() });
+}
+
+function deserializeTransfer(value: string): BridgeTransfer | null {
+	if (value === "null") return null;
+	const parsed = JSON.parse(value);
+	return parsed ? { ...parsed, amount: BigInt(parsed.amount) } : null;
+}
+
 type SupportedChainId = 11155111 | 84532 | 421614;
 
 interface UseBridgeTransferParams {
@@ -54,7 +83,11 @@ export function useBridgeTransfer({
 	sourceChainId,
 	destChainId,
 }: UseBridgeTransferParams) {
-	const [transfer, setTransfer] = useState<BridgeTransfer | null>(null);
+	const [transfer, setTransfer, removeTransfer] = useSessionStorage<BridgeTransfer | null>(
+		"bridge-transfer",
+		null,
+		{ serializer: serializeTransfer, deserializer: deserializeTransfer },
+	);
 
 	const handleDepositForBurn = useCallback(
 		(
@@ -64,20 +97,29 @@ export function useBridgeTransfer({
 			amount: bigint,
 			destinationDomain: number,
 		) => {
-			const sourceDomain = CCTP_DOMAINS[chainId] ?? 0;
-			const destChainId = DOMAIN_TO_CHAIN_ID[destinationDomain];
+			setTransfer((prev) => {
+				if (prev?.depositTxHash === txHash) return prev;
+				if (!canTransition(prev?.status ?? null, "deposited")) {
+					console.warn(
+						`[Bridge] Invalid transition: ${prev?.status} → deposited`,
+					);
+					return prev;
+				}
 
-			setTransfer({
-				id: `transfer-${txHash}`,
-				status: "deposited",
-				sourceChainId: chainId,
-				destChainId: destChainId ?? 0,
-				sourceDomain,
-				destinationDomain,
-				amount,
-				depositor,
-				depositTxHash: txHash,
-				depositTimestamp: Math.floor(Date.now() / 1000),
+				const sourceDomain = CCTP_DOMAINS[chainId] ?? 0;
+				const destChainId = DOMAIN_TO_CHAIN_ID[destinationDomain];
+				return {
+					id: `transfer-${txHash}`,
+					status: "deposited",
+					sourceChainId: chainId,
+					destChainId: destChainId ?? 0,
+					sourceDomain,
+					destinationDomain,
+					amount,
+					depositor,
+					depositTxHash: txHash,
+					depositTimestamp: Math.floor(Date.now() / 1000),
+				};
 			});
 		},
 		[],
@@ -89,6 +131,10 @@ export function useBridgeTransfer({
 				if (!prev) return prev;
 				if (prev.sourceDomain !== sourceDomain) return prev;
 				if (DOMAIN_TO_CHAIN_ID[prev.destinationDomain] !== chainId) return prev;
+				if (!canTransition(prev.status, "minted")) {
+					console.warn(`[Bridge] Invalid transition: ${prev.status} → minted`);
+					return prev;
+				}
 
 				return {
 					...prev,
@@ -168,34 +214,26 @@ export function useBridgeTransfer({
 
 	useInterval(
 		async () => {
-			if (!transfer || transfer.depositTxHash === "0x") return;
-
 			const response = await fetchIrisAttestation(
-				transfer.sourceDomain,
-				transfer.depositTxHash,
+				transfer!.sourceDomain,
+				transfer!.depositTxHash,
 			);
 
 			setTransfer((prev) => {
-				if (!prev || !["deposited", "attesting"].includes(prev.status))
-					return prev;
+				if (!prev) return prev;
 
-				if (!response) {
-					// No response yet, move to attesting if not already
-					if (prev.status === "deposited") {
-						return { ...prev, status: "attesting" };
+				const nextStatus =
+					response?.status === "complete" ? "relaying" : "attesting";
+
+				if (!canTransition(prev.status, nextStatus)) {
+					if (prev.status !== nextStatus) {
+						console.warn(
+							`[Bridge] Invalid transition: ${prev.status} → ${nextStatus}`,
+						);
 					}
 					return prev;
 				}
-
-				if (response.status === "complete") {
-					return { ...prev, status: "relaying" };
-				}
-
-				// Still pending
-				if (prev.status === "deposited") {
-					return { ...prev, status: "attesting" };
-				}
-				return prev;
+				return { ...prev, status: nextStatus };
 			});
 		},
 		shouldPollIris ? 500 : null,
@@ -209,15 +247,19 @@ export function useBridgeTransfer({
 
 	useInterval(
 		async () => {
-			if (!transfer || transfer.depositTxHash === "0x") return;
-
-			const response = await fetchRelayStatus(transfer.depositTxHash);
+			const response = await fetchRelayStatus(transfer!.depositTxHash);
 			if (!response) return;
 
 			setTransfer((prev) => {
-				if (!prev || prev.status !== "relaying") return prev;
+				if (!prev) return prev;
 
 				if (response.status === "relayed") {
+					if (!canTransition(prev.status, "minted")) {
+						console.warn(
+							`[Bridge] Invalid transition: ${prev.status} → minted`,
+						);
+						return prev;
+					}
 					return {
 						...prev,
 						status: "minted",
@@ -227,6 +269,12 @@ export function useBridgeTransfer({
 				}
 
 				if (response.status === "failed") {
+					if (!canTransition(prev.status, "failed")) {
+						console.warn(
+							`[Bridge] Invalid transition: ${prev.status} → failed`,
+						);
+						return prev;
+					}
 					return {
 						...prev,
 						status: "failed",
@@ -242,21 +290,27 @@ export function useBridgeTransfer({
 	);
 
 	const reset = useCallback(() => {
-		setTransfer(null);
-	}, []);
+		removeTransfer();
+	}, [removeTransfer]);
 
 	const startPending = useCallback(() => {
-		setTransfer({
-			id: `pending-${Date.now()}`,
-			status: "pending",
-			sourceChainId: 0,
-			destChainId: 0,
-			sourceDomain: 0,
-			destinationDomain: 0,
-			amount: 0n,
-			depositor: "0x" as Address,
-			depositTxHash: "0x" as `0x${string}`,
-			depositTimestamp: Math.floor(Date.now() / 1000),
+		setTransfer((prev) => {
+			if (prev !== null && !canTransition(prev.status, "pending")) {
+				console.warn(`[Bridge] Invalid transition: ${prev.status} → pending`);
+				return prev;
+			}
+			return {
+				id: `pending-${Date.now()}`,
+				status: "pending",
+				sourceChainId: 0,
+				destChainId: 0,
+				sourceDomain: 0,
+				destinationDomain: 0,
+				amount: 0n,
+				depositor: "0x" as Address,
+				depositTxHash: "0x" as `0x${string}`,
+				depositTimestamp: Math.floor(Date.now() / 1000),
+			};
 		});
 	}, []);
 
@@ -268,20 +322,29 @@ export function useBridgeTransfer({
 			srcChainId: number,
 			destDomain: number,
 		) => {
-			const sourceDomain = CCTP_DOMAINS[srcChainId] ?? 0;
-			const destChainId = DOMAIN_TO_CHAIN_ID[destDomain];
+			setTransfer((prev) => {
+				if (prev?.depositTxHash === txHash) return prev;
+				if (!canTransition(prev?.status ?? null, "deposited")) {
+					console.warn(
+						`[Bridge] Invalid transition: ${prev?.status} → deposited`,
+					);
+					return prev;
+				}
 
-			setTransfer({
-				id: `transfer-${txHash}`,
-				status: "deposited",
-				sourceChainId: srcChainId,
-				destChainId: destChainId ?? 0,
-				sourceDomain,
-				destinationDomain: destDomain,
-				amount,
-				depositor,
-				depositTxHash: txHash,
-				depositTimestamp: Math.floor(Date.now() / 1000),
+				const sourceDomain = CCTP_DOMAINS[srcChainId] ?? 0;
+				const destChainId = DOMAIN_TO_CHAIN_ID[destDomain];
+				return {
+					id: `transfer-${txHash}`,
+					status: "deposited",
+					sourceChainId: srcChainId,
+					destChainId: destChainId ?? 0,
+					sourceDomain,
+					destinationDomain: destDomain,
+					amount,
+					depositor,
+					depositTxHash: txHash,
+					depositTimestamp: Math.floor(Date.now() / 1000),
+				};
 			});
 		},
 		[],
