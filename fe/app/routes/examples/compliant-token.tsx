@@ -306,7 +306,7 @@ export default function CompliantToken() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="aqz-KE-bpKQ"
+							youtubeId="9-gHuHO5FOE"
 							title="Compliant Token Walkthrough"
 						/>
 					</div>
