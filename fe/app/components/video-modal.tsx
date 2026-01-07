@@ -1,4 +1,5 @@
 import { PlayCircleIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { css } from "styled-system/css";
 import { Dialog, IconButton } from "~/components/ui";
 
@@ -8,8 +9,10 @@ interface VideoModalProps {
 }
 
 export function VideoModal({ youtubeId, title }: VideoModalProps) {
+	const [open, setOpen] = useState(false);
+
 	return (
-		<Dialog.Root>
+		<Dialog.Root open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<Dialog.Trigger asChild>
 				<button
 					type="button"
@@ -40,7 +43,8 @@ export function VideoModal({ youtubeId, title }: VideoModalProps) {
 			<Dialog.Positioner>
 				<Dialog.Content
 					className={css({
-						maxW: "4xl",
+						width: "80vw",
+						maxW: "80vw",
 						p: "0",
 						overflow: "hidden",
 						borderRadius: "xl",
@@ -81,18 +85,20 @@ export function VideoModal({ youtubeId, title }: VideoModalProps) {
 							<XIcon />
 						</IconButton>
 					</Dialog.CloseTrigger>
-					<iframe
-						src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&rel=0`}
-						title={title ?? "Video"}
-						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-						allowFullScreen
-						className={css({
-							width: "100%",
-							aspectRatio: "16 / 9",
-							display: "block",
-							border: "none",
-						})}
-					/>
+					{open && (
+						<iframe
+							src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&mute=0&rel=0`}
+							title={title ?? "Video"}
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+							allowFullScreen
+							className={css({
+								width: "100%",
+								aspectRatio: "16 / 9",
+								display: "block",
+								border: "none",
+							})}
+						/>
+					)}
 				</Dialog.Content>
 			</Dialog.Positioner>
 		</Dialog.Root>
