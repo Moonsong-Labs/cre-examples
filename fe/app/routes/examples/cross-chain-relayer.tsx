@@ -5,13 +5,10 @@ import {
 	Calculator,
 	CheckCircle,
 	ExternalLink,
-	Eye,
-	FileCheck,
 	FileCode,
 	Globe2,
 	Loader2,
 	Search,
-	Send,
 	ShieldCheck,
 	Sparkles,
 	TriangleAlert,
@@ -20,10 +17,12 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import {
 	formatUnits,
 	isAddress,
@@ -410,15 +409,15 @@ export default function CrossChainRelayer() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
+					<Badge variant="surface" colorPalette="amber" size="md">
 						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						EVMLog Trigger
+						EVM Log Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						HTTP API Read
+						HTTP Client
 					</Badge>
-					<Badge variant="outline" colorPalette="blue" size="md">
+					<Badge variant="outline" colorPalette="teal" size="md">
 						<Zap className={css({ width: "3.5", height: "3.5" })} />
 						EVM Write
 					</Badge>
@@ -428,7 +427,19 @@ export default function CrossChainRelayer() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							youtubeId="FCP-L9NoJwc"
+							title="Cross-Chain Relayer Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Overcoming cross-chain friction with the Chainlink Runtime
 						Environment (CRE)
@@ -442,18 +453,7 @@ export default function CrossChainRelayer() {
 					})}
 				>
 					{/* Card 1: The Friction */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -477,18 +477,7 @@ export default function CrossChainRelayer() {
 					</div>
 
 					{/* Card 2: The Solution */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -512,18 +501,7 @@ export default function CrossChainRelayer() {
 					</div>
 
 					{/* Card 3: Architecture Flow */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -600,17 +578,20 @@ export default function CrossChainRelayer() {
 						>
 							<StepCard
 								title="Event Detection"
-								imageSrc="/eye-scanner.png"
+								imageSrc="/eye-scanner-80.png"
+								imageSrcSet="/eye-scanner-160.png 2x"
 								description="Relayer captures CCTP Burn events including amount, domain, and recipient"
 							/>
 							<StepCard
 								title="Attestation"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="CRE retrieves the Circle attestation once finality is reached on source"
 							/>
 							<StepCard
 								title="Fulfillment"
-								imageSrc="/paper-plane.png"
+								imageSrc="/paper-plane-80.png"
+								imageSrcSet="/paper-plane-160.png 2x"
 								description="Automated transaction submission to destination Messenger contract"
 							/>
 						</div>
@@ -1141,27 +1122,24 @@ export default function CrossChainRelayer() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
 		<div
-			className={css({
-				display: "flex",
-				flexDirection: "column",
-				gap: "3",
-				p: "4",
-				borderRadius: "md",
-				bg: "bg.muted",
-				border: "1px solid",
-				borderColor: "border.subtle",
-				alignItems: "center",
-				textAlign: "center",
-				overflow: "hidden",
-			})}
+			className={cx(
+				section({ hoverable: true }),
+				css({
+					alignItems: "center",
+					textAlign: "center",
+					overflow: "hidden",
+				}),
+			)}
 		>
 			<div
 				className={css({
@@ -1173,6 +1151,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",

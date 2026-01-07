@@ -126,6 +126,10 @@ export const keyframes = defineKeyframes({
 				"0 0 30px rgba(20, 184, 166, 0.6), 0 0 60px rgba(20, 184, 166, 0.3)",
 		},
 	},
+	shine: {
+		"0%": { backgroundPosition: "100%" },
+		"100%": { backgroundPosition: "-100%" },
+	},
 	position: {
 		from: {
 			insetInlineStart: "var(--animate-from-x)",

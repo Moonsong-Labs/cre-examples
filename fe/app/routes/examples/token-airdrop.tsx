@@ -5,15 +5,19 @@ import {
 	ExternalLink,
 	FileCode,
 	Gift,
+	Globe,
 	Loader2,
 	RefreshCw,
 	Search,
 	TriangleAlert,
 	Workflow,
 	XCircle,
+	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import { formatUnits, isAddress } from "viem";
 import { sepolia } from "viem/chains";
 import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
@@ -378,17 +382,17 @@ export default function TokenAirdrop() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						Merkle Proof
+					<Badge variant="surface" colorPalette="blue" size="md">
+						<Globe className={css({ width: "3.5", height: "3.5" })} />
+						HTTP Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						EVM Read
+						HTTP Client
 					</Badge>
-					<Badge variant="subtle" colorPalette="blue" size="md">
-						<Workflow className={css({ width: "3.5", height: "3.5" })} />
-						HTTP API
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>
@@ -396,7 +400,19 @@ export default function TokenAirdrop() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							youtubeId="aqz-KE-bpKQ"
+							title="Token Airdrop Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Scalable token distribution with gasless claims powered by the
 						Chainlink Runtime Environment (CRE)
@@ -410,7 +426,7 @@ export default function TokenAirdrop() {
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -440,7 +456,7 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -465,7 +481,7 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -544,17 +560,20 @@ export default function TokenAirdrop() {
 						>
 							<StepCard
 								title="Allocation Data"
-								imageSrc="/written-code.png"
+								imageSrc="/written-code-80.png"
+								imageSrcSet="/written-code-160.png 2x"
 								description="Community managers define token allocations in a Google Spreadsheet"
 							/>
 							<StepCard
 								title="Prover Workflow"
-								imageSrc="/workflow-nodes.png"
+								imageSrc="/workflow-nodes-80.png"
+								imageSrcSet="/workflow-nodes-160.png 2x"
 								description="Builds merkle tree from allocations, stores proofs, and publishes root on-chain"
 							/>
 							<StepCard
 								title="Claimer Workflow"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="Executes gasless claims by submitting proofs and sponsoring transactions"
 							/>
 						</div>
@@ -681,7 +700,11 @@ export default function TokenAirdrop() {
 			{isConnected && !isSepoliaChain && (
 				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
 					<Card.Body
-						className={css({ display: "flex", gap: "4", alignItems: "center" })}
+						className={css({
+							flexDirection: "row",
+							gap: "4",
+							alignItems: "center",
+						})}
 					>
 						<XCircle
 							className={css({
@@ -1259,27 +1282,24 @@ export default function TokenAirdrop() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
 		<div
-			className={css({
-				display: "flex",
-				flexDirection: "column",
-				gap: "3",
-				p: "4",
-				borderRadius: "md",
-				bg: "bg.muted",
-				border: "1px solid",
-				borderColor: "border.subtle",
-				alignItems: "center",
-				textAlign: "center",
-				overflow: "hidden",
-			})}
+			className={cx(
+				section({ hoverable: true }),
+				css({
+					alignItems: "center",
+					textAlign: "center",
+					overflow: "hidden",
+				}),
+			)}
 		>
 			<div
 				className={css({
@@ -1291,6 +1311,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",

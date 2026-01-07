@@ -1,6 +1,7 @@
 import {
 	Activity,
 	CheckCircle,
+	Clock,
 	Coins,
 	ExternalLink,
 	FileCode,
@@ -13,9 +14,12 @@ import {
 	Upload,
 	Workflow,
 	XCircle,
+	Zap,
 } from "lucide-react";
+import { VideoModal } from "~/components/video-modal";
 import { useState } from "react";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
 import {
@@ -275,13 +279,17 @@ export default function CompliantToken() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<Activity className={css({ width: "3.5", height: "3.5" })} />
-						Contract Read/Write
+					<Badge variant="surface" colorPalette="purple" size="md">
+						<Clock className={css({ width: "3.5", height: "3.5" })} />
+						Cron Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
 						<Search className={css({ width: "3.5", height: "3.5" })} />
-						Google Sheets
+						HTTP Client
+					</Badge>
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>
@@ -289,7 +297,19 @@ export default function CompliantToken() {
 			{/* How It Works Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							youtubeId="aqz-KE-bpKQ"
+							title="Compliant Token Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Bridging compliance and blockchain with the Chainlink Runtime
 						Environment (CRE)
@@ -303,7 +323,7 @@ export default function CompliantToken() {
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -332,7 +352,7 @@ export default function CompliantToken() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -357,7 +377,7 @@ export default function CompliantToken() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle">
+					<Card.Root variant="subtle" hoverable>
 						<Card.Body className={css({ p: "4", gap: "3" })}>
 							<div
 								className={css({
@@ -436,17 +456,20 @@ export default function CompliantToken() {
 						>
 							<StepCard
 								title="Data Entry"
-								imageSrc="/written-code.png"
+								imageSrc="/written-code-80.png"
+								imageSrcSet="/written-code-160.png 2x"
 								description="Compliance team manages addresses in a secure Google Spreadsheet"
 							/>
 							<StepCard
 								title="CRE Sync"
-								imageSrc="/workflow-nodes.png"
+								imageSrc="/workflow-nodes-80.png"
+								imageSrcSet="/workflow-nodes-160.png 2x"
 								description="The Chainlink Runtime Environment detects changes and prepares the update"
 							/>
 							<StepCard
 								title="Enforcement"
-								imageSrc="/shield.png"
+								imageSrc="/shield-80.png"
+								imageSrcSet="/shield-160.png 2x"
 								description="The smart contract automatically enforces the new allowlist for all operations"
 							/>
 						</div>
@@ -1237,27 +1260,24 @@ export default function CompliantToken() {
 function StepCard({
 	title,
 	imageSrc,
+	imageSrcSet,
 	description,
 }: {
 	title: string;
 	imageSrc: string;
+	imageSrcSet?: string;
 	description: string;
 }) {
 	return (
 		<div
-			className={css({
-				display: "flex",
-				flexDirection: "column",
-				gap: "3",
-				p: "4",
-				borderRadius: "md",
-				bg: "bg.muted",
-				border: "1px solid",
-				borderColor: "border.subtle",
-				alignItems: "center",
-				textAlign: "center",
-				overflow: "hidden",
-			})}
+			className={cx(
+				section({ hoverable: true }),
+				css({
+					alignItems: "center",
+					textAlign: "center",
+					overflow: "hidden",
+				}),
+			)}
 		>
 			<div
 				className={css({
@@ -1269,6 +1289,7 @@ function StepCard({
 			>
 				<img
 					src={imageSrc}
+					srcSet={imageSrcSet}
 					alt={title}
 					className={css({
 						width: "20",

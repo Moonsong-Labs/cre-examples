@@ -5,7 +5,7 @@ import { FloatingLines } from "~/components/backgrounds/floating-lines";
 import { GlassSurface } from "~/components/glass-surface";
 import { TextType } from "~/components/text-type";
 import { Badge, Button, Card, Heading, Text } from "~/components/ui";
-import { EXAMPLES } from "~/config/examples";
+import { EXAMPLES, preloadImages } from "~/config/examples";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
@@ -122,6 +122,9 @@ export default function Home() {
 						>
 							<Link
 								to={primaryExample?.href ?? "/examples/cross-chain-relayer"}
+								prefetch="intent"
+								onMouseEnter={() => preloadImages(primaryExample?.images)}
+								onFocus={() => preloadImages(primaryExample?.images)}
 								data-group
 							>
 								<Button
@@ -207,6 +210,9 @@ export default function Home() {
 										<Link
 											key={example.href}
 											to={example.href}
+											prefetch="intent"
+											onMouseEnter={() => preloadImages(example.images)}
+											onFocus={() => preloadImages(example.images)}
 											data-group
 											className={css({ textDecoration: "none" })}
 										>

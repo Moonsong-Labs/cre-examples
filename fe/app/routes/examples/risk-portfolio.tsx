@@ -1,11 +1,13 @@
 import katex from "katex";
+import { VideoModal } from "~/components/video-modal";
 import {
 	Calculator,
+	Clock,
 	FileCode,
 	Info,
-	PieChart,
 	RefreshCw,
 	Scale,
+	Search,
 	Shield,
 	TriangleAlert,
 	Workflow,
@@ -13,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
+import { section } from "styled-system/recipes";
 import { sepolia } from "viem/chains";
 import { useReadContract } from "wagmi";
 import {
@@ -185,12 +188,17 @@ export default function RiskPortfolio() {
 						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="teal" size="md">
-						<PieChart className={css({ width: "3.5", height: "3.5" })} />
-						Risk Budgeting
+					<Badge variant="surface" colorPalette="purple" size="md">
+						<Clock className={css({ width: "3.5", height: "3.5" })} />
+						Cron Trigger
 					</Badge>
 					<Badge variant="subtle" colorPalette="gray" size="md">
-						5 Assets
+						<Search className={css({ width: "3.5", height: "3.5" })} />
+						HTTP Client
+					</Badge>
+					<Badge variant="outline" colorPalette="teal" size="md">
+						<Zap className={css({ width: "3.5", height: "3.5" })} />
+						EVM Write
 					</Badge>
 				</div>
 			</div>
@@ -198,7 +206,19 @@ export default function RiskPortfolio() {
 			{/* Context Card */}
 			<Card.Root variant="outline">
 				<Card.Header>
-					<Card.Title>How It Works</Card.Title>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							youtubeId="aqz-KE-bpKQ"
+							title="Risk Portfolio Walkthrough"
+						/>
+					</div>
 					<Card.Description>
 						Overcoming on-chain compute limits with the Chainlink Runtime
 						Environment (CRE)
@@ -212,18 +232,7 @@ export default function RiskPortfolio() {
 					})}
 				>
 					{/* Card 1: The Compute Bottleneck */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -248,18 +257,7 @@ export default function RiskPortfolio() {
 					</div>
 
 					{/* Card 2: Scriptable Oracles */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",
@@ -284,18 +282,7 @@ export default function RiskPortfolio() {
 					</div>
 
 					{/* Card 3: Architecture Flow */}
-					<div
-						className={css({
-							p: "4",
-							borderRadius: "lg",
-							border: "1px solid",
-							borderColor: "border",
-							bg: "gray.subtle.bg",
-							display: "flex",
-							flexDirection: "column",
-							gap: "3",
-						})}
-					>
+					<div className={section({ hoverable: true })}>
 						<div
 							className={css({
 								display: "flex",

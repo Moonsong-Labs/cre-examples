@@ -11,6 +11,7 @@ import { icon } from "./icon";
 import { input } from "./input";
 import { numberInput } from "./number-input";
 import { progress } from "./progress";
+import { section } from "./section";
 import { select } from "./select";
 import { skeleton } from "./skeleton";
 import { slider } from "./slider";
@@ -37,6 +38,7 @@ export const recipes = {
 	alert,
 	slider,
 	toast,
+	section,
 };
 
 export const slotRecipes = {
