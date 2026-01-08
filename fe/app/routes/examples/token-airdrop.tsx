@@ -20,7 +20,14 @@ import { css, cx } from "styled-system/css";
 import { section } from "styled-system/recipes";
 import { formatUnits, isAddress } from "viem";
 import { sepolia } from "viem/chains";
-import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
+import {
+	useAccount,
+	useChainId,
+	useReadContract,
+	useSwitchChain,
+	useWatchContractEvent,
+} from "wagmi";
+import { useInterval } from "usehooks-ts";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
 import { Badge, Button, Card, Field, Input, Text } from "~/components/ui";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
@@ -121,7 +128,7 @@ export default function TokenAirdrop() {
 	});
 
 	// Read user balance
-	const { data: userBalance } = useReadContract({
+	const { data: userBalance, refetch: refetchUserBalance } = useReadContract({
 		chainId: sepolia.id,
 		address: AIRDROP_TOKEN_ADDRESS,
 		abi: airdropTokenAbi,
@@ -132,12 +139,27 @@ export default function TokenAirdrop() {
 		},
 	});
 
+	// Watch for Transfer events to user's address for real-time balance updates
+	useWatchContractEvent({
+		address: AIRDROP_TOKEN_ADDRESS,
+		abi: airdropTokenAbi,
+		eventName: "Transfer",
+		chainId: sepolia.id,
+		args: { to: address },
+		enabled: isSepoliaChain && !!address,
+		onLogs: () => {
+			refetchUserBalance();
+		},
+	});
+
 	// Fetch airdrop status from API
-	const fetchAirdropStatus = useCallback(async (addr: string) => {
+	const fetchAirdropStatus = useCallback(async (addr: string, silent = false) => {
 		if (!addr || !isAddress(addr)) return;
 
-		setStatusLoading(true);
-		setStatusError(null);
+		if (!silent) {
+			setStatusLoading(true);
+			setStatusError(null);
+		}
 
 		try {
 			const serverUrl =
@@ -176,7 +198,9 @@ export default function TokenAirdrop() {
 			setStatusError(message);
 			// Don't clear airdropStatus on server errors - keep previous data if available
 		} finally {
-			setStatusLoading(false);
+			if (!silent) {
+				setStatusLoading(false);
+			}
 		}
 	}, []);
 
@@ -190,23 +214,18 @@ export default function TokenAirdrop() {
 		}
 	}, [effectiveAddress, fetchAirdropStatus]);
 
-	// Poll for status updates when pending
-	useEffect(() => {
-		if (airdropStatus?.status === "pending") {
-			const interval = setInterval(() => {
-				if (effectiveAddress) {
-					fetchAirdropStatus(effectiveAddress);
-					refetchTotalClaimed();
-				}
-			}, 10000);
-			return () => clearInterval(interval);
-		}
-	}, [
-		airdropStatus?.status,
-		effectiveAddress,
-		fetchAirdropStatus,
-		refetchTotalClaimed,
-	]);
+	// Poll for status updates every 2 seconds
+	const shouldPollStatus =
+		isSepoliaChain && !!effectiveAddress && isAddress(effectiveAddress);
+
+	useInterval(
+		() => {
+			fetchAirdropStatus(effectiveAddress!, true);
+			refetchTotalClaimed();
+			refetchUserBalance();
+		},
+		shouldPollStatus ? 2_000 : null,
+	);
 
 	// Network switch handler
 	const handleSwitchToSepolia = async () => {
@@ -293,6 +312,7 @@ export default function TokenAirdrop() {
 			}
 
 			setClaimSuccess(true);
+			refetchUserBalance();
 
 			// Refresh status
 			await fetchAirdropStatus(effectiveAddress);
@@ -409,7 +429,7 @@ export default function TokenAirdrop() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="aqz-KE-bpKQ"
+							youtubeId="HS7EI2SElDU"
 							title="Token Airdrop Walkthrough"
 						/>
 					</div>
@@ -937,39 +957,16 @@ export default function TokenAirdrop() {
 									</Text>
 								)}
 							</Field.Root>
-							<div className={css({ display: "flex", gap: "2" })}>
-								{address && (
-									<Button
-										onClick={() => setQueryAddress("")}
-										variant="outline"
-										size="sm"
-										disabled={!queryAddress}
-									>
-										Use My Address
-									</Button>
-								)}
+							{address && (
 								<Button
-									onClick={() => {
-										if (effectiveAddress) {
-											fetchAirdropStatus(effectiveAddress);
-											refetchTotalClaimed();
-										}
-									}}
+									onClick={() => setQueryAddress("")}
 									variant="outline"
 									size="sm"
-									disabled={
-										!effectiveAddress || !isValidQueryAddress || statusLoading
-									}
+									disabled={!queryAddress}
 								>
-									<RefreshCw
-										className={css({
-											width: "3.5",
-											height: "3.5",
-											...(statusLoading ? { animation: "spin" } : {}),
-										})}
-									/>
+									Use My Address
 								</Button>
-							</div>
+							)}
 						</div>
 
 						{/* Network Error Display */}
