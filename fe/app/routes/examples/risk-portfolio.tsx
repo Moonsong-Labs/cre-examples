@@ -1,5 +1,4 @@
 import katex from "katex";
-import { VideoModal } from "~/components/video-modal";
 import {
 	Calculator,
 	Clock,
@@ -36,6 +35,7 @@ import {
 	Toaster,
 	toaster,
 } from "~/components/ui";
+import { VideoModal } from "~/components/video-modal";
 import {
 	RISK_METRICS_ORACLE_ADDRESS,
 	riskMetricsOracleAbi,

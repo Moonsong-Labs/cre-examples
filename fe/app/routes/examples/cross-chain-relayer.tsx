@@ -17,7 +17,6 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
-import { VideoModal } from "~/components/video-modal";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
@@ -51,6 +50,7 @@ import {
 	Select,
 	Text,
 } from "~/components/ui";
+import { VideoModal } from "~/components/video-modal";
 import {
 	CCTP_DOMAINS,
 	depositForBurnEventAbi,
@@ -436,7 +436,7 @@ export default function CrossChainRelayer() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="FCP-L9NoJwc"
+							youtubeId="1x-N_WlrsQw"
 							title="Cross-Chain Relayer Walkthrough"
 						/>
 					</div>
