@@ -215,7 +215,7 @@ export default function RiskPortfolio() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="aqz-KE-bpKQ"
+							youtubeId="XyrCevhcfJk"
 							title="Risk Portfolio Walkthrough"
 						/>
 					</div>
