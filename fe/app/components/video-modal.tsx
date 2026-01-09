@@ -44,7 +44,7 @@ export function VideoModal({ youtubeId, title }: VideoModalProps) {
 				<Dialog.Content
 					className={css({
 						width: "80vw",
-						maxW: "80vw",
+						maxW: "1280px",
 						p: "0",
 						overflow: "hidden",
 						borderRadius: "xl",
@@ -61,7 +61,9 @@ export function VideoModal({ youtubeId, title }: VideoModalProps) {
 								alignItems: "center",
 							})}
 						>
-							<Dialog.Title className={css({ fontSize: "md", fontWeight: "semibold" })}>
+							<Dialog.Title
+								className={css({ fontSize: "md", fontWeight: "semibold" })}
+							>
 								{title}
 							</Dialog.Title>
 						</div>

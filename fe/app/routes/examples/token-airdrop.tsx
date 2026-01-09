@@ -14,10 +14,10 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
-import { VideoModal } from "~/components/video-modal";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { section } from "styled-system/recipes";
+import { useInterval } from "usehooks-ts";
 import { formatUnits, isAddress } from "viem";
 import { sepolia } from "viem/chains";
 import {
@@ -27,9 +27,9 @@ import {
 	useSwitchChain,
 	useWatchContractEvent,
 } from "wagmi";
-import { useInterval } from "usehooks-ts";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
 import { Badge, Button, Card, Field, Input, Text } from "~/components/ui";
+import { VideoModal } from "~/components/video-modal";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
 import type { Route } from "./+types/token-airdrop";
 
@@ -153,56 +153,60 @@ export default function TokenAirdrop() {
 	});
 
 	// Fetch airdrop status from API
-	const fetchAirdropStatus = useCallback(async (addr: string, silent = false) => {
-		if (!addr || !isAddress(addr)) return;
+	const fetchAirdropStatus = useCallback(
+		async (addr: string, silent = false) => {
+			if (!addr || !isAddress(addr)) return;
 
-		if (!silent) {
-			setStatusLoading(true);
-			setStatusError(null);
-		}
-
-		try {
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
-
-			if (!response.ok) {
-				if (response.status >= 500) {
-					throw new Error(
-						"Server is temporarily unavailable. Please try again later.",
-					);
-				}
-				if (response.status === 404) {
-					// Address not found - show as not allocated
-					setAirdropStatus({
-						address: addr,
-						allocatedAmount: "0",
-						provedAmount: "0",
-						status: "available",
-					});
-					return;
-				}
-				throw new Error(`Request failed (HTTP ${response.status})`);
-			}
-
-			const data = await response.json();
-			setAirdropStatus(data);
-		} catch (error) {
-			let message: string;
-			if (error instanceof TypeError && error.message.includes("fetch")) {
-				message = "Unable to connect to server. Please check your connection.";
-			} else {
-				message =
-					error instanceof Error ? error.message : "Failed to fetch status";
-			}
-			setStatusError(message);
-			// Don't clear airdropStatus on server errors - keep previous data if available
-		} finally {
 			if (!silent) {
-				setStatusLoading(false);
+				setStatusLoading(true);
+				setStatusError(null);
 			}
-		}
-	}, []);
+
+			try {
+				const serverUrl =
+					import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
+				const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
+
+				if (!response.ok) {
+					if (response.status >= 500) {
+						throw new Error(
+							"Server is temporarily unavailable. Please try again later.",
+						);
+					}
+					if (response.status === 404) {
+						// Address not found - show as not allocated
+						setAirdropStatus({
+							address: addr,
+							allocatedAmount: "0",
+							provedAmount: "0",
+							status: "available",
+						});
+						return;
+					}
+					throw new Error(`Request failed (HTTP ${response.status})`);
+				}
+
+				const data = await response.json();
+				setAirdropStatus(data);
+			} catch (error) {
+				let message: string;
+				if (error instanceof TypeError && error.message.includes("fetch")) {
+					message =
+						"Unable to connect to server. Please check your connection.";
+				} else {
+					message =
+						error instanceof Error ? error.message : "Failed to fetch status";
+				}
+				setStatusError(message);
+				// Don't clear airdropStatus on server errors - keep previous data if available
+			} finally {
+				if (!silent) {
+					setStatusLoading(false);
+				}
+			}
+		},
+		[],
+	);
 
 	// Fetch status when effective address changes
 	useEffect(() => {

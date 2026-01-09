@@ -79,7 +79,12 @@ export const EXAMPLES: ExampleDefinition[] = [
 ];
 
 export const NAV_ITEMS = [
-	{ href: "/", label: "Home", icon: Home, images: undefined as string[] | undefined },
+	{
+		href: "/",
+		label: "Home",
+		icon: Home,
+		images: undefined as string[] | undefined,
+	},
 	...EXAMPLES.map((example) => ({
 		href: example.href,
 		label: example.navLabel ?? example.title,

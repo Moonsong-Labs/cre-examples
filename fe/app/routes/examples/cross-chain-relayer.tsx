@@ -17,7 +17,6 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
-import { VideoModal } from "~/components/video-modal";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
@@ -51,6 +50,7 @@ import {
 	Select,
 	Text,
 } from "~/components/ui";
+import { VideoModal } from "~/components/video-modal";
 import {
 	CCTP_DOMAINS,
 	depositForBurnEventAbi,

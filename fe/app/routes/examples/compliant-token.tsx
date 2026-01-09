@@ -16,7 +16,6 @@ import {
 	XCircle,
 	Zap,
 } from "lucide-react";
-import { VideoModal } from "~/components/video-modal";
 import { useState } from "react";
 import { css, cx } from "styled-system/css";
 import { section } from "styled-system/recipes";
@@ -40,6 +39,7 @@ import {
 	NumberInput,
 	Text,
 } from "~/components/ui";
+import { VideoModal } from "~/components/video-modal";
 import { COMPLIANT_TOKEN_ADDRESS, compliantTokenAbi } from "~/config/contracts";
 import { useSpreadsheetData } from "~/hooks/useSpreadsheetData";
 import type { Route } from "./+types/compliant-token";

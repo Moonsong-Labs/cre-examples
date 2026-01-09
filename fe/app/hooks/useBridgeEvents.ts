@@ -83,11 +83,11 @@ export function useBridgeTransfer({
 	sourceChainId,
 	destChainId,
 }: UseBridgeTransferParams) {
-	const [transfer, setTransfer, removeTransfer] = useSessionStorage<BridgeTransfer | null>(
-		"bridge-transfer",
-		null,
-		{ serializer: serializeTransfer, deserializer: deserializeTransfer },
-	);
+	const [transfer, setTransfer, removeTransfer] =
+		useSessionStorage<BridgeTransfer | null>("bridge-transfer", null, {
+			serializer: serializeTransfer,
+			deserializer: deserializeTransfer,
+		});
 
 	const handleDepositForBurn = useCallback(
 		(
