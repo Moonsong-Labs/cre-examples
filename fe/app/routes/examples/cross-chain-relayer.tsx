@@ -436,7 +436,7 @@ export default function CrossChainRelayer() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="FCP-L9NoJwc"
+							youtubeId="1x-N_WlrsQw"
 							title="Cross-Chain Relayer Walkthrough"
 						/>
 					</div>
