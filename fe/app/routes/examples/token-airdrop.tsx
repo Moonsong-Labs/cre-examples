@@ -433,7 +433,7 @@ export default function TokenAirdrop() {
 					>
 						<Card.Title>How It Works</Card.Title>
 						<VideoModal
-							youtubeId="HS7EI2SElDU"
+							youtubeId="8y-qv9DqTmM"
 							title="Token Airdrop Walkthrough"
 						/>
 					</div>
