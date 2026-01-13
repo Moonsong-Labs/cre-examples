@@ -66,7 +66,7 @@ import {
 } from "~/config/contracts";
 import type { config } from "~/config/wagmi";
 import { useBridgeTransfer } from "~/hooks/useBridgeEvents";
-import type { clientAction as whitelistAction } from "~/routes/resources/whitelist";
+import type { action as whitelistAction } from "~/routes/resources/whitelist";
 import type { Route } from "./+types/cross-chain-relayer";
 
 export function meta(_args: Route.MetaArgs) {

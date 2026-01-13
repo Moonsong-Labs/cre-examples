@@ -7,12 +7,20 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from "react-router";
+import { cookieToInitialState } from "wagmi";
 import type { Route } from "./+types/root";
 import stylesheet from "./app.css?url";
 import "./app.css";
 import { css } from "styled-system/css";
 import { Providers } from "~/components/providers";
+import { config } from "~/config/wagmi";
 import { Button, Heading, Spinner, Text } from "~/components/ui";
+
+export async function loader({ request }: Route.LoaderArgs) {
+	const cookie = request.headers.get("cookie");
+	const initialState = cookieToInitialState(config, cookie);
+	return { initialState };
+}
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "icon", href: "/favicon.ico" },
@@ -48,9 +56,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export default function App() {
+export default function App({ loaderData }: Route.ComponentProps) {
 	return (
-		<Providers>
+		<Providers initialState={loaderData.initialState}>
 			<Outlet />
 		</Providers>
 	);

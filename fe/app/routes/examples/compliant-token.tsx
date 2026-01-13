@@ -198,23 +198,12 @@ export default function CompliantToken() {
 			setIsSyncing(true);
 			setSyncError(null);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(`${serverUrl}/02-compliance/sync`, {
-				method: "POST",
-				headers: { "X-API-Key": apiKey },
-			});
+			const response = await fetch("/api/sync", { method: "POST" });
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to sync (HTTP ${response.status})`,
 				);
 			}
 

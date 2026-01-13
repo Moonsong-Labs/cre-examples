@@ -14,6 +14,7 @@
 		"@circle-fin/bridge-kit": "^1.1.2",
 		"@hookform/resolvers": "^5.2.2",
 		"@metamask/sdk": "^0.34.0",
+		"@netlify/vite-plugin-react-router": "^2.1.2",
 		"@rainbow-me/rainbowkit": "^2.2.10",
 		"@react-router/node": "7.10.1",
 		"@react-router/serve": "7.10.1",

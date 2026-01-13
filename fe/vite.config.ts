@@ -1,3 +1,4 @@
+import netlifyReactRouter from "@netlify/vite-plugin-react-router";
 import pandacss from "@pandacss/dev/postcss";
 import { reactRouter } from "@react-router/dev/vite";
 import autoprefixer from "autoprefixer";
@@ -10,5 +11,5 @@ export default defineConfig({
 			plugins: [pandacss, autoprefixer],
 		},
 	},
-	plugins: [reactRouter(), tsconfigPaths()],
+	plugins: [reactRouter(), tsconfigPaths(), netlifyReactRouter()],
 });

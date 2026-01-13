@@ -8,20 +8,13 @@ export interface UseSpreadsheetDataResult {
 }
 
 async function fetchSpreadsheetData(): Promise<string[]> {
-	const serverUrl =
-		import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-	const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-	if (!apiKey) {
-		throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-	}
-
-	const response = await fetch(`${serverUrl}/02-compliance/allowlist`, {
-		headers: { "X-API-Key": apiKey },
-	});
+	const response = await fetch("/api/allowlist");
 
 	if (!response.ok) {
-		throw new Error(`Failed to fetch allowlist (HTTP ${response.status})`);
+		const errorData = await response.json().catch(() => ({}));
+		throw new Error(
+			errorData.error || `Failed to fetch allowlist (HTTP ${response.status})`,
+		);
 	}
 
 	const result = (await response.json()) as {

@@ -163,9 +163,7 @@ export default function TokenAirdrop() {
 			}
 
 			try {
-				const serverUrl =
-					import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-				const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
+				const response = await fetch(`/api/airdrop/${addr}`);
 
 				if (!response.ok) {
 					if (response.status >= 500) {
@@ -173,17 +171,10 @@ export default function TokenAirdrop() {
 							"Server is temporarily unavailable. Please try again later.",
 						);
 					}
-					if (response.status === 404) {
-						// Address not found - show as not allocated
-						setAirdropStatus({
-							address: addr,
-							allocatedAmount: "0",
-							provedAmount: "0",
-							status: "available",
-						});
-						return;
-					}
-					throw new Error(`Request failed (HTTP ${response.status})`);
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(
+						errorData.error || `Request failed (HTTP ${response.status})`,
+					);
 				}
 
 				const data = await response.json();
@@ -198,7 +189,6 @@ export default function TokenAirdrop() {
 						error instanceof Error ? error.message : "Failed to fetch status";
 				}
 				setStatusError(message);
-				// Don't clear airdropStatus on server errors - keep previous data if available
 			} finally {
 				if (!silent) {
 					setStatusLoading(false);
@@ -247,23 +237,12 @@ export default function TokenAirdrop() {
 			setSyncError(null);
 			setSyncSuccess(false);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(`${serverUrl}/04-airdrop/sync`, {
-				method: "POST",
-				headers: { "X-API-Key": apiKey },
-			});
+			const response = await fetch("/api/airdrop/sync", { method: "POST" });
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to sync (HTTP ${response.status})`,
 				);
 			}
 
@@ -292,26 +271,14 @@ export default function TokenAirdrop() {
 			setClaimError(null);
 			setClaimSuccess(false);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(
-				`${serverUrl}/04-airdrop/${effectiveAddress}/claim`,
-				{
-					method: "POST",
-					headers: { "X-API-Key": apiKey },
-				},
-			);
+			const response = await fetch(`/api/airdrop/${effectiveAddress}`, {
+				method: "POST",
+			});
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to claim (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to claim (HTTP ${response.status})`,
 				);
 			}
 
