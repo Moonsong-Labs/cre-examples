@@ -22,7 +22,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	});
 
 	if (!response.ok) {
-		return Response.json(null, { status: response.status });
+		return Response.json(
+			{ error: "Relay status not found" },
+			{ status: response.status },
+		);
 	}
 
 	const data = await response.json();

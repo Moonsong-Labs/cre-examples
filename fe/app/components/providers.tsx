@@ -14,8 +14,10 @@ interface ProvidersProps {
 
 export function Providers({ children, initialState }: ProvidersProps) {
 	const [queryClient] = useState(() => new QueryClient());
-	const [mounted, setMounted] = useState(false);
 
+	// RainbowKit accesses localStorage during render, which throws on the server.
+	// We delay mounting RainbowKitProvider until client-side hydration completes.
+	const [mounted, setMounted] = useState(false);
 	useEffect(() => {
 		setMounted(true);
 	}, []);
