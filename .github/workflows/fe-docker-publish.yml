@@ -6,8 +6,7 @@ on:
       - 'fe/**'
       - '.github/workflows/fe-docker-publish.yml'
   push:
-    branches:
-      - '**'
+    branches: [master]
     paths:
       - 'fe/**'
       - '.github/workflows/fe-docker-publish.yml'
@@ -58,4 +57,4 @@ jobs:
           build-args: |
             VITE_CRE_HELPER_SERVER_URL=${{ vars.VITE_CRE_HELPER_SERVER_URL }}
             VITE_CRE_HELPER_API_KEY=${{ secrets.VITE_CRE_HELPER_API_KEY }}
-            VITE_WALLETCONNECT_PROJECT_ID=${{ vars.VITE_WALLETCONNECT_PROJECT_ID }}
+            VITE_WALLETCONNECT_PROJECT_ID=${{ secrets.VITE_WALLETCONNECT_PROJECT_ID }}
