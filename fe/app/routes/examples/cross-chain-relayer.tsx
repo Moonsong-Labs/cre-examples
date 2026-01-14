@@ -39,7 +39,6 @@ import {
 	useWriteContract,
 } from "wagmi";
 import { BridgeProgress } from "~/components/bridge-progress";
-import { ConfigWarningBanner } from "~/components/config-warning-banner";
 import {
 	Badge,
 	Button,
@@ -599,7 +598,7 @@ export default function CrossChainRelayer() {
 				</Card.Body>
 			</Card.Root>
 
-			<ConfigWarningBanner />
+			{/* <ConfigWarningBanner /> */}
 
 			{isConnected && (
 				<div

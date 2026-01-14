@@ -13,9 +13,9 @@ export default defineConfig({
 	},
 	plugins: [reactRouter(), tsconfigPaths(), netlifyReactRouter()],
 	ssr: {
-		// RainbowKit uses @vanilla-extract/* packages which have ESM/CJS interop issues
-		// on Netlify Functions. Force Vite to bundle these packages instead of
-		// externalizing them so its CJS/ESM transformation is applied.
-		noExternal: [/^@rainbow-me\//, /^@vanilla-extract\//],
+		// These packages have ESM/CJS interop issues on Netlify Functions.
+		// Force Vite to bundle them instead of externalizing so its CJS/ESM
+		// transformation is applied.
+		noExternal: [/^@rainbow-me\//, /^@vanilla-extract\//, "gsap"],
 	},
 });

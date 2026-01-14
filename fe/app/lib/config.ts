@@ -4,21 +4,6 @@ export interface ConfigStatus {
 	missingVars: string[];
 }
 
-export function getConfigStatus(): ConfigStatus {
-	const creHelperUrl =
-		import.meta.env.VITE_CRE_HELPER_SERVER_URL?.trim() || null;
-
-	const missingVars: string[] = [];
-	if (!creHelperUrl) missingVars.push("VITE_CRE_HELPER_SERVER_URL");
-	// Note: CRE_HELPER_API_KEY is server-only (no VITE_ prefix) and checked at runtime
-
-	return {
-		creHelperUrl,
-		isConfigured: missingVars.length === 0,
-		missingVars,
-	};
-}
-
 export function getConfigInstructions(missingVars: string[]): string {
 	if (missingVars.length === 0) return "";
 
