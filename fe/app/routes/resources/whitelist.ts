@@ -16,11 +16,11 @@ function resolveServerUrl(raw?: string | null) {
 }
 
 function getServerUrl() {
-	return resolveServerUrl(import.meta.env.VITE_CRE_HELPER_SERVER_URL);
+	return resolveServerUrl(process.env.CRE_HELPER_SERVER_URL);
 }
 
 function getApiKey() {
-	const candidate = import.meta.env.VITE_CRE_HELPER_API_KEY;
+	const candidate = process.env.CRE_HELPER_API_KEY;
 	const trimmed = candidate?.trim();
 	return trimmed ? trimmed : null;
 }
@@ -65,7 +65,7 @@ async function isRegistered(serverUrl: string, address: string) {
 async function addAddress(serverUrl: string, address: string) {
 	const apiKey = getApiKey();
 	if (!apiKey) {
-		throw new Error("Missing VITE_CRE_HELPER_API_KEY");
+		throw new Error("Missing CRE_HELPER_API_KEY");
 	}
 
 	const response = await fetch(`${serverUrl}/whitelist/add/${address}`, {
@@ -83,7 +83,7 @@ async function addAddress(serverUrl: string, address: string) {
 	}
 }
 
-export async function clientLoader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url);
 	const address = url.searchParams.get("address");
 
@@ -104,7 +104,7 @@ export async function clientLoader({ request }: Route.LoaderArgs) {
 	}
 }
 
-export async function clientAction({ request }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();
 	const address = formData.get("address");
 

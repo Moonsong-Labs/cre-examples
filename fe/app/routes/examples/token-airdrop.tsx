@@ -28,7 +28,7 @@ import {
 	useWatchContractEvent,
 } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
-import { Badge, Button, Card, Field, Input, Text } from "~/components/ui";
+import { Alert, Badge, Button, Card, Field, Input, Text } from "~/components/ui";
 import { VideoModal } from "~/components/video-modal";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
 import type { Route } from "./+types/token-airdrop";
@@ -163,9 +163,7 @@ export default function TokenAirdrop() {
 			}
 
 			try {
-				const serverUrl =
-					import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-				const response = await fetch(`${serverUrl}/04-airdrop/${addr}`);
+				const response = await fetch(`/api/airdrop/${addr}`);
 
 				if (!response.ok) {
 					if (response.status >= 500) {
@@ -173,17 +171,10 @@ export default function TokenAirdrop() {
 							"Server is temporarily unavailable. Please try again later.",
 						);
 					}
-					if (response.status === 404) {
-						// Address not found - show as not allocated
-						setAirdropStatus({
-							address: addr,
-							allocatedAmount: "0",
-							provedAmount: "0",
-							status: "available",
-						});
-						return;
-					}
-					throw new Error(`Request failed (HTTP ${response.status})`);
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(
+						errorData.error || `Request failed (HTTP ${response.status})`,
+					);
 				}
 
 				const data = await response.json();
@@ -198,7 +189,6 @@ export default function TokenAirdrop() {
 						error instanceof Error ? error.message : "Failed to fetch status";
 				}
 				setStatusError(message);
-				// Don't clear airdropStatus on server errors - keep previous data if available
 			} finally {
 				if (!silent) {
 					setStatusLoading(false);
@@ -247,23 +237,12 @@ export default function TokenAirdrop() {
 			setSyncError(null);
 			setSyncSuccess(false);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(`${serverUrl}/04-airdrop/sync`, {
-				method: "POST",
-				headers: { "X-API-Key": apiKey },
-			});
+			const response = await fetch("/api/airdrop/sync", { method: "POST" });
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to sync (HTTP ${response.status})`,
 				);
 			}
 
@@ -292,26 +271,14 @@ export default function TokenAirdrop() {
 			setClaimError(null);
 			setClaimSuccess(false);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(
-				`${serverUrl}/04-airdrop/${effectiveAddress}/claim`,
-				{
-					method: "POST",
-					headers: { "X-API-Key": apiKey },
-				},
-			);
+			const response = await fetch(`/api/airdrop/${effectiveAddress}`, {
+				method: "POST",
+			});
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to claim (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to claim (HTTP ${response.status})`,
 				);
 			}
 
@@ -447,11 +414,12 @@ export default function TokenAirdrop() {
 						display: "grid",
 						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
+						alignItems: "stretch",
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -480,8 +448,8 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -505,8 +473,8 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -580,6 +548,7 @@ export default function TokenAirdrop() {
 								display: "grid",
 								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
 								gap: "4",
+								alignItems: "stretch",
 							})}
 						>
 							<StepCard
@@ -722,38 +691,18 @@ export default function TokenAirdrop() {
 			)}
 
 			{isConnected && !isSepoliaChain && (
-				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
-					<Card.Body
-						className={css({
-							flexDirection: "row",
-							gap: "4",
-							alignItems: "center",
-						})}
-					>
-						<XCircle
-							className={css({
-								width: "5",
-								height: "5",
-								color: "red.11",
-								flexShrink: 0,
-							})}
-						/>
-						<div className={css({ flex: 1 })}>
-							<Text className={css({ fontWeight: "medium", mb: "1" })}>
-								Wrong Network
-							</Text>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Please switch to Sepolia testnet to continue
-							</Text>
-						</div>
-						<Button
-							onClick={handleSwitchToSepolia}
-							className={css({ flexShrink: 0 })}
-						>
-							Switch to Sepolia
-						</Button>
-					</Card.Body>
-				</Card.Root>
+				<Alert.Root status="error" variant="outline">
+					<Alert.Indicator />
+					<Alert.Content className={css({ flex: 1 })}>
+						<Alert.Title>Wrong Network</Alert.Title>
+						<Alert.Description>
+							Please switch to Sepolia testnet to continue
+						</Alert.Description>
+					</Alert.Content>
+					<Button onClick={handleSwitchToSepolia} size="sm">
+						Switch to Sepolia
+					</Button>
+				</Alert.Root>
 			)}
 
 			{/* Airdrop Status Section */}
@@ -1299,6 +1248,7 @@ function StepCard({
 					alignItems: "center",
 					textAlign: "center",
 					overflow: "hidden",
+					height: "100%",
 				}),
 			)}
 		>

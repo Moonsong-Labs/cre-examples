@@ -6,6 +6,7 @@ import {
 	Flame,
 	Loader2,
 	Radio,
+	RefreshCw,
 	Shield,
 	Sparkles,
 } from "lucide-react";
@@ -17,7 +18,7 @@ import {
 	formatBridgeAmount,
 	getChainName,
 } from "~/hooks/useBridgeEvents";
-import { Badge, Card, Text } from "./ui";
+import { Badge, Button, Card, Text } from "./ui";
 
 const stepIndicator = css({
 	position: "relative",
@@ -471,19 +472,18 @@ export function BridgeProgress({ transfer, onReset }: BridgeProgressProps) {
 				)}
 
 				{(transfer.status === "minted" || transfer.status === "failed") && (
-					<div className={css({ mt: "4", textAlign: "center" })}>
-						<button
-							type="button"
+					<div className={css({ mt: "6", textAlign: "center" })}>
+						<Button
+							variant="solid"
+							size="lg"
 							onClick={onReset}
 							className={css({
-								fontSize: "sm",
-								color: "teal.11",
-								cursor: "pointer",
-								_hover: { textDecoration: "underline" },
+								px: "8",
 							})}
 						>
-							Start new transfer
-						</button>
+							<RefreshCw className={css({ width: "4", height: "4" })} />
+							Start New Transfer
+						</Button>
 					</div>
 				)}
 			</Card.Body>

@@ -156,7 +156,7 @@ export function useBridgeTransfer({
 		enabled:
 			!!walletAddress &&
 			!!sourceChainId &&
-			(!transfer || transfer.status === "pending"),
+			transfer?.status === "pending",
 		onLogs: (logs) => {
 			for (const log of logs) {
 				if (!sourceChainId) continue;

@@ -7,7 +7,6 @@ import {
 	FileCode,
 	FileSpreadsheet,
 	Loader2,
-	RefreshCw,
 	Search,
 	ShieldCheck,
 	TriangleAlert,
@@ -19,6 +18,7 @@ import {
 import { useState } from "react";
 import { css, cx } from "styled-system/css";
 import { section } from "styled-system/recipes";
+import { useInterval } from "usehooks-ts";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
 import {
@@ -31,6 +31,7 @@ import {
 } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
 import {
+	Alert,
 	Badge,
 	Button,
 	Card,
@@ -78,7 +79,6 @@ export default function CompliantToken() {
 	const [mintAmount, setMintAmount] = useState("0");
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [syncError, setSyncError] = useState<string | null>(null);
-	const [isRefreshingAllowlist, setIsRefreshingAllowlist] = useState(false);
 
 	const {
 		addresses: spreadsheetData,
@@ -102,6 +102,13 @@ export default function CompliantToken() {
 			enabled: isSepoliaChain,
 		},
 	});
+
+	useInterval(
+		() => {
+			refetchAllowlist();
+		},
+		isSepoliaChain ? 5_000 : null,
+	);
 
 	// Read token name
 	const { data: tokenName } = useReadContract({
@@ -198,31 +205,18 @@ export default function CompliantToken() {
 			setIsSyncing(true);
 			setSyncError(null);
 
-			const serverUrl =
-				import.meta.env.VITE_CRE_HELPER_SERVER_URL || "http://localhost:3000";
-			const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-			if (!apiKey) {
-				throw new Error("Missing API key (VITE_CRE_HELPER_API_KEY)");
-			}
-
-			const response = await fetch(`${serverUrl}/02-compliance/sync`, {
-				method: "POST",
-				headers: { "X-API-Key": apiKey },
-			});
+			const response = await fetch("/api/sync", { method: "POST" });
 
 			if (!response.ok) {
-				const errorBody = await response.text().catch(() => "");
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Failed to sync (HTTP ${response.status}): ${errorBody}`,
+					errorData.error || `Failed to sync (HTTP ${response.status})`,
 				);
 			}
 
 			// Refresh both lists after successful sync
 			await refetchSpreadsheet();
-			setIsRefreshingAllowlist(true);
 			await refetchAllowlist();
-			setIsRefreshingAllowlist(false);
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "Failed to sync allowlist";
@@ -320,11 +314,12 @@ export default function CompliantToken() {
 						display: "grid",
 						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
+						alignItems: "stretch",
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -352,8 +347,8 @@ export default function CompliantToken() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -377,8 +372,8 @@ export default function CompliantToken() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -452,6 +447,7 @@ export default function CompliantToken() {
 								display: "grid",
 								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
 								gap: "4",
+								alignItems: "stretch",
 							})}
 						>
 							<StepCard
@@ -636,34 +632,18 @@ export default function CompliantToken() {
 			)}
 
 			{isConnected && !isSepoliaChain && (
-				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
-					<Card.Body
-						className={css({ display: "flex", gap: "4", alignItems: "center" })}
-					>
-						<XCircle
-							className={css({
-								width: "5",
-								height: "5",
-								color: "red.11",
-								flexShrink: 0,
-							})}
-						/>
-						<div className={css({ flex: 1 })}>
-							<Text className={css({ fontWeight: "medium", mb: "1" })}>
-								Wrong Network
-							</Text>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Please switch to Sepolia testnet to continue
-							</Text>
-						</div>
-						<Button
-							onClick={handleSwitchToSepolia}
-							className={css({ flexShrink: 0 })}
-						>
-							Switch to Sepolia
-						</Button>
-					</Card.Body>
-				</Card.Root>
+				<Alert.Root status="error" variant="outline">
+					<Alert.Indicator />
+					<Alert.Content className={css({ flex: 1 })}>
+						<Alert.Title>Wrong Network</Alert.Title>
+						<Alert.Description>
+							Please switch to Sepolia testnet to continue
+						</Alert.Description>
+					</Alert.Content>
+					<Button onClick={handleSwitchToSepolia} size="sm">
+						Switch to Sepolia
+					</Button>
+				</Alert.Root>
 			)}
 
 			{/* Mint Tokens Section */}
@@ -928,30 +908,6 @@ export default function CompliantToken() {
 									/>
 									Open Sheet
 								</a>
-								<Button
-									onClick={() => {
-										void refetchSpreadsheet();
-										setIsRefreshingAllowlist(true);
-										void refetchAllowlist().finally(() =>
-											setIsRefreshingAllowlist(false),
-										);
-									}}
-									variant="outline"
-									size="sm"
-									disabled={loadingSpreadsheet || isRefreshingAllowlist}
-									className={css({ gap: "1" })}
-								>
-									<RefreshCw
-										className={css({
-											width: "4",
-											height: "4",
-											...(loadingSpreadsheet || isRefreshingAllowlist
-												? { animation: "spin" }
-												: {}),
-										})}
-									/>
-									Refresh All
-								</Button>
 								<Button
 									onClick={() => void handleSync()}
 									disabled={isSyncing}
@@ -1276,6 +1232,7 @@ function StepCard({
 					alignItems: "center",
 					textAlign: "center",
 					overflow: "hidden",
+					height: "100%",
 				}),
 			)}
 		>

@@ -171,15 +171,8 @@ export interface RelayStatusResponse {
 export async function fetchRelayStatus(
 	burnTxHash: string,
 ): Promise<RelayStatusResponse | null> {
-	const baseUrl = import.meta.env.VITE_CRE_HELPER_SERVER_URL;
-	const apiKey = import.meta.env.VITE_CRE_HELPER_API_KEY;
-
-	if (!baseUrl) return null;
-
 	try {
-		const res = await fetch(`${baseUrl}/01-relay/mailbox/${burnTxHash}`, {
-			headers: { "x-api-key": apiKey ?? "" },
-		});
+		const res = await fetch(`/api/relay/${burnTxHash}`);
 		if (!res.ok) return null;
 		return (await res.json()) as RelayStatusResponse;
 	} catch {

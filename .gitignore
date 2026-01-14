@@ -48,3 +48,5 @@ styled-system
 styled-system-studio
 
 .playwright*
+# Local Netlify folder
+.netlify

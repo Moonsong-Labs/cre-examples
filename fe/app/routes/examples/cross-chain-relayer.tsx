@@ -39,7 +39,6 @@ import {
 	useWriteContract,
 } from "wagmi";
 import { BridgeProgress } from "~/components/bridge-progress";
-import { ConfigWarningBanner } from "~/components/config-warning-banner";
 import {
 	Badge,
 	Button,
@@ -66,7 +65,7 @@ import {
 } from "~/config/contracts";
 import type { config } from "~/config/wagmi";
 import { useBridgeTransfer } from "~/hooks/useBridgeEvents";
-import type { clientAction as whitelistAction } from "~/routes/resources/whitelist";
+import type { action as whitelistAction } from "~/routes/resources/whitelist";
 import type { Route } from "./+types/cross-chain-relayer";
 
 export function meta(_args: Route.MetaArgs) {
@@ -165,6 +164,10 @@ export default function CrossChainRelayer() {
 		sourceChainId: sourceChainData?.chainId,
 		destChainId: destChainData?.chainId,
 	});
+
+	const isEndState =
+		transfer?.status === "minted" || transfer?.status === "failed";
+	const hasActiveTransfer = transfer !== null;
 
 	const { data: sourceBalance, refetch: refetchSourceBalance } =
 		useReadContract({
@@ -599,7 +602,7 @@ export default function CrossChainRelayer() {
 				</Card.Body>
 			</Card.Root>
 
-			<ConfigWarningBanner />
+			{/* <ConfigWarningBanner /> */}
 
 			{isConnected && (
 				<div
@@ -780,7 +783,7 @@ export default function CrossChainRelayer() {
 										collection={chainsCollection}
 										value={field.value}
 										onValueChange={(e) => field.onChange(e.value)}
-										disabled={!isConnected}
+										disabled={!isConnected || isEndState}
 									>
 										<Select.Label>Source Chain</Select.Label>
 										<Select.Control>
@@ -820,6 +823,7 @@ export default function CrossChainRelayer() {
 								variant="subtle"
 								size="sm"
 								onClick={handleSwapChains}
+								disabled={isEndState}
 								className={css({
 									borderRadius: "full",
 									px: "3",
@@ -838,7 +842,7 @@ export default function CrossChainRelayer() {
 										collection={destChainsCollection}
 										value={field.value}
 										onValueChange={(e) => field.onChange(e.value)}
-										disabled={!isConnected || !sourceChain.length}
+										disabled={!isConnected || !sourceChain.length || isEndState}
 									>
 										<Select.Label>Destination Chain</Select.Label>
 										<Select.Control>
@@ -897,7 +901,7 @@ export default function CrossChainRelayer() {
 									min={0}
 									step={0.01}
 									formatOptions={{ style: "decimal", minimumFractionDigits: 2 }}
-									disabled={!isConnected}
+									disabled={!isConnected || hasActiveTransfer}
 								>
 									<NumberInput.Label>Amount (USDC)</NumberInput.Label>
 									<NumberInput.Input />
@@ -945,18 +949,20 @@ export default function CrossChainRelayer() {
 								display: "flex",
 								alignItems: "center",
 								gap: "2",
-								cursor: "pointer",
+								cursor: isEndState ? "not-allowed" : "pointer",
+								opacity: isEndState ? "0.5" : "1",
 							})}
 						>
 							<input
 								type="checkbox"
 								checked={sameAsWallet}
 								onChange={handleToggleSameAsWallet}
+								disabled={isEndState}
 								className={css({
 									width: "5",
 									height: "5",
 									accentColor: "teal",
-									cursor: "pointer",
+									cursor: isEndState ? "not-allowed" : "pointer",
 								})}
 							/>
 							<Text
@@ -991,7 +997,7 @@ export default function CrossChainRelayer() {
 								placeholder={
 									sameAsWallet ? (address ?? "Connect wallet") : "0x..."
 								}
-								disabled={sameAsWallet || !isConnected}
+								disabled={sameAsWallet || !isConnected || isEndState}
 								className={css({
 									fontFamily: "mono",
 									fontSize: "sm",
@@ -1047,7 +1053,7 @@ export default function CrossChainRelayer() {
 							{!isApproved ? (
 								<Button
 									variant="solid"
-									disabled={isApproving || isApproveConfirming}
+									disabled={isApproving || isApproveConfirming || isEndState}
 									loading={isApproving || isApproveConfirming}
 									loadingText="Approving..."
 									onClick={handleApprove}
@@ -1084,6 +1090,7 @@ export default function CrossChainRelayer() {
 							!isApproved ||
 							isBurning ||
 							isBurnConfirming ||
+							hasActiveTransfer ||
 							(!sameAsWallet && !isAddress(recipientAddress))
 						}
 						loading={isBurning || isBurnConfirming}
