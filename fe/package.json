@@ -6,7 +6,7 @@
 		"build": "react-router build",
 		"prepare": "panda codegen",
 		"dev": "react-router dev",
-		"start": "react-router-serve ./build/server/index.js",
+		"start": "react-router-serve ./build/server/server.js",
 		"typecheck": "react-router typegen && tsc"
 	},
 	"dependencies": {
