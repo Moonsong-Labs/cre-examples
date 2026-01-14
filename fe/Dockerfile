@@ -12,8 +12,7 @@ FROM oven/bun:1-alpine AS build-env
 ARG VITE_WALLETCONNECT_PROJECT_ID
 ENV VITE_WALLETCONNECT_PROJECT_ID=$VITE_WALLETCONNECT_PROJECT_ID
 
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
+COPY --from=development-dependencies-env /app /app
 WORKDIR /app
 RUN bun run build
 
