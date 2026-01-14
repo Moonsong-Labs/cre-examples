@@ -414,11 +414,12 @@ export default function TokenAirdrop() {
 						display: "grid",
 						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
+						alignItems: "stretch",
 					})}
 				>
 					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -447,8 +448,8 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -472,8 +473,8 @@ export default function TokenAirdrop() {
 					</Card.Root>
 
 					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle" hoverable>
-						<Card.Body className={css({ p: "4", gap: "3" })}>
+					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
+						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 							<div
 								className={css({
 									display: "flex",
@@ -547,6 +548,7 @@ export default function TokenAirdrop() {
 								display: "grid",
 								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
 								gap: "4",
+								alignItems: "stretch",
 							})}
 						>
 							<StepCard
@@ -692,6 +694,7 @@ export default function TokenAirdrop() {
 				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
 					<Card.Body
 						className={css({
+							display: "flex",
 							flexDirection: "row",
 							gap: "4",
 							alignItems: "center",
@@ -1266,6 +1269,7 @@ function StepCard({
 					alignItems: "center",
 					textAlign: "center",
 					overflow: "hidden",
+					height: "100%",
 				}),
 			)}
 		>
