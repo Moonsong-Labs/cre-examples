@@ -28,7 +28,7 @@ import {
 	useWatchContractEvent,
 } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
-import { Badge, Button, Card, Field, Input, Text } from "~/components/ui";
+import { Alert, Badge, Button, Card, Field, Input, Text } from "~/components/ui";
 import { VideoModal } from "~/components/video-modal";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
 import type { Route } from "./+types/token-airdrop";
@@ -691,39 +691,18 @@ export default function TokenAirdrop() {
 			)}
 
 			{isConnected && !isSepoliaChain && (
-				<Card.Root variant="outline" className={css({ borderColor: "red.7" })}>
-					<Card.Body
-						className={css({
-							display: "flex",
-							flexDirection: "row",
-							gap: "4",
-							alignItems: "center",
-						})}
-					>
-						<XCircle
-							className={css({
-								width: "5",
-								height: "5",
-								color: "red.11",
-								flexShrink: 0,
-							})}
-						/>
-						<div className={css({ flex: 1 })}>
-							<Text className={css({ fontWeight: "medium", mb: "1" })}>
-								Wrong Network
-							</Text>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Please switch to Sepolia testnet to continue
-							</Text>
-						</div>
-						<Button
-							onClick={handleSwitchToSepolia}
-							className={css({ flexShrink: 0 })}
-						>
-							Switch to Sepolia
-						</Button>
-					</Card.Body>
-				</Card.Root>
+				<Alert.Root status="error" variant="outline">
+					<Alert.Indicator />
+					<Alert.Content className={css({ flex: 1 })}>
+						<Alert.Title>Wrong Network</Alert.Title>
+						<Alert.Description>
+							Please switch to Sepolia testnet to continue
+						</Alert.Description>
+					</Alert.Content>
+					<Button onClick={handleSwitchToSepolia} size="sm">
+						Switch to Sepolia
+					</Button>
+				</Alert.Root>
 			)}
 
 			{/* Airdrop Status Section */}
