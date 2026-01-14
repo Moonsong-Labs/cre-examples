@@ -7,7 +7,6 @@ import {
 	FileCode,
 	FileSpreadsheet,
 	Loader2,
-	RefreshCw,
 	Search,
 	ShieldCheck,
 	TriangleAlert,
@@ -19,6 +18,7 @@ import {
 import { useState } from "react";
 import { css, cx } from "styled-system/css";
 import { section } from "styled-system/recipes";
+import { useInterval } from "usehooks-ts";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
 import {
@@ -78,7 +78,6 @@ export default function CompliantToken() {
 	const [mintAmount, setMintAmount] = useState("0");
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [syncError, setSyncError] = useState<string | null>(null);
-	const [isRefreshingAllowlist, setIsRefreshingAllowlist] = useState(false);
 
 	const {
 		addresses: spreadsheetData,
@@ -102,6 +101,13 @@ export default function CompliantToken() {
 			enabled: isSepoliaChain,
 		},
 	});
+
+	useInterval(
+		() => {
+			refetchAllowlist();
+		},
+		isSepoliaChain ? 5_000 : null,
+	);
 
 	// Read token name
 	const { data: tokenName } = useReadContract({
@@ -209,9 +215,7 @@ export default function CompliantToken() {
 
 			// Refresh both lists after successful sync
 			await refetchSpreadsheet();
-			setIsRefreshingAllowlist(true);
 			await refetchAllowlist();
-			setIsRefreshingAllowlist(false);
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "Failed to sync allowlist";
@@ -917,30 +921,6 @@ export default function CompliantToken() {
 									/>
 									Open Sheet
 								</a>
-								<Button
-									onClick={() => {
-										void refetchSpreadsheet();
-										setIsRefreshingAllowlist(true);
-										void refetchAllowlist().finally(() =>
-											setIsRefreshingAllowlist(false),
-										);
-									}}
-									variant="outline"
-									size="sm"
-									disabled={loadingSpreadsheet || isRefreshingAllowlist}
-									className={css({ gap: "1" })}
-								>
-									<RefreshCw
-										className={css({
-											width: "4",
-											height: "4",
-											...(loadingSpreadsheet || isRefreshingAllowlist
-												? { animation: "spin" }
-												: {}),
-										})}
-									/>
-									Refresh All
-								</Button>
 								<Button
 									onClick={() => void handleSync()}
 									disabled={isSyncing}

@@ -28,13 +28,13 @@ async function fetchSpreadsheetData(): Promise<string[]> {
 
 /**
  * Fetches spreadsheet allowlist data from the CRE helper server.
- * Automatically refetches every 30 seconds.
+ * Automatically refetches every 5 seconds.
  */
 export function useSpreadsheetData(): UseSpreadsheetDataResult {
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ["spreadsheet-allowlist"],
 		queryFn: fetchSpreadsheetData,
-		refetchInterval: 30_000,
+		refetchInterval: 5_000,
 		staleTime: 10_000,
 	});
 
