@@ -1,3 +1,0 @@
-# SSR mode: routing is handled by the React Router server function
-# The @netlify/vite-plugin-react-router generates the function that handles all routes
-# No SPA redirect needed
