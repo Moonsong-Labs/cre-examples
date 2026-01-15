@@ -8,7 +8,7 @@ export interface UseSpreadsheetDataResult {
 }
 
 async function fetchSpreadsheetData(): Promise<string[]> {
-	const response = await fetch("/api/allowlist");
+	const response = await fetch("/be/allowlist");
 
 	if (!response.ok) {
 		const errorData = await response.json().catch(() => ({}));

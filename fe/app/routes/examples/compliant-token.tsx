@@ -205,7 +205,7 @@ export default function CompliantToken() {
 			setIsSyncing(true);
 			setSyncError(null);
 
-			const response = await fetch("/api/sync", { method: "POST" });
+			const response = await fetch("/be/sync", { method: "POST" });
 
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
