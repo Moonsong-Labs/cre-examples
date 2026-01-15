@@ -1,6 +1,6 @@
 {
 	"schedule": "*/30 * * * * *",
-	"mailboxUrl": "https://cre.lunatic.boo/01-relay/mailbox",
+	"mailboxUrl": "https://cre-examples.msldev.io/api/01-relay/mailbox",
 	"evms": [
 		{
 			"chainSelectorName": "ethereum-testnet-sepolia",

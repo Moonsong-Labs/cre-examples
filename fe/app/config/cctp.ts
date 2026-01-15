@@ -172,7 +172,7 @@ export async function fetchRelayStatus(
 	burnTxHash: string,
 ): Promise<RelayStatusResponse | null> {
 	try {
-		const res = await fetch(`/api/relay/${burnTxHash}`);
+		const res = await fetch(`/be/relay/${burnTxHash}`);
 		if (!res.ok) return null;
 		return (await res.json()) as RelayStatusResponse;
 	} catch {

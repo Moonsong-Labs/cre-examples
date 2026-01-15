@@ -163,7 +163,7 @@ export default function TokenAirdrop() {
 			}
 
 			try {
-				const response = await fetch(`/api/airdrop/${addr}`);
+				const response = await fetch(`/be/airdrop/${addr}`);
 
 				if (!response.ok) {
 					if (response.status >= 500) {
@@ -237,7 +237,7 @@ export default function TokenAirdrop() {
 			setSyncError(null);
 			setSyncSuccess(false);
 
-			const response = await fetch("/api/airdrop/sync", { method: "POST" });
+			const response = await fetch("/be/airdrop/sync", { method: "POST" });
 
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
@@ -271,7 +271,7 @@ export default function TokenAirdrop() {
 			setClaimError(null);
 			setClaimSuccess(false);
 
-			const response = await fetch(`/api/airdrop/${effectiveAddress}`, {
+			const response = await fetch(`/be/airdrop/${effectiveAddress}`, {
 				method: "POST",
 			});
 
