@@ -1,0 +1,31 @@
+name: Deploy front end (ECS force new deployment)
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - "master"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.AWS_ROLE_TO_ASSUME}}
+          aws-region: ${{vars.AWS_REGION}}
+
+      - name: Force new deployment (frontend)
+        env:
+          AWS_PAGER: ""
+        run: |
+          aws ecs update-service \
+            --cluster cre-examples-cluster \
+            --service cre-examples-frontend \
+            --force-new-deployment \
+            --region ${{vars.AWS_REGION}}
