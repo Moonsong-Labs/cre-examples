@@ -70,8 +70,8 @@ export const card = defineSlotRecipe({
 					transition: "all 0.2s ease",
 					cursor: "default",
 					_hover: {
-						bg: "rgba(255,255,255,0.08)",
-						borderColor: "rgba(255,255,255,0.15)",
+						bg: "gray.surface.bg.hover",
+						borderColor: "gray.surface.border.hover",
 					},
 				},
 			},

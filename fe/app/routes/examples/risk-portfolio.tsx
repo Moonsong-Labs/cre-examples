@@ -160,7 +160,7 @@ export default function RiskPortfolio() {
 					display: "flex",
 					flexDirection: { base: "column", md: "row" },
 					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-end" },
+					alignItems: { base: "flex-start", md: "flex-start" },
 					gap: "4",
 				})}
 			>
@@ -227,7 +227,7 @@ export default function RiskPortfolio() {
 				<Card.Body
 					className={css({
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
 					})}
 				>
@@ -353,7 +353,7 @@ export default function RiskPortfolio() {
 						<div
 							className={css({
 								display: "grid",
-								gridTemplateColumns: { base: "1fr", md: "repeat(4, 1fr)" },
+								gridTemplateColumns: { base: "1fr 1fr", lg: "repeat(4, 1fr)" },
 								gap: "4",
 							})}
 						>
@@ -541,38 +541,14 @@ export default function RiskPortfolio() {
 									gap: "6",
 								})}
 							>
-								<div
-									className={css({
-										p: "4",
-										borderRadius: "lg",
-										bg: "gray.subtle.bg",
-										border: "1px solid",
-										borderColor: "border",
-									})}
-								>
+								<div className={section()}>
 									<VolatilityBarChart volBps={normalized.volBps} />
 								</div>
-								<div
-									className={css({
-										p: "4",
-										borderRadius: "lg",
-										bg: "gray.subtle.bg",
-										border: "1px solid",
-										borderColor: "border",
-									})}
-								>
+								<div className={section()}>
 									<RiskContributionChart cov={cov} portfolios={portfolios} />
 								</div>
 							</div>
-							<div
-								className={css({
-									p: "4",
-									borderRadius: "lg",
-									bg: "gray.subtle.bg",
-									border: "1px solid",
-									borderColor: "border",
-								})}
-							>
+						<div className={section()}>
 								<CorrelationHeatmap corrBps={normalized.corrBps} />
 							</div>
 						</div>
@@ -659,7 +635,7 @@ function MathBox({
 				})}
 				dangerouslySetInnerHTML={{ __html: html }}
 			/>
-			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+			<Text className={css({ fontSize: "xs", color: "fg.muted" })}>
 				{description}
 			</Text>
 		</div>
