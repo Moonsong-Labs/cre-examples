@@ -245,7 +245,7 @@ export default function CompliantToken() {
 					display: "flex",
 					flexDirection: { base: "column", md: "row" },
 					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-end" },
+					alignItems: { base: "flex-start", md: "flex-start" },
 					gap: "4",
 				})}
 			>
@@ -312,7 +312,7 @@ export default function CompliantToken() {
 				<Card.Body
 					className={css({
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
 						alignItems: "stretch",
 					})}
@@ -623,9 +623,35 @@ export default function CompliantToken() {
 
 			{!isConnected && (
 				<Card.Root variant="outline">
-					<Card.Body className={css({ py: "8", textAlign: "center" })}>
-						<Text className={css({ color: "fg.muted" })}>
-							Connect your wallet to continue
+					<Card.Body
+						className={css({
+							py: "12",
+							textAlign: "center",
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "center",
+							gap: "3",
+						})}
+					>
+						<ShieldCheck
+							className={css({
+								width: "8",
+								height: "8",
+								color: "teal.8",
+							})}
+						/>
+						<Text
+							className={css({
+								color: "fg.muted",
+								fontWeight: "medium",
+								fontSize: "lg",
+							})}
+						>
+							Connect your wallet to get started
+						</Text>
+						<Text className={css({ color: "fg.subtle", fontSize: "sm" })}>
+							Connect a wallet on Sepolia testnet to mint compliant tokens and
+							view the allowlist
 						</Text>
 					</Card.Body>
 				</Card.Root>
@@ -1230,7 +1256,7 @@ function StepCard({
 				section({ hoverable: true }),
 				css({
 					alignItems: "center",
-					textAlign: "center",
+					textAlign: "left",
 					overflow: "hidden",
 					height: "100%",
 				}),
@@ -1264,7 +1290,7 @@ function StepCard({
 			>
 				{title}
 			</Text>
-			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+			<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
 				{description}
 			</Text>
 		</div>

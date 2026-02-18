@@ -345,7 +345,7 @@ export default function TokenAirdrop() {
 					display: "flex",
 					flexDirection: { base: "column", md: "row" },
 					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-end" },
+					alignItems: { base: "flex-start", md: "flex-start" },
 					gap: "4",
 				})}
 			>
@@ -412,7 +412,7 @@ export default function TokenAirdrop() {
 				<Card.Body
 					className={css({
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
 						alignItems: "stretch",
 					})}
@@ -682,9 +682,34 @@ export default function TokenAirdrop() {
 
 			{!isConnected && (
 				<Card.Root variant="outline">
-					<Card.Body className={css({ py: "8", textAlign: "center" })}>
-						<Text className={css({ color: "fg.muted" })}>
+					<Card.Body
+						className={css({
+							py: "12",
+							textAlign: "center",
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "center",
+							gap: "3",
+						})}
+					>
+						<Gift
+							className={css({
+								width: "8",
+								height: "8",
+								color: "teal.8",
+							})}
+						/>
+						<Text
+							className={css({
+								color: "fg.muted",
+								fontWeight: "medium",
+								fontSize: "lg",
+							})}
+						>
 							Connect your wallet to check your airdrop status
+						</Text>
+						<Text className={css({ color: "fg.subtle", fontSize: "sm" })}>
+							Use the Connect Wallet button above to get started
 						</Text>
 					</Card.Body>
 				</Card.Root>
@@ -1246,7 +1271,7 @@ function StepCard({
 				section({ hoverable: true }),
 				css({
 					alignItems: "center",
-					textAlign: "center",
+					textAlign: "left",
 					overflow: "hidden",
 					height: "100%",
 				}),
@@ -1280,7 +1305,7 @@ function StepCard({
 			>
 				{title}
 			</Text>
-			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+			<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
 				{description}
 			</Text>
 		</div>

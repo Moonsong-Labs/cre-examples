@@ -383,7 +383,7 @@ export default function CrossChainRelayer() {
 					display: "flex",
 					flexDirection: { base: "column", md: "row" },
 					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-end" },
+					alignItems: { base: "flex-start", md: "flex-start" },
 					gap: "4",
 				})}
 			>
@@ -451,7 +451,7 @@ export default function CrossChainRelayer() {
 				<Card.Body
 					className={css({
 						display: "grid",
-						gridTemplateColumns: { base: "1fr", lg: "1fr 1fr 1fr" },
+						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
 						gap: "4",
 					})}
 				>
@@ -1109,16 +1109,37 @@ export default function CrossChainRelayer() {
 			{!isConnected && (
 				<div
 					className={css({
-						textAlign: "center",
-						p: "8",
+						textAlign: "left",
+						py: "12",
+						px: "8",
 						bg: "gray.subtle.bg",
 						borderRadius: "lg",
 						border: "1px dashed",
 						borderColor: "border",
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: "3",
 					})}
 				>
-					<Text className={css({ color: "fg.muted" })}>
+					<ArrowLeftRight
+						className={css({
+							width: "8",
+							height: "8",
+							color: "fg.subtle",
+						})}
+					/>
+					<Text
+						className={css({
+							color: "fg.muted",
+							fontWeight: "medium",
+							fontSize: "lg",
+						})}
+					>
 						Connect your wallet to start transferring USDC cross-chain
+					</Text>
+					<Text className={css({ color: "fg.subtle", fontSize: "sm" })}>
+						Use the Connect Wallet button above to get started
 					</Text>
 				</div>
 			)}
@@ -1143,7 +1164,7 @@ function StepCard({
 				section({ hoverable: true }),
 				css({
 					alignItems: "center",
-					textAlign: "center",
+					textAlign: "left",
 					overflow: "hidden",
 				}),
 			)}
@@ -1176,7 +1197,7 @@ function StepCard({
 			>
 				{title}
 			</Text>
-			<Text className={css({ fontSize: "xs", color: "fg.subtle" })}>
+			<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
 				{description}
 			</Text>
 		</div>

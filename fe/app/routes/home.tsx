@@ -107,7 +107,7 @@ export default function Home() {
 							className={css({
 								textStyle: "2xl",
 								minHeight: "5rem",
-								color: "rgba(255,255,255,0.9)",
+								color: "white.a11",
 							})}
 						/>
 
@@ -137,10 +137,9 @@ export default function Home() {
 										backgroundSize: "200% 200%",
 										color: "white",
 										fontWeight: "bold",
-										border: "2px solid rgba(255, 255, 255, 0.2)",
+										border: "2px solid token(colors.white.a4)",
 										borderRadius: "xl",
 										transition: "all 0.3s ease",
-										animation: "pulse-glow 2s ease-in-out infinite",
 										_before: {
 											content: '""',
 											position: "absolute",
@@ -150,9 +149,9 @@ export default function Home() {
 											animation: "shimmer 2s infinite",
 										},
 										_hover: {
-											transform: "scale(1.05)",
+											transform: "translateY(-2px)",
 											backgroundPosition: "100% 0",
-											borderColor: "rgba(255, 255, 255, 0.4)",
+											boxShadow: "0 0 24px rgba(20, 184, 166, 0.4)",
 										},
 									})}
 								>
@@ -183,7 +182,7 @@ export default function Home() {
 						<Card.Root
 							className={css({
 								bg: "rgba(15,23,42,0.3)",
-								border: "1px solid rgba(255,255,255,0.08)",
+								border: "1px solid token(colors.white.a2)",
 								color: "white",
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
@@ -192,7 +191,7 @@ export default function Home() {
 							<Card.Header>
 								<Card.Title>Available demos</Card.Title>
 								<Card.Description
-									className={css({ color: "rgba(255,255,255,0.7)!" })}
+									className={css({ color: "white.a9!" })}
 								>
 									Hands-on flows you can run in the browser.
 								</Card.Description>
@@ -224,11 +223,11 @@ export default function Home() {
 													padding: "4",
 													borderRadius: "lg",
 													border: "1px solid",
-													borderColor: "rgba(255,255,255,0.05)",
-													bg: "rgba(255,255,255,0.02)",
+													borderColor: "white.a1",
+													bg: "white.a1",
 													_hover: {
-														borderColor: "rgba(255,255,255,0.15)",
-														bg: "rgba(255,255,255,0.06)",
+														borderColor: "white.a3",
+														bg: "white.a1",
 													},
 													transition: "all 0.2s ease",
 												})}
@@ -248,7 +247,7 @@ export default function Home() {
 																borderRadius: "md",
 																display: "grid",
 																placeItems: "center",
-																bg: "rgba(255,255,255,0.08)",
+																bg: "white.a2",
 																color: "white",
 																_groupHover: {
 																	bg: "rgba(20,184,166,0.2)",
@@ -280,7 +279,7 @@ export default function Home() {
 														</Text>
 														<Text
 															className={css({
-																color: "rgba(255,255,255,0.6)",
+																color: "white.a8",
 																fontSize: "sm",
 															})}
 														>
@@ -311,7 +310,7 @@ export default function Home() {
 														className={css({
 															width: "5",
 															height: "5",
-															color: "rgba(255,255,255,0.3)",
+															color: "white.a5",
 															_groupHover: {
 																color: "white",
 																transform: "translateX(2px)",
