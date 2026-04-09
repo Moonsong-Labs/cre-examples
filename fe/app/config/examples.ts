@@ -15,6 +15,19 @@ export interface ExampleDefinition {
 	icon?: ComponentType<{ className?: string }>;
 	navLabel?: string;
 	images?: string[];
+	navBg?: string;
+	navFg?: string;
+	navGlow?: string;
+}
+
+export interface NavItem {
+	href: string;
+	label: string;
+	icon?: ComponentType<{ className?: string }>;
+	images?: string[];
+	navBg?: string;
+	navFg?: string;
+	navGlow?: string;
 }
 
 export const EXAMPLES: ExampleDefinition[] = [
@@ -25,6 +38,9 @@ export const EXAMPLES: ExampleDefinition[] = [
 		description: "Bridge USDC across testnets with CRE attestations and CCTP.",
 		tag: "Live demo",
 		icon: ArrowLeftRight,
+		navBg: "rgba(215, 244, 239, 0.92)",
+		navFg: "#0f6d61",
+		navGlow: "rgba(94, 234, 212, 0.28)",
 		images: [
 			"/eye-scanner-80.png",
 			"/eye-scanner-160.png",
@@ -42,6 +58,9 @@ export const EXAMPLES: ExampleDefinition[] = [
 			"Sync Google Spreadsheet allowlist to ERC20 token contract using CRE.",
 		tag: "Live demo",
 		icon: ShieldCheck,
+		navBg: "rgba(238, 231, 255, 0.94)",
+		navFg: "#6e3bd8",
+		navGlow: "rgba(143, 96, 250, 0.28)",
 		images: [
 			"/written-code-80.png",
 			"/written-code-160.png",
@@ -59,6 +78,9 @@ export const EXAMPLES: ExampleDefinition[] = [
 			"Automated portfolio allocations driven by on-chain volatility and correlation metrics.",
 		tag: "Demo",
 		icon: PieChart,
+		navBg: "rgba(230, 244, 255, 0.94)",
+		navFg: "#2563c9",
+		navGlow: "rgba(96, 165, 250, 0.24)",
 	},
 	{
 		href: "/examples/token-airdrop",
@@ -67,6 +89,9 @@ export const EXAMPLES: ExampleDefinition[] = [
 		description: "Distribute tokens via merkle proof airdrop using CRE.",
 		tag: "Live demo",
 		icon: Gift,
+		navBg: "rgba(255, 244, 223, 0.94)",
+		navFg: "#a35b00",
+		navGlow: "rgba(252, 211, 77, 0.28)",
 		images: [
 			"/written-code-80.png",
 			"/written-code-160.png",
@@ -78,18 +103,20 @@ export const EXAMPLES: ExampleDefinition[] = [
 	},
 ];
 
-export const NAV_ITEMS = [
+export const NAV_ITEMS: NavItem[] = [
 	{
 		href: "/",
 		label: "Home",
 		icon: Home,
-		images: undefined as string[] | undefined,
 	},
 	...EXAMPLES.map((example) => ({
 		href: example.href,
 		label: example.navLabel ?? example.title,
 		icon: example.icon,
 		images: example.images,
+		navBg: example.navBg,
+		navFg: example.navFg,
+		navGlow: example.navGlow,
 	})),
 ];
 

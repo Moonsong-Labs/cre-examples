@@ -1,1 +1,37 @@
 @layer reset, base, tokens, recipes, utilities;
+
+@layer base {
+	html {
+		font-family: "Inter", sans-serif;
+		background: #f7f9fb;
+	}
+
+	body {
+		margin: 0;
+		font-family: "Inter", sans-serif;
+		background:
+			radial-gradient(
+				circle at top left,
+				rgba(143, 96, 250, 0.14),
+				transparent 30%
+			),
+			radial-gradient(
+				circle at 88% 8%,
+				rgba(165, 243, 252, 0.28),
+				transparent 24%
+			),
+			radial-gradient(
+				circle at 52% 38%,
+				rgba(240, 253, 244, 0.52),
+				transparent 34%
+			), linear-gradient(180deg, #f8fbfd 0%, #eef4f8 52%, #f9fbfc 100%);
+		color: #2c3437;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+
+	::selection {
+		background: rgba(143, 96, 250, 0.18);
+		color: #2c3437;
+	}
+}

@@ -13,8 +13,8 @@ import stylesheet from "./app.css?url";
 import "./app.css";
 import { css } from "styled-system/css";
 import { Providers } from "~/components/providers";
-import { config } from "~/config/wagmi";
 import { Button, Heading, Spinner, Text } from "~/components/ui";
+import { config } from "~/config/wagmi";
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const cookie = request.headers.get("cookie");
@@ -29,6 +29,10 @@ export const links: Route.LinksFunction = () => [
 		rel: "preconnect",
 		href: "https://fonts.gstatic.com",
 		crossOrigin: "anonymous",
+	},
+	{
+		rel: "stylesheet",
+		href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap",
 	},
 	{
 		rel: "stylesheet",

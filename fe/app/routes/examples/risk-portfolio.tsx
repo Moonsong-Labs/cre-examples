@@ -1,12 +1,10 @@
 import katex from "katex";
 import {
 	Calculator,
-	Clock,
 	FileCode,
 	Info,
 	RefreshCw,
 	Scale,
-	Search,
 	Shield,
 	TriangleAlert,
 	Workflow,
@@ -17,6 +15,7 @@ import { css } from "styled-system/css";
 import { section } from "styled-system/recipes";
 import { sepolia } from "viem/chains";
 import { useReadContract } from "wagmi";
+import { ExamplePage } from "~/components/example-shell";
 import {
 	CorrelationHeatmap,
 	DataStatusBadge,
@@ -41,6 +40,7 @@ import {
 	riskMetricsOracleAbi,
 } from "~/config/contracts";
 import {
+	ASSETS,
 	buildCovarianceMatrix,
 	computeAllPortfolios,
 	type DataStatus,
@@ -56,7 +56,7 @@ export function meta(_args: Route.MetaArgs) {
 		{
 			name: "description",
 			content:
-				"Automated risk-budgeted portfolio allocations using on-chain risk metrics",
+				"Read oracle risk metrics and compare portfolio weights for three risk profiles.",
 		},
 	];
 }
@@ -143,245 +143,15 @@ export default function RiskPortfolio() {
 	const portfolios = useMemo(() => computeAllPortfolios(cov), [cov]);
 
 	return (
-		<div
-			className={css({
-				maxWidth: "5xl",
-				mx: "auto",
-				py: { base: "6", md: "10" },
-				px: { base: "4", md: "6" },
-				display: "flex",
-				flexDirection: "column",
-				gap: "8",
-			})}
+		<ExamplePage
+			title="Automated Portfolio Management"
+			description="Read the latest volatility and correlation metrics, build a covariance matrix, and compare conservative, balanced, and aggressive weights for BTC, ETH, LINK, sDAI, and UNI. If the oracle is unavailable, the demo falls back to mock data."
+			accent={{
+				glow: "rgba(110, 59, 216, 0.16)",
+				wash: "rgba(165, 243, 252, 0.22)",
+				edge: "rgba(165, 243, 252, 0.26)",
+			}}
 		>
-			{/* Header */}
-			<div
-				className={css({
-					display: "flex",
-					flexDirection: { base: "column", md: "row" },
-					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-start" },
-					gap: "4",
-				})}
-			>
-				<div>
-					<Text
-						as="h1"
-						className={css({
-							fontSize: "3xl",
-							fontWeight: "bold",
-							mb: "2",
-							color: "fg.default",
-						})}
-					>
-						Automated Portfolio Management
-					</Text>
-					<Text className={css({ color: "fg.muted", fontSize: "lg" })}>
-						Dynamic portfolio allocations driven by on-chain risk metrics
-					</Text>
-				</div>
-				<div
-					className={css({
-						display: "flex",
-						alignItems: "center",
-						gap: "2",
-						flexWrap: "wrap",
-					})}
-				>
-					<Badge variant="surface" colorPalette="purple" size="md">
-						<Clock className={css({ width: "3.5", height: "3.5" })} />
-						Cron Trigger
-					</Badge>
-					<Badge variant="subtle" colorPalette="gray" size="md">
-						<Search className={css({ width: "3.5", height: "3.5" })} />
-						HTTP Client
-					</Badge>
-					<Badge variant="outline" colorPalette="teal" size="md">
-						<Zap className={css({ width: "3.5", height: "3.5" })} />
-						EVM Write
-					</Badge>
-				</div>
-			</div>
-
-			{/* Context Card */}
-			<Card.Root variant="outline">
-				<Card.Header>
-					<div
-						className={css({
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-						})}
-					>
-						<Card.Title>How It Works</Card.Title>
-						<VideoModal
-							youtubeId="3kHNicJe7ts"
-							title="Risk Portfolio Walkthrough"
-						/>
-					</div>
-					<Card.Description>
-						Overcoming on-chain compute limits with the Chainlink Runtime
-						Environment (CRE)
-					</Card.Description>
-				</Card.Header>
-				<Card.Body
-					className={css({
-						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
-						gap: "4",
-					})}
-				>
-					{/* Card 1: The Compute Bottleneck */}
-					<div className={section({ hoverable: true })}>
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-							})}
-						>
-							<TriangleAlert
-								className={css({ width: "4", height: "4", color: "amber.fg" })}
-							/>
-							<Badge variant="surface" colorPalette="amber" size="sm">
-								Problem: Gas & Trust
-							</Badge>
-						</div>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							Smart contracts are constrained by gas limits. Complex financial
-							modeling—like calculating 30-day rolling covariance matrices
-							across multiple assets—is prohibitively expensive to execute
-							on-chain and lacks cryptographic guarantees if run on a
-							centralized backend.
-						</Text>
-					</div>
-
-					{/* Card 2: Scriptable Oracles */}
-					<div className={section({ hoverable: true })}>
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-							})}
-						>
-							<FileCode
-								className={css({ width: "4", height: "4", color: "teal.fg" })}
-							/>
-							<Badge variant="surface" colorPalette="teal" size="sm">
-								Solution: Scriptable Oracles
-							</Badge>
-						</div>
-						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-							Going beyond simply fetching a value, we can do data manipulation
-							in the CRE using typical typescript libraries e.g. Decimal.js. We
-							use this feature to execute statistical analysis off-chain,
-							producing a verifiable result that is cryptographically signed and
-							delivered on-chain.
-						</Text>
-					</div>
-
-					{/* Card 3: Architecture Flow */}
-					<div className={section({ hoverable: true })}>
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-							})}
-						>
-							<Workflow
-								className={css({ width: "4", height: "4", color: "blue.fg" })}
-							/>
-							<Badge variant="surface" colorPalette="blue" size="sm">
-								Implementation
-							</Badge>
-						</div>
-						<ul
-							className={css({
-								fontSize: "sm",
-								color: "fg.muted",
-								listStyleType: "disc",
-								pl: "4",
-								display: "flex",
-								flexDirection: "column",
-								gap: "1.5",
-							})}
-						>
-							<li>
-								<strong>Workflow:</strong> Fetches price history & computes risk
-								matrix off-chain.
-							</li>
-							<li>
-								<strong>Oracle Contract:</strong> Receives and stores only the
-								verified risk metrics.
-							</li>
-							<li>
-								<strong>Dapp:</strong> Reads the contract to dynamically
-								rebalance portfolio weights.
-							</li>
-						</ul>
-					</div>
-
-					{/* Mathematical Model */}
-					<div
-						className={css({
-							gridColumn: "1 / -1",
-							mt: "2",
-							pt: "4",
-							borderTop: "1px solid",
-							borderColor: "border",
-							display: "flex",
-							flexDirection: "column",
-							gap: "4",
-						})}
-					>
-						<div
-							className={css({
-								display: "flex",
-								alignItems: "center",
-								gap: "2",
-								color: "fg.default",
-							})}
-						>
-							<Calculator className={css({ width: "4", height: "4" })} />
-							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
-								Mathematical Model
-							</Text>
-						</div>
-
-						<div
-							className={css({
-								display: "grid",
-								gridTemplateColumns: { base: "1fr 1fr", lg: "repeat(4, 1fr)" },
-								gap: "4",
-							})}
-						>
-							<MathBox
-								title="Log Returns"
-								formula="r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)"
-								description="Enables time-additive performance measurement for risk analysis"
-							/>
-							<MathBox
-								title="Covariance"
-								formula="\Sigma_{ij} = \text{Cov}(r_i, r_j)"
-								description="Quantifies diversification potential between assets"
-							/>
-							<MathBox
-								title="Annualization"
-								formula="\Sigma_{\text{ann}} = \Sigma \times 365"
-								description="Aligns daily metrics with annual risk budgets"
-							/>
-							<MathBox
-								title="Correlation"
-								formula="\rho_{ij} = \frac{\Sigma_{ij}}{\sigma_i \sigma_j}"
-								description="Identifies hedging opportunities and concentration risk"
-							/>
-						</div>
-					</div>
-				</Card.Body>
-			</Card.Root>
-
 			{/* Mock Data Alert */}
 			{useMockData && (
 				<Alert.Root>
@@ -432,7 +202,7 @@ export default function RiskPortfolio() {
 					))}
 				</div>
 			) : (
-				<Card.Root variant="outline">
+				<Card.Root variant="outline" id="portfolio-allocations">
 					<Card.Header>
 						<Card.Title>Portfolio Allocations</Card.Title>
 						<Card.Description>
@@ -478,7 +248,7 @@ export default function RiskPortfolio() {
 
 			{/* Risk Metrics Card */}
 			{dataStatus !== "loading" && (
-				<Card.Root variant="outline">
+				<Card.Root variant="outline" id="risk-metrics">
 					<Card.Header>
 						<div
 							className={css({
@@ -548,7 +318,7 @@ export default function RiskPortfolio() {
 									<RiskContributionChart cov={cov} portfolios={portfolios} />
 								</div>
 							</div>
-						<div className={section()}>
+							<div className={section()}>
 								<CorrelationHeatmap corrBps={normalized.corrBps} />
 							</div>
 						</div>
@@ -581,8 +351,186 @@ export default function RiskPortfolio() {
 				</Card.Root>
 			)}
 
+			<Card.Root variant="outline" className={css({ order: -1 })}>
+				<Card.Header>
+					<div
+						className={css({
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						})}
+					>
+						<Card.Title>How It Works</Card.Title>
+						<VideoModal
+							youtubeId="3kHNicJe7ts"
+							title="Risk Portfolio Walkthrough"
+						/>
+					</div>
+					<Card.Description>
+						Overcoming on-chain compute limits with the Chainlink Runtime
+						Environment (CRE)
+					</Card.Description>
+				</Card.Header>
+				<Card.Body
+					className={css({
+						display: "grid",
+						gridTemplateColumns: {
+							base: "1fr",
+							md: "1fr 1fr",
+							lg: "1fr 1fr 1fr",
+						},
+						gap: "4",
+					})}
+				>
+					<div className={section({ hoverable: true })}>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<TriangleAlert
+								className={css({ width: "4", height: "4", color: "amber.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="amber" size="sm">
+								Problem: Gas & Trust
+							</Badge>
+						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Smart contracts are constrained by gas limits. Complex financial
+							modeling—like calculating 30-day rolling covariance matrices
+							across multiple assets—is prohibitively expensive to execute
+							on-chain and lacks cryptographic guarantees if run on a
+							centralized backend.
+						</Text>
+					</div>
+
+					<div className={section({ hoverable: true })}>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<FileCode
+								className={css({ width: "4", height: "4", color: "teal.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="teal" size="sm">
+								Solution: Scriptable Oracles
+							</Badge>
+						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Going beyond simply fetching a value, we can do data manipulation
+							in the CRE using typical typescript libraries e.g. Decimal.js. We
+							use this feature to execute statistical analysis off-chain,
+							producing a verifiable result that is cryptographically signed and
+							delivered on-chain.
+						</Text>
+					</div>
+
+					<div className={section({ hoverable: true })}>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<Workflow
+								className={css({ width: "4", height: "4", color: "blue.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="blue" size="sm">
+								Implementation
+							</Badge>
+						</div>
+						<ul
+							className={css({
+								fontSize: "sm",
+								color: "fg.muted",
+								listStyleType: "disc",
+								pl: "4",
+								display: "flex",
+								flexDirection: "column",
+								gap: "1.5",
+							})}
+						>
+							<li>
+								<strong>Workflow:</strong> Fetches price history & computes risk
+								matrix off-chain.
+							</li>
+							<li>
+								<strong>Oracle Contract:</strong> Receives and stores only the
+								verified risk metrics.
+							</li>
+							<li>
+								<strong>Dapp:</strong> Reads the contract to dynamically
+								rebalance portfolio weights.
+							</li>
+						</ul>
+					</div>
+
+					<div
+						className={css({
+							gridColumn: "1 / -1",
+							mt: "2",
+							pt: "4",
+							borderTop: "1px solid",
+							borderColor: "border",
+							display: "flex",
+							flexDirection: "column",
+							gap: "4",
+						})}
+					>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+								color: "fg.default",
+							})}
+						>
+							<Calculator className={css({ width: "4", height: "4" })} />
+							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+								Mathematical Model
+							</Text>
+						</div>
+
+						<div
+							className={css({
+								display: "grid",
+								gridTemplateColumns: { base: "1fr 1fr", lg: "repeat(4, 1fr)" },
+								gap: "4",
+							})}
+						>
+							<MathBox
+								title="Log Returns"
+								formula="r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)"
+								description="Enables time-additive performance measurement for risk analysis"
+							/>
+							<MathBox
+								title="Covariance"
+								formula="\Sigma_{ij} = \text{Cov}(r_i, r_j)"
+								description="Quantifies diversification potential between assets"
+							/>
+							<MathBox
+								title="Annualization"
+								formula="\Sigma_{\text{ann}} = \Sigma \times 365"
+								description="Aligns daily metrics with annual risk budgets"
+							/>
+							<MathBox
+								title="Correlation"
+								formula="\rho_{ij} = \frac{\Sigma_{ij}}{\sigma_i \sigma_j}"
+								description="Identifies hedging opportunities and concentration risk"
+							/>
+						</div>
+					</div>
+				</Card.Body>
+			</Card.Root>
+
 			<Toaster />
-		</div>
+		</ExamplePage>
 	);
 }
 

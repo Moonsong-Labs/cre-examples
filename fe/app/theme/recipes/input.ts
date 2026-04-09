@@ -20,34 +20,46 @@ export const input = {
 	},
 	defaultVariants: {
 		size: "md",
-		variant: "outline",
+		variant: "surface",
 	},
 	variants: {
 		variant: {
 			outline: {
-				borderWidth: "1px",
-				borderColor: "gray.outline.border",
+				bg: "linear-gradient(180deg, rgba(255,255,255,0.82), var(--example-surface-strong, rgba(232,239,244,0.94)))",
+				borderWidth: "0",
+				borderColor: "transparent",
+				boxShadow:
+					"inset 0 0 0 1px rgba(172,179,183,0.1), inset 0 -1px 0 rgba(172,179,183,0.14), inset 0 1px 0 rgba(255,255,255,0.52)",
 				focusVisibleRing: "inside",
+				_focusVisible: {
+					boxShadow:
+						"inset 0 0 0 1px rgba(172,179,183,0.1), inset 0 -2px 0 rgba(110,59,216,0.86), inset 0 1px 0 rgba(255,255,255,0.56)",
+				},
 				_invalid: {
 					focusRingColor: "error",
 					borderColor: "error",
 				},
 			},
 			surface: {
-				bg: "gray.surface.bg",
-				borderWidth: "1px",
-				borderColor: "gray.surface.border",
+				bg: "linear-gradient(180deg, rgba(255,255,255,0.8), var(--example-surface-strong, rgba(232,239,244,0.94)))",
+				borderWidth: "0",
+				borderColor: "transparent",
+				boxShadow:
+					"inset 0 -1px 0 rgba(172,179,183,0.14), inset 0 1px 0 rgba(255,255,255,0.56)",
 				focusVisibleRing: "inside",
-
+				_focusVisible: {
+					boxShadow:
+						"inset 0 -2px 0 rgba(110,59,216,0.86), inset 0 1px 0 rgba(255,255,255,0.58)",
+				},
 				_invalid: {
 					focusRingColor: "error",
 					borderColor: "error",
 				},
 			},
 			subtle: {
-				borderWidth: "1px",
+				borderWidth: "0",
 				borderColor: "transparent",
-				bg: "gray.subtle.bg",
+				bg: "linear-gradient(180deg, rgba(255,255,255,0.72), var(--example-surface, rgba(243,246,250,0.72)))",
 				color: "gray.subtle.fg",
 				focusVisibleRing: "inside",
 
@@ -58,7 +70,7 @@ export const input = {
 			},
 			flushed: {
 				borderBottomWidth: "1px",
-				borderBottomColor: "gray.outline.border",
+				borderBottomColor: "rgba(172,179,183,0.22)",
 				borderRadius: "0",
 				color: "fg.default",
 				px: "0",
@@ -66,8 +78,8 @@ export const input = {
 					borderColor: "error",
 				},
 				_focus: {
-					borderColor: "colorPalette.solid.bg",
-					boxShadowColor: "colorPalette.solid.bg",
+					borderColor: "rgba(110,59,216,0.86)",
+					boxShadowColor: "rgba(110,59,216,0.86)",
 					boxShadow: "0 1px 0 0 var(--shadow-color)",
 					_invalid: {
 						borderColor: "error",

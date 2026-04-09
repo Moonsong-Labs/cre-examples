@@ -5,14 +5,11 @@ import {
 	ExternalLink,
 	FileCode,
 	Gift,
-	Globe,
 	Loader2,
 	RefreshCw,
-	Search,
 	TriangleAlert,
 	Workflow,
 	XCircle,
-	Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { css, cx } from "styled-system/css";
@@ -28,7 +25,16 @@ import {
 	useWatchContractEvent,
 } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
-import { Alert, Badge, Button, Card, Field, Input, Text } from "~/components/ui";
+import { ExamplePage } from "~/components/example-shell";
+import {
+	Alert,
+	Badge,
+	Button,
+	Card,
+	Field,
+	Input,
+	Text,
+} from "~/components/ui";
 import { VideoModal } from "~/components/video-modal";
 import { AIRDROP_TOKEN_ADDRESS, airdropTokenAbi } from "~/config/contracts";
 import type { Route } from "./+types/token-airdrop";
@@ -38,7 +44,8 @@ export function meta(_args: Route.MetaArgs) {
 		{ title: "Token Airdrop - CRE Examples" },
 		{
 			name: "description",
-			content: "Distribute tokens via merkle proof airdrop using CRE",
+			content:
+				"Check address eligibility, sync spreadsheet allocations, and trigger airdrop claims on Sepolia.",
 		},
 	];
 }
@@ -138,6 +145,7 @@ export default function TokenAirdrop() {
 			enabled: isSepoliaChain && !!address,
 		},
 	});
+	const userBalanceValue = userBalance as bigint | undefined;
 
 	// Watch for Transfer events to user's address for real-time balance updates
 	useWatchContractEvent({
@@ -214,7 +222,9 @@ export default function TokenAirdrop() {
 
 	useInterval(
 		() => {
-			fetchAirdropStatus(effectiveAddress!, true);
+			if (effectiveAddress) {
+				fetchAirdropStatus(effectiveAddress, true);
+			}
 			refetchTotalClaimed();
 			refetchUserBalance();
 		},
@@ -327,253 +337,215 @@ export default function TokenAirdrop() {
 		return isAddress(queryAddress);
 	}, [queryAddress]);
 
-	return (
-		<div
-			className={css({
-				maxWidth: "5xl",
-				mx: "auto",
-				py: { base: "6", md: "10" },
-				px: { base: "4", md: "6" },
-				display: "flex",
-				flexDirection: "column",
-				gap: "8",
-			})}
-		>
-			{/* Header */}
-			<div
-				className={css({
-					display: "flex",
-					flexDirection: { base: "column", md: "row" },
-					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-start" },
-					gap: "4",
-				})}
-			>
-				<div>
-					<Text
-						as="h1"
-						className={css({
-							fontSize: "3xl",
-							fontWeight: "bold",
-							mb: "2",
-							color: "fg.default",
-						})}
-					>
-						Token Airdrop
-					</Text>
-					<Text className={css({ color: "fg.muted", fontSize: "lg" })}>
-						Distribute tokens via merkle proof airdrop using CRE
-					</Text>
-				</div>
+	const howItWorks = (
+		<Card.Root variant="outline" className={css({ order: -1 })}>
+			<Card.Header>
 				<div
 					className={css({
 						display: "flex",
+						justifyContent: "space-between",
 						alignItems: "center",
-						gap: "2",
-						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="blue" size="md">
-						<Globe className={css({ width: "3.5", height: "3.5" })} />
-						HTTP Trigger
-					</Badge>
-					<Badge variant="subtle" colorPalette="gray" size="md">
-						<Search className={css({ width: "3.5", height: "3.5" })} />
-						HTTP Client
-					</Badge>
-					<Badge variant="outline" colorPalette="teal" size="md">
-						<Zap className={css({ width: "3.5", height: "3.5" })} />
-						EVM Write
-					</Badge>
+					<Card.Title>How It Works</Card.Title>
+					<VideoModal
+						youtubeId="6RdWrZcTi5o"
+						title="Token Airdrop Walkthrough"
+					/>
 				</div>
-			</div>
-
-			{/* How It Works Card */}
-			<Card.Root variant="outline">
-				<Card.Header>
-					<div
-						className={css({
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-						})}
-					>
-						<Card.Title>How It Works</Card.Title>
-						<VideoModal
-							youtubeId="6RdWrZcTi5o"
-							title="Token Airdrop Walkthrough"
-						/>
-					</div>
-					<Card.Description>
-						Scalable token distribution with gasless claims powered by the
-						Chainlink Runtime Environment (CRE)
-					</Card.Description>
-				</Card.Header>
-				<Card.Body
-					className={css({
-						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
-						gap: "4",
-						alignItems: "stretch",
-					})}
+				<Card.Description>
+					Scalable token distribution with gasless claims powered by the
+					Chainlink Runtime Environment (CRE)
+				</Card.Description>
+			</Card.Header>
+			<Card.Body
+				className={css({
+					display: "grid",
+					gridTemplateColumns: {
+						base: "1fr",
+						md: "1fr 1fr",
+						lg: "1fr 1fr 1fr",
+					},
+					gap: "4",
+					alignItems: "stretch",
+				})}
+			>
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
 				>
-					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<TriangleAlert
-									className={css({
-										width: "4",
-										height: "4",
-										color: "amber.fg",
-									})}
-								/>
-								<Badge variant="surface" colorPalette="amber" size="sm">
-									Problem: Complex Distribution
-								</Badge>
-							</div>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Distributing tokens to many addresses requires building merkle
-								trees, managing proofs, and users need ETH to pay gas for
-								claiming—creating friction and complexity for both operators and
-								recipients.
-							</Text>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<FileCode
-									className={css({ width: "4", height: "4", color: "teal.fg" })}
-								/>
-								<Badge variant="surface" colorPalette="teal" size="sm">
-									Solution: CRE Automation
-								</Badge>
-							</div>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Manage allocations from a simple Google Spreadsheet. CRE handles
-								merkle tree generation, on-chain publishing, and sponsors claim
-								transactions—users receive tokens without needing ETH.
-							</Text>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<Workflow
-									className={css({ width: "4", height: "4", color: "blue.fg" })}
-								/>
-								<Badge variant="surface" colorPalette="blue" size="sm">
-									Implementation
-								</Badge>
-							</div>
-							<ul
-								className={css({
-									fontSize: "sm",
-									color: "fg.muted",
-									listStyleType: "disc",
-									pl: "4",
-									display: "flex",
-									flexDirection: "column",
-									gap: "1.5",
-								})}
-							>
-								<li>
-									<strong>Allocate:</strong> Update addresses and amounts in a
-									Google Spreadsheet.
-								</li>
-								<li>
-									<strong>Sync:</strong> Prover workflow builds merkle tree and
-									publishes root on-chain.
-								</li>
-								<li>
-									<strong>Claim:</strong> Claimer workflow executes gasless
-									claims with proof verification.
-								</li>
-							</ul>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Technical Breakdown */}
-					<div
-						className={css({
-							gridColumn: "1 / -1",
-							mt: "2",
-							pt: "4",
-							borderTop: "1px solid",
-							borderColor: "border",
-							display: "flex",
-							flexDirection: "column",
-							gap: "4",
-						})}
-					>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 						<div
 							className={css({
 								display: "flex",
 								alignItems: "center",
 								gap: "2",
-								color: "fg.default",
 							})}
 						>
-							<Activity className={css({ width: "4", height: "4" })} />
-							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
-								Technical Breakdown
-							</Text>
+							<TriangleAlert
+								className={css({
+									width: "4",
+									height: "4",
+									color: "amber.fg",
+								})}
+							/>
+							<Badge variant="surface" colorPalette="amber" size="sm">
+								Problem: Complex Distribution
+							</Badge>
 						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Distributing tokens to many addresses requires building merkle
+							trees, managing proofs, and users need ETH to pay gas for
+							claiming—creating friction and complexity for both operators and
+							recipients.
+						</Text>
+					</Card.Body>
+				</Card.Root>
 
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
+				>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 						<div
 							className={css({
-								display: "grid",
-								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-								gap: "4",
-								alignItems: "stretch",
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
 							})}
 						>
-							<StepCard
-								title="Allocation Data"
-								imageSrc="/written-code-80.png"
-								imageSrcSet="/written-code-160.png 2x"
-								description="Community managers define token allocations in a Google Spreadsheet"
+							<FileCode
+								className={css({ width: "4", height: "4", color: "teal.fg" })}
 							/>
-							<StepCard
-								title="Prover Workflow"
-								imageSrc="/workflow-nodes-80.png"
-								imageSrcSet="/workflow-nodes-160.png 2x"
-								description="Builds merkle tree from allocations, stores proofs, and publishes root on-chain"
-							/>
-							<StepCard
-								title="Claimer Workflow"
-								imageSrc="/shield-80.png"
-								imageSrcSet="/shield-160.png 2x"
-								description="Executes gasless claims by submitting proofs and sponsoring transactions"
-							/>
+							<Badge variant="surface" colorPalette="teal" size="sm">
+								Solution: CRE Automation
+							</Badge>
 						</div>
-					</div>
-				</Card.Body>
-			</Card.Root>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Manage allocations from a simple Google Spreadsheet. CRE handles
+							merkle tree generation, on-chain publishing, and sponsors claim
+							transactions—users receive tokens without needing ETH.
+						</Text>
+					</Card.Body>
+				</Card.Root>
 
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
+				>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<Workflow
+								className={css({ width: "4", height: "4", color: "blue.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="blue" size="sm">
+								Implementation
+							</Badge>
+						</div>
+						<ul
+							className={css({
+								fontSize: "sm",
+								color: "fg.muted",
+								listStyleType: "disc",
+								pl: "4",
+								display: "flex",
+								flexDirection: "column",
+								gap: "1.5",
+							})}
+						>
+							<li>
+								<strong>Allocate:</strong> Update addresses and amounts in a
+								Google Spreadsheet.
+							</li>
+							<li>
+								<strong>Sync:</strong> Prover workflow builds merkle tree and
+								publishes root on-chain.
+							</li>
+							<li>
+								<strong>Claim:</strong> Claimer workflow executes gasless claims
+								with proof verification.
+							</li>
+						</ul>
+					</Card.Body>
+				</Card.Root>
+
+				<div
+					className={css({
+						gridColumn: "1 / -1",
+						mt: "2",
+						pt: "4",
+						borderTop: "1px solid",
+						borderColor: "border",
+						display: "flex",
+						flexDirection: "column",
+						gap: "4",
+					})}
+				>
+					<div
+						className={css({
+							display: "flex",
+							alignItems: "center",
+							gap: "2",
+							color: "fg.default",
+						})}
+					>
+						<Activity className={css({ width: "4", height: "4" })} />
+						<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+							Technical Breakdown
+						</Text>
+					</div>
+
+					<div
+						className={css({
+							display: "grid",
+							gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+							gap: "4",
+							alignItems: "stretch",
+						})}
+					>
+						<StepCard
+							title="Allocation Data"
+							imageSrc="/written-code-80.png"
+							imageSrcSet="/written-code-160.png 2x"
+							description="Community managers define token allocations in a Google Spreadsheet"
+						/>
+						<StepCard
+							title="Prover Workflow"
+							imageSrc="/workflow-nodes-80.png"
+							imageSrcSet="/workflow-nodes-160.png 2x"
+							description="Builds merkle tree from allocations, stores proofs, and publishes root on-chain"
+						/>
+						<StepCard
+							title="Claimer Workflow"
+							imageSrc="/shield-80.png"
+							imageSrcSet="/shield-160.png 2x"
+							description="Executes gasless claims by submitting proofs and sponsoring transactions"
+						/>
+					</div>
+				</div>
+			</Card.Body>
+		</Card.Root>
+	);
+
+	return (
+		<ExamplePage
+			title="Token Airdrop"
+			description="Check any address for its airdrop allocation, proved amount, claimed amount, and current claimable balance. The page can sync spreadsheet allocations and trigger a claim through the helper service on Sepolia."
+			accent={{
+				glow: "rgba(110, 59, 216, 0.16)",
+				wash: "rgba(252, 211, 77, 0.18)",
+				edge: "rgba(165, 243, 252, 0.24)",
+			}}
+		>
 			{/* Token Info */}
 			{isConnected && (
 				<div
@@ -732,7 +704,7 @@ export default function TokenAirdrop() {
 
 			{/* Airdrop Status Section */}
 			{isConnected && isSepoliaChain && (
-				<Card.Root variant="elevated">
+				<Card.Root variant="elevated" id="airdrop-status">
 					<Card.Header>
 						<div
 							className={css({
@@ -1250,7 +1222,9 @@ export default function TokenAirdrop() {
 					</Card.Body>
 				</Card.Root>
 			)}
-		</div>
+
+			{howItWorks}
+		</ExamplePage>
 	);
 }
 

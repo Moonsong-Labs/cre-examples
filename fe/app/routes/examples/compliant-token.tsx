@@ -1,19 +1,16 @@
 import {
 	Activity,
 	CheckCircle,
-	Clock,
 	Coins,
 	ExternalLink,
 	FileCode,
 	FileSpreadsheet,
 	Loader2,
-	Search,
 	ShieldCheck,
 	TriangleAlert,
 	Upload,
 	Workflow,
 	XCircle,
-	Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { css, cx } from "styled-system/css";
@@ -30,6 +27,7 @@ import {
 	useWriteContract,
 } from "wagmi";
 import { AddToWalletButton } from "~/components/add-to-wallet-button";
+import { ExamplePage } from "~/components/example-shell";
 import {
 	Alert,
 	Badge,
@@ -51,7 +49,7 @@ export function meta(_args: Route.MetaArgs) {
 		{
 			name: "description",
 			content:
-				"Sync Google Spreadsheet allowlist to ERC20 token contract using CRE",
+				"Sync a Google Sheets allowlist to a Sepolia token contract and mint to approved addresses.",
 		},
 	];
 }
@@ -131,6 +129,7 @@ export default function CompliantToken() {
 			enabled: isSepoliaChain,
 		},
 	});
+	const totalSupplyValue = totalSupply as bigint | undefined;
 
 	// Read user balance
 	const { data: userBalance } = useReadContract({
@@ -227,252 +226,214 @@ export default function CompliantToken() {
 		}
 	};
 
-	return (
-		<div
-			className={css({
-				maxWidth: "5xl",
-				mx: "auto",
-				py: { base: "6", md: "10" },
-				px: { base: "4", md: "6" },
-				display: "flex",
-				flexDirection: "column",
-				gap: "8",
-			})}
-		>
-			{/* Header */}
-			<div
-				className={css({
-					display: "flex",
-					flexDirection: { base: "column", md: "row" },
-					justifyContent: "space-between",
-					alignItems: { base: "flex-start", md: "flex-start" },
-					gap: "4",
-				})}
-			>
-				<div>
-					<Text
-						as="h1"
-						className={css({
-							fontSize: "3xl",
-							fontWeight: "bold",
-							mb: "2",
-							color: "fg.default",
-						})}
-					>
-						Compliant Token
-					</Text>
-					<Text className={css({ color: "fg.muted", fontSize: "lg" })}>
-						Sync Google Spreadsheet allowlist to ERC20 token contract
-					</Text>
-				</div>
+	const howItWorks = (
+		<Card.Root variant="outline" className={css({ order: -1 })}>
+			<Card.Header>
 				<div
 					className={css({
 						display: "flex",
+						justifyContent: "space-between",
 						alignItems: "center",
-						gap: "2",
-						flexWrap: "wrap",
 					})}
 				>
-					<Badge variant="surface" colorPalette="purple" size="md">
-						<Clock className={css({ width: "3.5", height: "3.5" })} />
-						Cron Trigger
-					</Badge>
-					<Badge variant="subtle" colorPalette="gray" size="md">
-						<Search className={css({ width: "3.5", height: "3.5" })} />
-						HTTP Client
-					</Badge>
-					<Badge variant="outline" colorPalette="teal" size="md">
-						<Zap className={css({ width: "3.5", height: "3.5" })} />
-						EVM Write
-					</Badge>
+					<Card.Title>How It Works</Card.Title>
+					<VideoModal
+						youtubeId="9vSHfANA6Ek"
+						title="Compliant Token Walkthrough"
+					/>
 				</div>
-			</div>
-
-			{/* How It Works Card */}
-			<Card.Root variant="outline">
-				<Card.Header>
-					<div
-						className={css({
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-						})}
-					>
-						<Card.Title>How It Works</Card.Title>
-						<VideoModal
-							youtubeId="9vSHfANA6Ek"
-							title="Compliant Token Walkthrough"
-						/>
-					</div>
-					<Card.Description>
-						Bridging compliance and blockchain with the Chainlink Runtime
-						Environment (CRE)
-					</Card.Description>
-				</Card.Header>
-				<Card.Body
-					className={css({
-						display: "grid",
-						gridTemplateColumns: { base: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" },
-						gap: "4",
-						alignItems: "stretch",
-					})}
+				<Card.Description>
+					Bridging compliance and blockchain with the Chainlink Runtime
+					Environment (CRE)
+				</Card.Description>
+			</Card.Header>
+			<Card.Body
+				className={css({
+					display: "grid",
+					gridTemplateColumns: {
+						base: "1fr",
+						md: "1fr 1fr",
+						lg: "1fr 1fr 1fr",
+					},
+					gap: "4",
+					alignItems: "stretch",
+				})}
+			>
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
 				>
-					{/* Card 1: The Problem */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<TriangleAlert
-									className={css({
-										width: "4",
-										height: "4",
-										color: "amber.fg",
-									})}
-								/>
-								<Badge variant="surface" colorPalette="amber" size="sm">
-									Problem: Manual Management
-								</Badge>
-							</div>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Compliance specialists need to manage who can receive or
-								transfer tokens, but working with wallets and blockchain
-								transactions is complex and error-prone for non-technical users.
-							</Text>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Card 2: The Solution */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<FileCode
-									className={css({ width: "4", height: "4", color: "teal.fg" })}
-								/>
-								<Badge variant="surface" colorPalette="teal" size="sm">
-									Solution: Spreadsheet Sync
-								</Badge>
-							</div>
-							<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
-								Manage allowlists from a familiar Google Sheet interface. CRE
-								automatically syncs changes to the on-chain contract—no wallet
-								or blockchain knowledge required by the compliance team.
-							</Text>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Card 3: Implementation */}
-					<Card.Root variant="subtle" hoverable className={css({ height: "100%" })}>
-						<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
-							<div
-								className={css({
-									display: "flex",
-									alignItems: "center",
-									gap: "2",
-								})}
-							>
-								<Workflow
-									className={css({ width: "4", height: "4", color: "blue.fg" })}
-								/>
-								<Badge variant="surface" colorPalette="blue" size="sm">
-									Implementation
-								</Badge>
-							</div>
-							<ul
-								className={css({
-									fontSize: "sm",
-									color: "fg.muted",
-									listStyleType: "disc",
-									pl: "4",
-									display: "flex",
-									flexDirection: "column",
-									gap: "1.5",
-								})}
-							>
-								<li>
-									<strong>Connect:</strong> Workflow uses Google Sheets API to
-									fetch the latest authorized addresses.
-								</li>
-								<li>
-									<strong>Compare:</strong> Logic identifies differences between
-									the sheet and the on-chain state.
-								</li>
-								<li>
-									<strong>Sync:</strong> CRE automatically executes transactions
-									to bring the contract in sync.
-								</li>
-							</ul>
-						</Card.Body>
-					</Card.Root>
-
-					{/* Technical Breakdown */}
-					<div
-						className={css({
-							gridColumn: "1 / -1",
-							mt: "2",
-							pt: "4",
-							borderTop: "1px solid",
-							borderColor: "border",
-							display: "flex",
-							flexDirection: "column",
-							gap: "4",
-						})}
-					>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 						<div
 							className={css({
 								display: "flex",
 								alignItems: "center",
 								gap: "2",
-								color: "fg.default",
 							})}
 						>
-							<Activity className={css({ width: "4", height: "4" })} />
-							<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
-								Technical Breakdown
-							</Text>
+							<TriangleAlert
+								className={css({
+									width: "4",
+									height: "4",
+									color: "amber.fg",
+								})}
+							/>
+							<Badge variant="surface" colorPalette="amber" size="sm">
+								Problem: Manual Management
+							</Badge>
 						</div>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Compliance specialists need to manage who can receive or transfer
+							tokens, but working with wallets and blockchain transactions is
+							complex and error-prone for non-technical users.
+						</Text>
+					</Card.Body>
+				</Card.Root>
 
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
+				>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
 						<div
 							className={css({
-								display: "grid",
-								gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-								gap: "4",
-								alignItems: "stretch",
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
 							})}
 						>
-							<StepCard
-								title="Data Entry"
-								imageSrc="/written-code-80.png"
-								imageSrcSet="/written-code-160.png 2x"
-								description="Compliance team manages addresses in a secure Google Spreadsheet"
+							<FileCode
+								className={css({ width: "4", height: "4", color: "teal.fg" })}
 							/>
-							<StepCard
-								title="CRE Sync"
-								imageSrc="/workflow-nodes-80.png"
-								imageSrcSet="/workflow-nodes-160.png 2x"
-								description="The Chainlink Runtime Environment detects changes and prepares the update"
-							/>
-							<StepCard
-								title="Enforcement"
-								imageSrc="/shield-80.png"
-								imageSrcSet="/shield-160.png 2x"
-								description="The smart contract automatically enforces the new allowlist for all operations"
-							/>
+							<Badge variant="surface" colorPalette="teal" size="sm">
+								Solution: Spreadsheet Sync
+							</Badge>
 						</div>
-					</div>
-				</Card.Body>
-			</Card.Root>
+						<Text className={css({ fontSize: "sm", color: "fg.muted" })}>
+							Manage allowlists from a familiar Google Sheet interface. CRE
+							automatically syncs changes to the on-chain contract—no wallet or
+							blockchain knowledge required by the compliance team.
+						</Text>
+					</Card.Body>
+				</Card.Root>
 
+				<Card.Root
+					variant="subtle"
+					hoverable
+					className={css({ height: "100%" })}
+				>
+					<Card.Body className={css({ p: "4", gap: "3", flex: 1 })}>
+						<div
+							className={css({
+								display: "flex",
+								alignItems: "center",
+								gap: "2",
+							})}
+						>
+							<Workflow
+								className={css({ width: "4", height: "4", color: "blue.fg" })}
+							/>
+							<Badge variant="surface" colorPalette="blue" size="sm">
+								Implementation
+							</Badge>
+						</div>
+						<ul
+							className={css({
+								fontSize: "sm",
+								color: "fg.muted",
+								listStyleType: "disc",
+								pl: "4",
+								display: "flex",
+								flexDirection: "column",
+								gap: "1.5",
+							})}
+						>
+							<li>
+								<strong>Connect:</strong> Workflow uses Google Sheets API to
+								fetch the latest authorized addresses.
+							</li>
+							<li>
+								<strong>Compare:</strong> Logic identifies differences between
+								the sheet and the on-chain state.
+							</li>
+							<li>
+								<strong>Sync:</strong> CRE automatically executes transactions
+								to bring the contract in sync.
+							</li>
+						</ul>
+					</Card.Body>
+				</Card.Root>
+
+				<div
+					className={css({
+						gridColumn: "1 / -1",
+						mt: "2",
+						pt: "4",
+						borderTop: "1px solid",
+						borderColor: "border",
+						display: "flex",
+						flexDirection: "column",
+						gap: "4",
+					})}
+				>
+					<div
+						className={css({
+							display: "flex",
+							alignItems: "center",
+							gap: "2",
+							color: "fg.default",
+						})}
+					>
+						<Activity className={css({ width: "4", height: "4" })} />
+						<Text className={css({ fontWeight: "semibold", fontSize: "sm" })}>
+							Technical Breakdown
+						</Text>
+					</div>
+
+					<div
+						className={css({
+							display: "grid",
+							gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+							gap: "4",
+							alignItems: "stretch",
+						})}
+					>
+						<StepCard
+							title="Data Entry"
+							imageSrc="/written-code-80.png"
+							imageSrcSet="/written-code-160.png 2x"
+							description="Compliance team manages addresses in a secure Google Spreadsheet"
+						/>
+						<StepCard
+							title="CRE Sync"
+							imageSrc="/workflow-nodes-80.png"
+							imageSrcSet="/workflow-nodes-160.png 2x"
+							description="The Chainlink Runtime Environment detects changes and prepares the update"
+						/>
+						<StepCard
+							title="Enforcement"
+							imageSrc="/shield-80.png"
+							imageSrcSet="/shield-160.png 2x"
+							description="The smart contract automatically enforces the new allowlist for all operations"
+						/>
+					</div>
+				</div>
+			</Card.Body>
+		</Card.Root>
+	);
+
+	return (
+		<ExamplePage
+			title="Compliant Token"
+			description="Use a Google Sheet as the token allowlist, publish changes to the Sepolia contract, and mint to any address currently on that list. The page shows the sheet state next to the on-chain state so you can reconcile them before publishing."
+			accent={{
+				glow: "rgba(143, 96, 250, 0.18)",
+				wash: "rgba(240, 253, 244, 0.28)",
+				edge: "rgba(143, 96, 250, 0.22)",
+			}}
+		>
 			{/* Token Info */}
 			{isConnected && (
 				<div
@@ -674,7 +635,7 @@ export default function CompliantToken() {
 
 			{/* Mint Tokens Section */}
 			{isConnected && isSepoliaChain && (
-				<Card.Root variant="elevated">
+				<Card.Root variant="elevated" id="mint-tokens">
 					<Card.Header>
 						<Card.Title>
 							<div
@@ -889,7 +850,7 @@ export default function CompliantToken() {
 
 			{/* Allowed Accounts Comparison */}
 			{isConnected && isSepoliaChain && (
-				<Card.Root variant="outline">
+				<Card.Root variant="outline" id="allowed-accounts">
 					<Card.Header>
 						<div
 							className={css({
@@ -1235,7 +1196,9 @@ export default function CompliantToken() {
 					</Card.Body>
 				</Card.Root>
 			)}
-		</div>
+
+			{howItWorks}
+		</ExamplePage>
 	);
 }
 
