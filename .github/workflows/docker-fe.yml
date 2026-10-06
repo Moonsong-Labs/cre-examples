@@ -1,9 +1,10 @@
 name: Build and Push FE Docker Image
 
+# Pushes an immutable git-<sha> tag to MSL's ECR. Deploying is a separate step:
+# pin the digest in Moonsong-Labs/msl-ops (cre-examples/main.tf) and apply.
 on:
   push:
     branches: [master]
-    tags: ['v*']
     paths:
       - 'fe/**'
       - '.github/workflows/docker-fe.yml'
@@ -12,13 +13,23 @@ on:
     paths:
       - 'fe/**'
       - '.github/workflows/docker-fe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
-  IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/cre-fe
+  ECR_REPOSITORY: cre-examples/frontend
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # The AWS role only trusts master; everything else builds without pushing.
+      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,31 +37,52 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Configure AWS credentials (OIDC)
+        if: env.PUBLISH == 'true'
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          role-to-assume: ${{ vars.AWS_IMAGE_PUBLISH_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        if: env.PUBLISH == 'true'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      # Tags are immutable, so a re-run for an already-published commit skips the push.
+      - name: Check for an existing image
+        if: env.PUBLISH == 'true'
+        id: existing
+        run: |
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids "imageTag=git-$GITHUB_SHA" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "\`$ECR_REPOSITORY:git-$GITHUB_SHA\` is already published." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: ${{ steps.ecr.outputs.registry || 'local' }}/${{ env.ECR_REPOSITORY }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=,format=short
+            type=raw,value=git-${{ github.sha }}
 
       - name: Build and push
+        id: build
+        if: steps.existing.outputs.found != 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./fe
-          push: true
+          push: ${{ env.PUBLISH == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_WALLETCONNECT_PROJECT_ID=${{ secrets.VITE_WALLETCONNECT_PROJECT_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Deployment hint
+        if: env.PUBLISH == 'true' && steps.build.outcome == 'success'
+        run: |
+          echo "Pushed \`$ECR_REPOSITORY:git-$GITHUB_SHA\` as \`${{ steps.build.outputs.digest }}\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "To deploy, set \`frontend_image_digest\` in Moonsong-Labs/msl-ops \`cre-examples/main.tf\` and apply." >> "$GITHUB_STEP_SUMMARY"
