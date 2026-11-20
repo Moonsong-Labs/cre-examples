@@ -16,7 +16,7 @@ COPY --from=development-dependencies-env /app /app
 WORKDIR /app
 RUN bun run build
 
-FROM node:22-alpine
+FROM node:22.23.5-alpine
 COPY ./package.json /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
