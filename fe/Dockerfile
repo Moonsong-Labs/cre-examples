@@ -1,14 +1,14 @@
-FROM oven/bun:1-alpine AS development-dependencies-env
+FROM oven/bun:1.3.10-alpine AS development-dependencies-env
 COPY . /app
 WORKDIR /app
 RUN bun install --frozen-lockfile
 
-FROM oven/bun:1-alpine AS production-dependencies-env
+FROM oven/bun:1.3.10-alpine AS production-dependencies-env
 COPY ./package.json bun.lock /app/
 WORKDIR /app
 RUN bun install --frozen-lockfile --production --ignore-scripts
 
-FROM oven/bun:1-alpine AS build-env
+FROM oven/bun:1.3.10-alpine AS build-env
 ARG VITE_WALLETCONNECT_PROJECT_ID
 ENV VITE_WALLETCONNECT_PROJECT_ID=$VITE_WALLETCONNECT_PROJECT_ID
 
@@ -16,7 +16,7 @@ COPY --from=development-dependencies-env /app /app
 WORKDIR /app
 RUN bun run build
 
-FROM node:22-alpine
+FROM node:22.23.5-alpine
 COPY ./package.json /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
